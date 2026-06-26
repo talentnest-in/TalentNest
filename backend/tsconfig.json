@@ -1,5 +1,4 @@
 {
-  // Visit https://aka.ms/tsconfig to read more about this file
   "compilerOptions": {
     // File Layout
     "rootDir": "./src",
@@ -7,7 +6,7 @@
 
     // Environment Settings
     "module": "commonjs",
-    "moduleResolution": "node16",
+    "moduleResolution": "node",
     "target": "es2022",
     "lib": ["es2022"],
     "types": ["node"],
