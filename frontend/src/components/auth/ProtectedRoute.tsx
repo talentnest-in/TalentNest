@@ -28,7 +28,7 @@ export function ProtectedRoute() {
   }
 
   const isOnboardingRoute = location.pathname === '/onboarding/select-role';
-  const needsOnboarding = !user.onboardingCompleted || user.role === 'ONBOARDING';
+  const needsOnboarding = !user.onboardingCompleted || user.role === null;
 
   if (needsOnboarding && !isOnboardingRoute) {
     return <Navigate to="/onboarding/select-role" replace />;

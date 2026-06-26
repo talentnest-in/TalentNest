@@ -38,7 +38,7 @@ export function Login() {
     mutationFn: authService.login,
     onSuccess: (data) => {
       login(data.token, data.user);
-      const needsOnboarding = !data.user.onboardingCompleted || data.user.role === 'ONBOARDING';
+      const needsOnboarding = !data.user.onboardingCompleted || data.user.role === null;
       
       if (needsOnboarding) {
         navigate('/onboarding/select-role', { replace: true });

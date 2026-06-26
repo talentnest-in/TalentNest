@@ -34,7 +34,7 @@ export function OAuthCallback() {
     authService.getMe()
       .then((user) => {
         login(token, user);
-        const needsOnboarding = !user.onboardingCompleted || user.role === 'ONBOARDING';
+        const needsOnboarding = !user.onboardingCompleted || user.role === null;
         if (needsOnboarding) {
           navigate('/onboarding/select-role', { replace: true });
         } else if (user.role === 'CLIENT') {

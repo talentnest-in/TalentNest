@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
-import { jobService } from '@/services/job.service';
+import { clientJobService } from '@/services/job.service';
+import type { Job } from '@/types';
 import { JobCard } from '@/components/client/JobCard';
 import { EmptyState } from '@/components/client/EmptyState';
 import { Button } from '@/components/ui/Button';
@@ -15,11 +16,11 @@ export function JobsPage() {
 
   const { data: jobs, isLoading } = useQuery({
     queryKey: ['myJobs', statusFilter, searchQuery],
-    queryFn: () => jobService.getMyJobs({ status: statusFilter, search: searchQuery }),
+    queryFn: () => clientJobService.getMyJobs({ status: statusFilter, search: searchQuery }),
   });
 
   const deleteMutation = useMutation({
-    mutationFn: jobService.deleteJob,
+    mutationFn: (id: string) => clientJobService.deleteJob(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['myJobs'] });
       queryClient.invalidateQueries({ queryKey: ['clientDashboard'] });
@@ -72,11 +73,11 @@ export function JobsPage() {
           </div>
         ) : jobs && jobs.length > 0 ? (
           <div className="grid gap-4">
-            {jobs.map((job) => (
+            {jobs.map((job: Job) => (
               <JobCard
                 key={job.id}
                 job={job}
-                onDelete={(id) => {
+                onDelete={(id: string) => {
                   if (confirm('Are you sure you want to delete this job?')) {
                     deleteMutation.mutate(id);
                   }
