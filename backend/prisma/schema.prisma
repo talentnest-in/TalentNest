@@ -1,0 +1,164 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  FREELANCER
+  CLIENT
+  ADMIN
+}
+
+model User {
+  id                   String    @id @default(uuid())
+  email                String    @unique
+  password             String?   // Null for OAuth-only users
+  name                 String?
+  avatar               String?   // Profile picture from OAuth provider
+  provider             String?   // 'local' | 'google' | 'github'
+  providerId           String?   // OAuth provider's user ID
+  role                 Role?     // Null means onboarding not completed
+  onboardingCompleted  Boolean   @default(false)
+  resetPasswordToken   String?
+  resetPasswordExpires DateTime?
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  freelancerProfile    FreelancerProfile?
+  clientProfile        ClientProfile?
+
+  @@unique([provider, providerId])
+}
+
+model FreelancerProfile {
+  id          String   @id @default(uuid())
+  userId      String   @unique
+  title       String?  // e.g., "Senior Full Stack Developer"
+  bio         String?  @db.Text
+  hourlyRate  Float?
+  location    String?
+  resumeUrl   String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  skills      Skill[]
+  experiences Experience[]
+  educations  Education[]
+  projects    PortfolioProject[]
+}
+
+model Skill {
+  id                  String            @id @default(uuid())
+  name                String
+  freelancerProfileId String
+  profile             FreelancerProfile @relation(fields: [freelancerProfileId], references: [id], onDelete: Cascade)
+}
+
+model Experience {
+  id                  String            @id @default(uuid())
+  company             String
+  role                String
+  startDate           DateTime
+  endDate             DateTime?
+  current             Boolean           @default(false)
+  description         String?           @db.Text
+  freelancerProfileId String
+  profile             FreelancerProfile @relation(fields: [freelancerProfileId], references: [id], onDelete: Cascade)
+}
+
+model Education {
+  id                  String            @id @default(uuid())
+  institution         String
+  degree              String
+  fieldOfStudy        String
+  startDate           DateTime
+  endDate             DateTime?
+  freelancerProfileId String
+  profile             FreelancerProfile @relation(fields: [freelancerProfileId], references: [id], onDelete: Cascade)
+}
+
+model PortfolioProject {
+  id                  String            @id @default(uuid())
+  title               String
+  description         String            @db.Text
+  imageUrl            String?
+  projectUrl          String?
+  freelancerProfileId String
+  profile             FreelancerProfile @relation(fields: [freelancerProfileId], references: [id], onDelete: Cascade)
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
+}
+
+// ─── Sprint 3: Client & Job Management ───────────────────────────────────────
+
+enum JobStatus {
+  DRAFT
+  OPEN
+  PAUSED
+  CLOSED
+}
+
+enum JobType {
+  FIXED
+  HOURLY
+}
+
+model ClientProfile {
+  id        String   @id @default(uuid())
+  userId    String   @unique
+  bio       String?  @db.Text
+  website   String?
+  location  String?
+  logoUrl   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  company Company?
+  jobs    Job[]
+}
+
+model Company {
+  id              String        @id @default(uuid())
+  clientProfileId String        @unique
+  name            String
+  industry        String?
+  size            String?       // e.g. "1-10", "11-50", "51-200"
+  description     String?       @db.Text
+  website         String?
+  logoUrl         String?
+  location        String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  clientProfile   ClientProfile @relation(fields: [clientProfileId], references: [id], onDelete: Cascade)
+}
+
+model Job {
+  id              String        @id @default(uuid())
+  clientProfileId String
+  title           String
+  description     String        @db.Text
+  type            JobType       @default(FIXED)
+  budget          Float?
+  status          JobStatus     @default(DRAFT)
+  location        String?
+  isRemote        Boolean       @default(true)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  clientProfile   ClientProfile @relation(fields: [clientProfileId], references: [id], onDelete: Cascade)
+  skills          JobSkill[]
+}
+
+model JobSkill {
+  id    String @id @default(uuid())
+  jobId String
+  name  String
+  job   Job    @relation(fields: [jobId], references: [id], onDelete: Cascade)
+}
+
