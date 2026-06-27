@@ -7,7 +7,7 @@ import {
   Search, Briefcase, MapPin, DollarSign, Clock, SlidersHorizontal,
   ChevronLeft, ChevronRight, Loader2, Building2, Wifi,
 } from 'lucide-react';
-import type { Job } from '@/types';
+import type { Job, JobType } from '@/types';
 
 function FreelancerJobCard({ job, index }: { job: Job; index: number }) {
   const timeAgo = (date: string) => {
@@ -105,13 +105,13 @@ function FreelancerJobCard({ job, index }: { job: Job; index: number }) {
 
 export function FreelancerJobsPage() {
   const [search, setSearch] = useState('');
-  const [typeFilter, setTypeFilter] = useState('');
+  const [typeFilter, setTypeFilter] = useState<JobType | undefined>(undefined);
   const [page, setPage] = useState(1);
   const [showFilters, setShowFilters] = useState(false);
 
   const { data, isLoading } = useQuery({
     queryKey: ['openJobs', search, typeFilter, page],
-    queryFn: () => jobService.getOpenJobs({ search, type: typeFilter || undefined, page }),
+    queryFn: () => jobService.getOpenJobs({ search, type: typeFilter, page: page.toString() }),
     placeholderData: (prev) => prev,
   });
 
@@ -180,8 +180,8 @@ export function FreelancerJobsPage() {
               <div className="flex items-center gap-2">
                 <label className="text-xs font-medium text-text-muted whitespace-nowrap">Job Type</label>
                 <select
-                  value={typeFilter}
-                  onChange={(e) => { setTypeFilter(e.target.value); setPage(1); }}
+                  value={typeFilter || ''}
+                  onChange={(e) => { setTypeFilter(e.target.value as JobType || undefined); setPage(1); }}
                   className="bg-background border border-border rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-accent"
                 >
                   <option value="">All Types</option>
@@ -194,7 +194,7 @@ export function FreelancerJobsPage() {
                   type="button"
                   variant="ghost"
                   size="sm"
-                  onClick={() => { setSearch(''); setTypeFilter(''); setPage(1); }}
+                  onClick={() => { setSearch(''); setTypeFilter(undefined); setPage(1); }}
                   className="text-xs text-text-muted"
                 >
                   Clear filters
@@ -227,7 +227,7 @@ export function FreelancerJobsPage() {
               <Button
                 variant="outline"
                 className="mt-6"
-                onClick={() => { setSearch(''); setTypeFilter(''); setPage(1); }}
+                onClick={() => { setSearch(''); setTypeFilter(undefined); setPage(1); }}
               >
                 Clear filters
               </Button>
