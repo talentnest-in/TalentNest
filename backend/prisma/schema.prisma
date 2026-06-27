@@ -44,11 +44,12 @@ model FreelancerProfile {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
   skills      Skill[]
   experiences Experience[]
   educations  Education[]
   projects    PortfolioProject[]
+  savedJobs   SavedJob[]
 }
 
 model Skill {
@@ -153,6 +154,7 @@ model Job {
 
   clientProfile   ClientProfile @relation(fields: [clientProfileId], references: [id], onDelete: Cascade)
   skills          JobSkill[]
+  savedJobs       SavedJob[]
 }
 
 model JobSkill {
@@ -160,5 +162,19 @@ model JobSkill {
   jobId String
   name  String
   job   Job    @relation(fields: [jobId], references: [id], onDelete: Cascade)
+}
+
+// ─── Sprint 4: Job Marketplace & Saved Jobs ───────────────────────────────────────
+
+model SavedJob {
+  id                  String            @id @default(uuid())
+  freelancerProfileId String
+  jobId               String
+  createdAt           DateTime          @default(now())
+
+  profile             FreelancerProfile @relation(fields: [freelancerProfileId], references: [id], onDelete: Cascade)
+  job                 Job               @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  @@unique([freelancerProfileId, jobId])
 }
 

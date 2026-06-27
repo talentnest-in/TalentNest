@@ -95,7 +95,7 @@ export function Dashboard() {
           {[
             { icon: TrendingUp, label: 'Dashboard', path: '/freelancer-dashboard' },
             { icon: User, label: 'Profile', path: '/profile' },
-            { icon: Briefcase, label: 'Find Jobs', path: '/jobs' },
+            { icon: Briefcase, label: 'Find Jobs', path: '/find-jobs' },
             { icon: Users, label: 'Applications', path: '/applications' },
             { icon: DollarSign, label: 'Saved Jobs', path: '/saved-jobs' },
             { icon: MessageSquare, label: 'Messages', path: '/messages' },

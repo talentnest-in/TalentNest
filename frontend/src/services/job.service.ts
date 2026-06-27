@@ -1,5 +1,5 @@
 import { api } from '@/lib/api';
-import type { Job, JobStatus } from '@/types';
+import type { Job, JobStatus, JobsResponse, JobsQueryParams } from '@/types';
 
 export interface JobInput {
   title: string;
@@ -12,22 +12,10 @@ export interface JobInput {
   skills: string[];
 }
 
-export interface OpenJobsResult {
-  jobs: Job[];
-  total: number;
-  page: number;
-  totalPages: number;
-}
-
 // ── Freelancer Marketplace ──────────────────────────────────────────────────
 // Fetches all OPEN jobs across all clients for freelancers to browse
 export const jobService = {
-  getOpenJobs: async (params?: {
-    search?: string;
-    type?: string;
-    skills?: string;
-    page?: number;
-  }): Promise<OpenJobsResult> => {
+  getOpenJobs: async (params?: JobsQueryParams): Promise<JobsResponse> => {
     const res = await api.get('/jobs', { params });
     return res.data;
   },

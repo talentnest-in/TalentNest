@@ -9,10 +9,12 @@ import { Dashboard } from '@/pages/Dashboard';
 import { ProfileManager } from '@/pages/ProfileManager';
 import { ClientDashboard } from '@/pages/ClientDashboard';
 import { CompanyPage } from '@/pages/CompanyPage';
-import { FreelancerJobsPage } from '@/pages/FreelancerJobsPage';
 import { ClientJobsPage } from '@/pages/ClientJobsPage';
 import { CreateEditJobPage } from '@/pages/CreateEditJobPage';
 import { OnboardingRoleSelection } from '@/pages/OnboardingRoleSelection';
+import { FindJobs } from '@/pages/FindJobs';
+import { JobDetails } from '@/pages/JobDetails';
+import { SavedJobs } from '@/pages/SavedJobs';
 
 function App() {
   return (
@@ -34,8 +36,9 @@ function App() {
           <Route element={<FreelancerRoute />}>
             <Route path="/freelancer-dashboard" element={<Dashboard />} />
             <Route path="/profile" element={<ProfileManager />} />
-            <Route path="/jobs" element={<FreelancerJobsPage />} />
-            <Route path="/jobs/:id" element={<FreelancerJobsPage />} />
+            <Route path="/find-jobs" element={<FindJobs />} />
+            <Route path="/jobs/:id" element={<JobDetails />} />
+            <Route path="/saved-jobs" element={<SavedJobs />} />
           </Route>
 
           {/* ── Client-only routes ── */}

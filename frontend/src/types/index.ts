@@ -80,21 +80,6 @@ export interface JobSkill {
   name: string;
 }
 
-export interface Job {
-  id: string;
-  clientProfileId: string;
-  title: string;
-  description: string;
-  type: JobType;
-  budget: number | null;
-  status: JobStatus;
-  location: string | null;
-  isRemote: boolean;
-  skills: JobSkill[];
-  createdAt: string;
-  updatedAt: string;
-}
-
 export interface Company {
   id: string;
   name: string;
@@ -116,6 +101,26 @@ export interface ClientProfile {
   company: Company | null;
 }
 
+export interface Job {
+  id: string;
+  clientProfileId: string;
+  title: string;
+  description: string;
+  type: JobType;
+  budget: number | null;
+  status: JobStatus;
+  location: string | null;
+  isRemote: boolean;
+  skills: JobSkill[];
+  createdAt: string;
+  updatedAt: string;
+  clientProfile?: ClientProfile;
+}
+
+export interface JobWithDetails extends Job {
+  clientProfile: ClientProfile & { company: Company | null };
+}
+
 export interface ClientDashboard {
   activeJobs: number;
   draftJobs: number;
@@ -123,4 +128,32 @@ export interface ClientDashboard {
   closedJobs: number;
   recentJobs: Job[];
   company: Company | null;
+}
+
+// ─── Sprint 4: Job Marketplace & Saved Jobs ───────────────────────────────────
+
+export interface SavedJob {
+  id: string;
+  freelancerProfileId: string;
+  jobId: string;
+  createdAt: string;
+  job: JobWithDetails;
+}
+
+export interface JobsQueryParams {
+  search?: string;
+  type?: JobType;
+  skills?: string;
+  minBudget?: string;
+  maxBudget?: string;
+  isRemote?: string;
+  sortBy?: 'newest' | 'oldest' | 'budget_low' | 'budget_high';
+  page?: string;
+}
+
+export interface JobsResponse {
+  jobs: JobWithDetails[];
+  total: number;
+  page: number;
+  totalPages: number;
 }
