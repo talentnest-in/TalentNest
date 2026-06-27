@@ -13,6 +13,7 @@ import { PortfolioGrid } from '@/components/freelancer/PortfolioGrid';
 import { ResumeCard } from '@/components/freelancer/ResumeCard';
 import { User, Briefcase, GraduationCap, FolderDot, Plus, Loader2 } from 'lucide-react';
 import type { Experience, Education, PortfolioProject } from '@/types';
+import { BACKEND_URL } from '@/lib/constants';
 
 // ─── Shared input style ───────────────────────────────────────────────────────
 const inp = 'w-full bg-background border border-border rounded-lg px-4 py-2.5 text-sm text-text placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-accent';
@@ -211,7 +212,7 @@ function PortfolioForm({
       <div>
         <label className={label}>Project Image</label>
         {form.imageUrl && (
-          <img src={`http://localhost:3001${form.imageUrl}`} alt="Preview" className="w-full h-40 object-cover rounded-lg mb-2" />
+          <img src={`${BACKEND_URL}${form.imageUrl}`} alt="Preview" className="w-full h-40 object-cover rounded-lg mb-2" />
         )}
         <label className="flex items-center gap-2 cursor-pointer text-sm text-accent hover:underline">
           <input type="file" className="hidden" accept="image/*" onChange={handleImageUpload} disabled={uploadingImage} />

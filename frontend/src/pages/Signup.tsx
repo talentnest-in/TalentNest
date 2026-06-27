@@ -12,6 +12,7 @@ import { authService } from '@/services/auth.service';
 import { useAuth } from '@/contexts/AuthContext';
 import type { ApiError } from '@/types';
 import { AxiosError } from 'axios';
+import { BACKEND_URL } from '@/lib/constants';
 
 const signupSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
@@ -228,7 +229,7 @@ export function Signup() {
               <Button
                 variant="outline"
                 className="w-full h-11"
-                onClick={() => window.location.href = 'http://localhost:3001/api/v1/auth/google'}
+                onClick={() => window.location.href = `${BACKEND_URL}/api/v1/auth/google`}
               >
                 <svg className="h-5 w-5 mr-2" aria-hidden="true" viewBox="0 0 24 24">
                   <path
@@ -254,7 +255,7 @@ export function Signup() {
               <Button
                 variant="outline"
                 className="w-full h-11"
-                onClick={() => window.location.href = 'http://localhost:3001/api/v1/auth/github'}
+                onClick={() => window.location.href = `${BACKEND_URL}/api/v1/auth/github`}
               >
                 <svg className="h-5 w-5 mr-2 text-text" fill="currentColor" viewBox="0 0 24 24">
                   <path

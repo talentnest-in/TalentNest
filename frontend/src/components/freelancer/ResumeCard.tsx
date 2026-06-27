@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { FileText, UploadCloud, Trash2, Loader2, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
+import { BACKEND_URL } from '@/lib/constants';
 
 interface ResumeCardProps {
   resumeUrl: string | null;
@@ -49,7 +50,7 @@ export function ResumeCard({ resumeUrl, onUpload, onDelete }: ResumeCardProps) {
             <span className="text-sm font-medium text-text">Resume Uploaded</span>
           </div>
           <div className="flex gap-2">
-            <a href={`http://localhost:3001${resumeUrl}`} target="_blank" rel="noopener noreferrer">
+            <a href={`${BACKEND_URL}${resumeUrl}`} target="_blank" rel="noopener noreferrer">
               <Button variant="outline" size="sm">View</Button>
             </a>
             {onDelete && (

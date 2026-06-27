@@ -75,10 +75,15 @@ server.register(multipart, {
 
 server.register(fastifyStatic, {
   root: path.join(__dirname, '..', 'public'),
-  prefix: '/public/', // http://localhost:3001/public/uploads/xxx.png
+  prefix: '/public/', // e.g. https://talentnest-zrk2.onrender.com/public/uploads/xxx.png
 });
 
 import oauthPlugin from '@fastify/oauth2';
+
+// Resolve base URL: use BACKEND_URL in production, fall back to localhost for dev
+const BACKEND_URL =
+  process.env.BACKEND_URL ||
+  `http://localhost:${process.env.PORT || 3001}`;
 
 // Register Google OAuth2
 server.register(oauthPlugin, {
@@ -92,7 +97,7 @@ server.register(oauthPlugin, {
     auth: oauthPlugin.GOOGLE_CONFIGURATION,
   },
   startRedirectPath: '/api/v1/auth/google',
-  callbackUri: 'http://localhost:3001/api/v1/auth/google/callback',
+  callbackUri: `${BACKEND_URL}/api/v1/auth/google/callback`,
 });
 
 // Register GitHub OAuth2
@@ -107,7 +112,7 @@ server.register(oauthPlugin, {
     auth: oauthPlugin.GITHUB_CONFIGURATION,
   },
   startRedirectPath: '/api/v1/auth/github',
-  callbackUri: 'http://localhost:3001/api/v1/auth/github/callback',
+  callbackUri: `${BACKEND_URL}/api/v1/auth/github/callback`,
 });
 
 server.decorate('authenticate', async (request: FastifyRequest, reply: FastifyReply) => {

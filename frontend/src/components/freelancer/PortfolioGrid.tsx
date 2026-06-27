@@ -1,6 +1,7 @@
 import type { PortfolioProject } from '@/types';
 import { ExternalLink, Trash2, Edit } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
+import { BACKEND_URL } from '@/lib/constants';
 
 interface PortfolioGridProps {
   projects: PortfolioProject[];
@@ -18,7 +19,7 @@ export function PortfolioGrid({ projects, onDelete, onEdit }: PortfolioGridProps
       {projects.map((project) => (
         <div key={project.id} className="bg-surface border border-border rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow flex flex-col">
           {project.imageUrl ? (
-            <img src={`http://localhost:3001${project.imageUrl}`} alt={project.title} className="w-full h-48 object-cover" />
+            <img src={`${BACKEND_URL}${project.imageUrl}`} alt={project.title} className="w-full h-48 object-cover" />
           ) : (
             <div className="w-full h-48 bg-background flex items-center justify-center text-text-muted text-sm">
               No Image

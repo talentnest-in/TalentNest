@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { companyService } from '@/services/company.service';
 import { Button } from '@/components/ui/Button';
 import { Building2, Loader2, ArrowLeft } from 'lucide-react';
+import { BACKEND_URL } from '@/lib/constants';
 
 const inp = 'w-full bg-background border border-border rounded-lg px-4 py-2.5 text-sm text-text placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-accent';
 const label = 'text-sm font-medium text-text-muted mb-1 block';
@@ -90,7 +91,7 @@ export function CompanyPage() {
         <div className="bg-surface border border-border rounded-2xl p-6 lg:p-8 shadow-sm">
           <div className="flex items-center gap-6 mb-8 pb-8 border-b border-border">
             {company?.logoUrl ? (
-              <img src={`http://localhost:3001${company.logoUrl}`} alt="Company Logo" className="w-24 h-24 rounded-2xl object-cover border border-border" />
+              <img src={`${BACKEND_URL}${company.logoUrl}`} alt="Company Logo" className="w-24 h-24 rounded-2xl object-cover border border-border" />
             ) : (
               <div className="w-24 h-24 rounded-2xl bg-accent/10 flex items-center justify-center">
                 <Building2 className="w-10 h-10 text-accent" />
