@@ -15,6 +15,10 @@ import { OnboardingRoleSelection } from '@/pages/OnboardingRoleSelection';
 import { FindJobs } from '@/pages/FindJobs';
 import { JobDetails } from '@/pages/JobDetails';
 import { SavedJobs } from '@/pages/SavedJobs';
+import { MyApplications } from '@/pages/MyApplications';
+import { ApplicationDetails } from '@/pages/ApplicationDetails';
+import { ApplicantsList } from '@/pages/ApplicantsList';
+import { ApplicantDetails } from '@/pages/ApplicantDetails';
 
 function App() {
   return (
@@ -39,6 +43,8 @@ function App() {
             <Route path="/find-jobs" element={<FindJobs />} />
             <Route path="/jobs/:id" element={<JobDetails />} />
             <Route path="/saved-jobs" element={<SavedJobs />} />
+            <Route path="/applications" element={<MyApplications />} />
+            <Route path="/applications/:id" element={<ApplicationDetails />} />
           </Route>
 
           {/* ── Client-only routes ── */}
@@ -48,6 +54,8 @@ function App() {
             <Route path="/company" element={<CompanyPage />} />
             <Route path="/jobs/new" element={<CreateEditJobPage />} />
             <Route path="/jobs/:id/edit" element={<CreateEditJobPage />} />
+            <Route path="/client/applicants" element={<ApplicantsList />} />
+            <Route path="/client/applicants/:id" element={<ApplicantDetails />} />
           </Route>
         </Route>
 

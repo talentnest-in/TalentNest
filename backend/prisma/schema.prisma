@@ -50,6 +50,7 @@ model FreelancerProfile {
   educations  Education[]
   projects    PortfolioProject[]
   savedJobs   SavedJob[]
+  applications JobApplication[]
 }
 
 model Skill {
@@ -140,21 +141,22 @@ model Company {
 }
 
 model Job {
-  id              String        @id @default(uuid())
+  id              String            @id @default(uuid())
   clientProfileId String
   title           String
-  description     String        @db.Text
-  type            JobType       @default(FIXED)
+  description     String            @db.Text
+  type            JobType           @default(FIXED)
   budget          Float?
-  status          JobStatus     @default(DRAFT)
+  status          JobStatus         @default(DRAFT)
   location        String?
-  isRemote        Boolean       @default(true)
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
+  isRemote        Boolean           @default(true)
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
 
-  clientProfile   ClientProfile @relation(fields: [clientProfileId], references: [id], onDelete: Cascade)
+  clientProfile   ClientProfile      @relation(fields: [clientProfileId], references: [id], onDelete: Cascade)
   skills          JobSkill[]
   savedJobs       SavedJob[]
+  applications    JobApplication[]
 }
 
 model JobSkill {
@@ -178,3 +180,31 @@ model SavedJob {
   @@unique([freelancerProfileId, jobId])
 }
 
+// ─── Sprint 5: Job Applications ─────────────────────────────────────────────────────
+
+enum ApplicationStatus {
+  PENDING
+  REVIEWING
+  SHORTLISTED
+  REJECTED
+  HIRED
+  WITHDRAWN
+}
+
+model JobApplication {
+  id                  String            @id @default(uuid())
+  freelancerProfileId String
+  jobId               String
+  coverLetter         String            @db.Text
+  proposedRate        Float?
+  estimatedDuration   String?
+  resumeUrl           String?
+  status              ApplicationStatus @default(PENDING)
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
+
+  profile             FreelancerProfile @relation(fields: [freelancerProfileId], references: [id], onDelete: Cascade)
+  job                 Job               @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  @@unique([freelancerProfileId, jobId])
+}

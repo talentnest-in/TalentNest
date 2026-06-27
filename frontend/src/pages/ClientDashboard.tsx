@@ -10,7 +10,7 @@ import { CompanyCard } from '@/components/client/CompanyCard';
 import { EmptyState } from '@/components/client/EmptyState';
 import {
   Briefcase, Building2, LayoutDashboard, Settings, LogOut,
-  Plus, Bell, TrendingUp, FileText, CheckCircle,
+  Plus, Bell, TrendingUp, FileText, CheckCircle, Users,
 } from 'lucide-react';
 
 export function ClientDashboard() {
@@ -30,6 +30,7 @@ export function ClientDashboard() {
   const navItems = [
     { icon: LayoutDashboard, label: 'Dashboard', path: '/client-dashboard' },
     { icon: Briefcase, label: 'Jobs', path: '/client/jobs' },
+    { icon: Users, label: 'Applicants', path: '/client/applicants' },
     { icon: Building2, label: 'Company', path: '/company' },
     { icon: Settings, label: 'Settings', path: '/settings' },
   ];
@@ -103,9 +104,9 @@ export function ClientDashboard() {
               {/* Stats */}
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-5">
                 <StatCard icon={TrendingUp} label="Active Jobs" value={data?.activeJobs ?? 0} color="bg-accent" subtitle="Currently hiring" />
-                <StatCard icon={FileText} label="Draft Jobs" value={data?.draftJobs ?? 0} color="bg-[#8B5CF6]" subtitle="Not published yet" />
-                <StatCard icon={Briefcase} label="Total Jobs" value={data?.totalJobs ?? 0} color="bg-primary" subtitle="All time" />
-                <StatCard icon={CheckCircle} label="Closed / Paused" value={data?.closedJobs ?? 0} color="bg-success" subtitle="Completed or on hold" />
+                <StatCard icon={Users} label="Total Applicants" value="0" color="bg-primary" subtitle="Across all jobs" />
+                <StatCard icon={FileText} label="Pending Review" value="0" color="bg-yellow-500" subtitle="Awaiting your response" />
+                <StatCard icon={CheckCircle} label="Hired" value="0" color="bg-success" subtitle="Successfully hired" />
               </div>
 
               {/* Body */}

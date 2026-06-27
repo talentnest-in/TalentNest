@@ -1,8 +1,10 @@
 import { motion } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import { Logo } from '@/components/ui/Logo';
 import { Button } from '@/components/ui/Button';
+import { applicationService } from '@/services/application.service';
 import {
   Briefcase,
   MessageSquare,
@@ -77,6 +79,19 @@ function ActivityRow({
 export function Dashboard() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+
+  const { data: applicationsData } = useQuery({
+    queryKey: ['myApplications'],
+    queryFn: () => applicationService.getMyApplications(),
+  });
+
+  const applications = applicationsData?.applications || [];
+
+  // Calculate application stats
+  const totalApplications = applications.length;
+  const pendingApplications = applications.filter(a => a.status === 'PENDING').length;
+  const shortlistedApplications = applications.filter(a => a.status === 'SHORTLISTED').length;
+  const hiredApplications = applications.filter(a => a.status === 'HIRED').length;
 
   const handleLogout = async () => {
     await logout();
@@ -170,10 +185,10 @@ export function Dashboard() {
         <div className="p-6 lg:p-8 max-w-7xl mx-auto space-y-8">
           {/* Stats grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-            <StatCard icon={Briefcase} label="Active Jobs" value="12" trend="+3 this week" color="bg-accent" />
-            <StatCard icon={Users} label="Applications" value="48" trend="+11 today" color="bg-primary" />
-            <StatCard icon={DollarSign} label="Total Earned" value="$14,520" trend="+8%" color="bg-success" />
-            <StatCard icon={MessageSquare} label="Messages" value="7" color="bg-[#8B5CF6]" />
+            <StatCard icon={Users} label="Total Applications" value={totalApplications.toString()} color="bg-accent" />
+            <StatCard icon={TrendingUp} label="Pending" value={pendingApplications.toString()} color="bg-yellow-500" />
+            <StatCard icon={Briefcase} label="Shortlisted" value={shortlistedApplications.toString()} color="bg-purple-500" />
+            <StatCard icon={DollarSign} label="Hired" value={hiredApplications.toString()} color="bg-success" />
           </div>
 
           {/* Two column layout */}

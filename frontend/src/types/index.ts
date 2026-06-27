@@ -157,3 +157,57 @@ export interface JobsResponse {
   page: number;
   totalPages: number;
 }
+
+// ─── Sprint 5: Job Applications ─────────────────────────────────────────────────────
+
+export type ApplicationStatus = 'PENDING' | 'REVIEWING' | 'SHORTLISTED' | 'REJECTED' | 'HIRED' | 'WITHDRAWN';
+
+export interface JobApplication {
+  id: string;
+  freelancerProfileId: string;
+  jobId: string;
+  coverLetter: string;
+  proposedRate: number | null;
+  estimatedDuration: string | null;
+  resumeUrl: string | null;
+  status: ApplicationStatus;
+  createdAt: string;
+  updatedAt: string;
+  job?: JobWithDetails;
+  profile?: FreelancerProfile;
+}
+
+export interface ApplicationWithDetails extends JobApplication {
+  job: JobWithDetails;
+  profile: FreelancerProfile & {
+    user: User;
+    skills: Skill[];
+    experiences: Experience[];
+    educations: Education[];
+    projects: PortfolioProject[];
+  };
+}
+
+export interface ApplicationsQueryParams {
+  page?: string;
+  search?: string;
+  status?: ApplicationStatus;
+}
+
+export interface ApplicationsResponse {
+  applications: ApplicationWithDetails[];
+  total: number;
+  page: number;
+  totalPages: number;
+}
+
+export interface ApplyJobInput {
+  coverLetter: string;
+  proposedRate?: number;
+  estimatedDuration?: string;
+  resumeUrl?: string;
+}
+
+export interface UpdateStatusInput {
+  status: ApplicationStatus;
+}
