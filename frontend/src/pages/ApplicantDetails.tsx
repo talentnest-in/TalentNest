@@ -1,11 +1,14 @@
+import { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { clientApplicationService } from '@/services/client-application.service';
+import { offerService } from '@/services/offer.service';
 import { ApplicationStatusBadge } from '@/components/shared/ApplicationStatusBadge';
 import { StatusDropdown } from '@/components/shared/StatusDropdown';
 import { ResumePreviewCard } from '@/components/shared/ResumePreviewCard';
 import { PortfolioPreview } from '@/components/shared/PortfolioPreview';
 import { Button } from '@/components/ui/Button';
+import { OfferModal } from '@/components/ui/OfferModal';
 import { ArrowLeft, MapPin, DollarSign, Mail } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import type { ApplicationStatus } from '@/types';
@@ -14,6 +17,7 @@ export function ApplicantDetails() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const [isOfferModalOpen, setIsOfferModalOpen] = useState(false);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['applicant', id],
@@ -29,6 +33,21 @@ export function ApplicantDetails() {
       queryClient.invalidateQueries({ queryKey: ['jobApplicants'] });
     },
   });
+
+  const createOfferMutation = useMutation({
+    mutationFn: (data: { applicationId: string; title: string; message: string; proposedBudget: number; currency: string; estimatedDuration?: string; deadline?: string }) =>
+      offerService.createOffer(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['applicant', id] });
+      queryClient.invalidateQueries({ queryKey: ['clientOffers'] });
+      queryClient.invalidateQueries({ queryKey: ['clientDashboard'] });
+      setIsOfferModalOpen(false);
+    },
+  });
+
+  const handleCreateOffer = (data: { applicationId: string; title: string; message: string; proposedBudget: number; currency: string; estimatedDuration?: string; deadline?: string }) => {
+    createOfferMutation.mutate(data);
+  };
 
   if (isLoading) {
     return (
@@ -61,6 +80,7 @@ export function ApplicantDetails() {
   const user = profile.user;
 
   const canUpdateStatus = application.status !== 'WITHDRAWN' && application.status !== 'REJECTED' && application.status !== 'HIRED';
+  const canSendOffer = application.status === 'SHORTLISTED' && !application.offer;
 
   return (
     <div className="min-h-screen bg-background">
@@ -81,6 +101,15 @@ export function ApplicantDetails() {
             </div>
             <div className="flex items-center gap-4">
               <ApplicationStatusBadge status={application.status} />
+              {canSendOffer && (
+                <Button
+                  onClick={() => setIsOfferModalOpen(true)}
+                  className="gap-2"
+                >
+                  <DollarSign className="w-4 h-4" />
+                  Send Offer
+                </Button>
+              )}
               {canUpdateStatus && (
                 <StatusDropdown
                   value={application.status}
@@ -258,6 +287,17 @@ export function ApplicantDetails() {
             )}
           </div>
         </div>
+
+        {/* Offer Modal */}
+        <OfferModal
+          isOpen={isOfferModalOpen}
+          onClose={() => setIsOfferModalOpen(false)}
+          onSubmit={handleCreateOffer}
+          isSubmitting={createOfferMutation.isPending}
+          applicationId={application.id}
+          jobTitle={application.job?.title || 'Job'}
+          freelancerName={user?.name || 'Freelancer'}
+        />
       </div>
     </div>
   );

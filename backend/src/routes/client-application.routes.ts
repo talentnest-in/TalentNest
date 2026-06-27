@@ -1,5 +1,6 @@
 import { FastifyInstance } from 'fastify';
 import {
+  getAllClientApplicants,
   getJobApplicants,
   getApplicantDetails,
   updateApplicationStatus,
@@ -7,6 +8,9 @@ import {
 
 export async function clientApplicationRoutes(fastify: FastifyInstance) {
   fastify.addHook('preValidation', fastify.authenticate);
+
+  // Get all applicants for client (across all jobs)
+  fastify.get('/client/applications', getAllClientApplicants);
 
   // Get applicants for a job
   fastify.get('/client/jobs/:jobId/applications', getJobApplicants);

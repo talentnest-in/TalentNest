@@ -175,6 +175,7 @@ export interface JobApplication {
   updatedAt: string;
   job?: JobWithDetails;
   profile?: FreelancerProfile;
+  offer?: Offer;
 }
 
 export interface ApplicationWithDetails extends JobApplication {
@@ -210,4 +211,122 @@ export interface ApplyJobInput {
 
 export interface UpdateStatusInput {
   status: ApplicationStatus;
+}
+
+// ─── Sprint 6: Offers & Contracts ─────────────────────────────────────────────────────
+
+export type OfferStatus = 'PENDING' | 'ACCEPTED' | 'DECLINED' | 'EXPIRED' | 'CANCELLED';
+export type ContractStatus = 'ACTIVE' | 'COMPLETED' | 'CANCELLED' | 'DISPUTED';
+
+export interface Offer {
+  id: string;
+  applicationId: string;
+  clientId: string;
+  freelancerId: string;
+  title: string;
+  message: string;
+  proposedBudget: number;
+  currency: string;
+  estimatedDuration: string | null;
+  deadline: string | null;
+  status: OfferStatus;
+  expiresAt: string;
+  createdAt: string;
+  updatedAt: string;
+  application?: {
+    job: JobWithDetails;
+    profile: FreelancerProfile & { user: User };
+  };
+  client?: User;
+  freelancer?: User;
+  contract?: Contract;
+}
+
+export interface OfferWithDetails extends Offer {
+  application: {
+    job: JobWithDetails;
+    profile: FreelancerProfile & {
+      user: User;
+      skills: Skill[];
+      experiences: Experience[];
+      educations: Education[];
+    };
+  };
+  client: User;
+  freelancer: User;
+}
+
+export interface Contract {
+  id: string;
+  offerId: string;
+  jobId: string;
+  clientId: string;
+  freelancerId: string;
+  title: string;
+  description: string;
+  agreedBudget: number;
+  currency: string;
+  deadline: string | null;
+  status: ContractStatus;
+  startedAt: string | null;
+  completedAt: string | null;
+  cancelledAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+  offer?: Offer;
+  job?: JobWithDetails;
+  client?: User;
+  freelancer?: User;
+}
+
+export interface ContractWithDetails extends Contract {
+  offer: OfferWithDetails;
+  job: JobWithDetails & {
+    clientProfile: ClientProfile & { company: Company | null };
+  };
+  client: User;
+  freelancer: User;
+}
+
+export interface CreateOfferInput {
+  applicationId: string;
+  title: string;
+  message: string;
+  proposedBudget: number;
+  currency: string;
+  estimatedDuration?: string;
+  deadline?: string;
+}
+
+export interface OffersQueryParams {
+  status?: OfferStatus;
+  search?: string;
+  page?: number;
+  limit?: number;
+}
+
+export interface OffersResponse {
+  offers: OfferWithDetails[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    pages: number;
+  };
+}
+
+export interface ContractsQueryParams {
+  status?: ContractStatus;
+  page?: number;
+  limit?: number;
+}
+
+export interface ContractsResponse {
+  contracts: ContractWithDetails[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    pages: number;
+  };
 }

@@ -29,6 +29,10 @@ model User {
 
   freelancerProfile    FreelancerProfile?
   clientProfile        ClientProfile?
+  clientOffers         Offer[]           @relation("ClientOffers")
+  freelancerOffers     Offer[]           @relation("FreelancerOffers")
+  clientContracts      Contract[]        @relation("ClientContracts")
+  freelancerContracts  Contract[]        @relation("FreelancerContracts")
 
   @@unique([provider, providerId])
 }
@@ -157,6 +161,7 @@ model Job {
   skills          JobSkill[]
   savedJobs       SavedJob[]
   applications    JobApplication[]
+  contracts       Contract[]
 }
 
 model JobSkill {
@@ -205,6 +210,72 @@ model JobApplication {
 
   profile             FreelancerProfile @relation(fields: [freelancerProfileId], references: [id], onDelete: Cascade)
   job                 Job               @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  offer               Offer?
 
   @@unique([freelancerProfileId, jobId])
+}
+
+// ─── Sprint 6: Offers & Contracts ─────────────────────────────────────────────────────
+
+enum OfferStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+  EXPIRED
+  CANCELLED
+}
+
+enum ContractStatus {
+  ACTIVE
+  COMPLETED
+  CANCELLED
+  DISPUTED
+}
+
+model Offer {
+  id                String          @id @default(uuid())
+  applicationId     String
+  clientId          String
+  freelancerId      String
+  title             String
+  message           String          @db.Text
+  proposedBudget    Float
+  currency          String          @default("USD")
+  estimatedDuration String?
+  deadline          DateTime?
+  status            OfferStatus     @default(PENDING)
+  expiresAt         DateTime
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  application       JobApplication  @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  client            User            @relation("ClientOffers", fields: [clientId], references: [id], onDelete: Cascade)
+  freelancer        User            @relation("FreelancerOffers", fields: [freelancerId], references: [id], onDelete: Cascade)
+  contract          Contract?
+
+  @@unique([applicationId])
+}
+
+model Contract {
+  id                String         @id @default(uuid())
+  offerId           String         @unique
+  jobId             String
+  clientId          String
+  freelancerId      String
+  title             String
+  description       String         @db.Text
+  agreedBudget      Float
+  currency          String         @default("USD")
+  deadline          DateTime?
+  status            ContractStatus @default(ACTIVE)
+  startedAt         DateTime?
+  completedAt       DateTime?
+  cancelledAt       DateTime?
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+
+  offer             Offer          @relation(fields: [offerId], references: [id], onDelete: Cascade)
+  job               Job            @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  client            User           @relation("ClientContracts", fields: [clientId], references: [id], onDelete: Cascade)
+  freelancer        User           @relation("FreelancerContracts", fields: [freelancerId], references: [id], onDelete: Cascade)
 }

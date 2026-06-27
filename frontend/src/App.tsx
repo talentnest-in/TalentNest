@@ -18,7 +18,14 @@ import { SavedJobs } from '@/pages/SavedJobs';
 import { MyApplications } from '@/pages/MyApplications';
 import { ApplicationDetails } from '@/pages/ApplicationDetails';
 import { ApplicantsList } from '@/pages/ApplicantsList';
+import { ClientApplicants } from '@/pages/ClientApplicants';
 import { ApplicantDetails } from '@/pages/ApplicantDetails';
+import { ClientOffersList } from '@/pages/ClientOffersList';
+import { OfferDetails } from '@/pages/OfferDetails';
+import { FreelancerOffersList } from '@/pages/FreelancerOffersList';
+import { ContractsList } from '@/pages/ContractsList';
+import { ContractDetails } from '@/pages/ContractDetails';
+import { ProjectWorkspace } from '@/pages/ProjectWorkspace';
 
 function App() {
   return (
@@ -45,6 +52,8 @@ function App() {
             <Route path="/saved-jobs" element={<SavedJobs />} />
             <Route path="/applications" element={<MyApplications />} />
             <Route path="/applications/:id" element={<ApplicationDetails />} />
+            <Route path="/freelancer/offers" element={<FreelancerOffersList />} />
+            <Route path="/freelancer/offers/:id" element={<OfferDetails />} />
           </Route>
 
           {/* ── Client-only routes ── */}
@@ -54,8 +63,18 @@ function App() {
             <Route path="/company" element={<CompanyPage />} />
             <Route path="/jobs/new" element={<CreateEditJobPage />} />
             <Route path="/jobs/:id/edit" element={<CreateEditJobPage />} />
-            <Route path="/client/applicants" element={<ApplicantsList />} />
+            <Route path="/client/applicants" element={<ClientApplicants />} />
+            <Route path="/client/jobs/:jobId/applicants" element={<ApplicantsList />} />
             <Route path="/client/applicants/:id" element={<ApplicantDetails />} />
+            <Route path="/client/offers" element={<ClientOffersList />} />
+            <Route path="/client/offers/:id" element={<OfferDetails />} />
+          </Route>
+
+          {/* ── Shared routes (both client and freelancer) ── */}
+          <Route element={<ProtectedRoute />}>
+            <Route path="/contracts" element={<ContractsList />} />
+            <Route path="/contracts/:id" element={<ContractDetails />} />
+            <Route path="/workspace/:id" element={<ProjectWorkspace />} />
           </Route>
         </Route>
 

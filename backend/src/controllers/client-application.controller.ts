@@ -10,6 +10,85 @@ const updateStatusSchema = z.object({
 
 type UpdateStatusInput = z.infer<typeof updateStatusSchema>;
 
+// ── Get All Applicants for Client ─────────────────────────────────────────────────────
+
+export const getAllClientApplicants = async (
+  request: FastifyRequest<{ Querystring: { page?: string; search?: string; status?: string } }>,
+  reply: FastifyReply
+) => {
+  const userId = request.user.id;
+  const page = parseInt(request.query.page || '1') || 1;
+  const search = request.query.search || '';
+  const status = request.query.status;
+
+  // Get client profile
+  const clientProfile = await prisma.clientProfile.findUnique({
+    where: { userId },
+  });
+
+  if (!clientProfile) {
+    return reply.status(404).send({ message: 'Client profile not found' });
+  }
+
+  const where: any = {
+    job: {
+      clientProfileId: clientProfile.id,
+    },
+  };
+
+  if (status) {
+    where.status = status;
+  }
+
+  if (search) {
+    where.profile = {
+      OR: [
+        { user: { name: { contains: search, mode: 'insensitive' } } },
+      ],
+    };
+  }
+
+  const [applications, total] = await Promise.all([
+    prisma.jobApplication.findMany({
+      where,
+      include: {
+        profile: {
+          include: {
+            user: true,
+            skills: true,
+            experiences: true,
+            educations: true,
+            projects: true,
+          },
+        },
+        job: {
+          include: {
+            clientProfile: {
+              include: {
+                company: true,
+              },
+            },
+            skills: true,
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+      skip: (page - 1) * 12,
+      take: 12,
+    }),
+    prisma.jobApplication.count({ where }),
+  ]);
+
+  const totalPages = Math.ceil(total / 12);
+
+  return reply.send({
+    applications,
+    total,
+    page,
+    totalPages,
+  });
+};
+
 // ── Get Applicants for Job ───────────────────────────────────────────────────────────
 
 export const getJobApplicants = async (

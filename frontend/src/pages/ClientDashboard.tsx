@@ -2,6 +2,8 @@ import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { clientService } from '@/services/client.service';
+import { offerService } from '@/services/offer.service';
+import { contractService } from '@/services/contract.service';
 import { Logo } from '@/components/ui/Logo';
 import { Button } from '@/components/ui/Button';
 import { StatCard } from '@/components/client/StatCard';
@@ -10,7 +12,7 @@ import { CompanyCard } from '@/components/client/CompanyCard';
 import { EmptyState } from '@/components/client/EmptyState';
 import {
   Briefcase, Building2, LayoutDashboard, Settings, LogOut,
-  Plus, Bell, TrendingUp, FileText, CheckCircle, Users,
+  Plus, Bell, TrendingUp, FileText, CheckCircle, Users, DollarSign,
 } from 'lucide-react';
 
 export function ClientDashboard() {
@@ -22,6 +24,26 @@ export function ClientDashboard() {
     queryFn: clientService.getDashboard,
   });
 
+  const { data: offersData } = useQuery({
+    queryKey: ['clientOffers'],
+    queryFn: () => offerService.getClientOffers(),
+  });
+
+  const { data: contractsData } = useQuery({
+    queryKey: ['contracts'],
+    queryFn: () => contractService.getContracts(),
+  });
+
+  const offers = offersData?.offers || [];
+  const contracts = contractsData?.contracts || [];
+
+  // Calculate offer stats
+  const pendingOffers = offers.filter(o => o.status === 'PENDING').length;
+
+  // Calculate contract stats
+  const activeContracts = contracts.filter(c => c.status === 'ACTIVE').length;
+  const completedContracts = contracts.filter(c => c.status === 'COMPLETED').length;
+
   const handleLogout = async () => {
     await logout();
     navigate('/login', { replace: true });
@@ -31,6 +53,8 @@ export function ClientDashboard() {
     { icon: LayoutDashboard, label: 'Dashboard', path: '/client-dashboard' },
     { icon: Briefcase, label: 'Jobs', path: '/client/jobs' },
     { icon: Users, label: 'Applicants', path: '/client/applicants' },
+    { icon: DollarSign, label: 'Offers', path: '/client/offers' },
+    { icon: FileText, label: 'Contracts', path: '/contracts' },
     { icon: Building2, label: 'Company', path: '/company' },
     { icon: Settings, label: 'Settings', path: '/settings' },
   ];
@@ -104,9 +128,9 @@ export function ClientDashboard() {
               {/* Stats */}
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-5">
                 <StatCard icon={TrendingUp} label="Active Jobs" value={data?.activeJobs ?? 0} color="bg-accent" subtitle="Currently hiring" />
-                <StatCard icon={Users} label="Total Applicants" value="0" color="bg-primary" subtitle="Across all jobs" />
-                <StatCard icon={FileText} label="Pending Review" value="0" color="bg-yellow-500" subtitle="Awaiting your response" />
-                <StatCard icon={CheckCircle} label="Hired" value="0" color="bg-success" subtitle="Successfully hired" />
+                <StatCard icon={DollarSign} label="Pending Offers" value={pendingOffers.toString()} color="bg-yellow-500" subtitle="Awaiting response" />
+                <StatCard icon={FileText} label="Active Contracts" value={activeContracts.toString()} color="bg-primary" subtitle="In progress" />
+                <StatCard icon={CheckCircle} label="Completed Contracts" value={completedContracts.toString()} color="bg-success" subtitle="Successfully completed" />
               </div>
 
               {/* Body */}

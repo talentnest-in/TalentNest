@@ -1,15 +1,22 @@
+import { useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { jobService } from '@/services/job.service';
 import { savedJobService } from '@/services/saved-job.service';
+import { applicationService } from '@/services/application.service';
 import { MapPin, DollarSign, Clock, Building2, Briefcase } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { SaveButton } from '@/components/freelancer/SaveButton';
+import { ApplicationModal } from '@/components/ui/ApplicationModal';
 import { BACKEND_URL } from '@/lib/constants';
 import { EmptyState } from '@/components/freelancer/EmptyState';
+import { useAuth } from '@/contexts/AuthContext';
 
 export function JobDetails() {
   const { id } = useParams<{ id: string }>();
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+  const [isApplicationModalOpen, setIsApplicationModalOpen] = useState(false);
 
   const { data: job, isLoading, error } = useQuery({
     queryKey: ['job', id],
@@ -22,7 +29,27 @@ export function JobDetails() {
     queryFn: () => savedJobService.getSavedJobs(),
   });
 
+  const { data: myApplicationsData } = useQuery({
+    queryKey: ['myApplications'],
+    queryFn: () => applicationService.getMyApplications(),
+  });
+
   const isSaved = savedJobsData?.savedJobs.some((sj) => sj.jobId === id) || false;
+  const hasApplied = myApplicationsData?.applications.some((app) => app.jobId === id) || false;
+
+  const applyMutation = useMutation({
+    mutationFn: (data: { coverLetter: string; proposedRate?: number | string; estimatedDuration?: string; resumeUrl?: string }) =>
+      applicationService.applyForJob(id!, {
+        ...data,
+        proposedRate: typeof data.proposedRate === 'number' ? data.proposedRate : undefined,
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['myApplications'] });
+      queryClient.invalidateQueries({ queryKey: ['jobApplicants', id] });
+      queryClient.invalidateQueries({ queryKey: ['freelancerDashboard'] });
+      setIsApplicationModalOpen(false);
+    },
+  });
 
   if (isLoading) {
     return (
@@ -176,10 +203,35 @@ export function JobDetails() {
         {/* Actions */}
         <div className="flex items-center gap-4">
           <SaveButton jobId={job.id} isSaved={isSaved} />
-          <Button variant="accent" disabled className="opacity-50 cursor-not-allowed">
-            Apply (Coming Soon)
-          </Button>
+          {user?.role === 'FREELANCER' ? (
+            hasApplied ? (
+              <Button variant="outline" disabled className="opacity-50 cursor-not-allowed">
+                Applied
+              </Button>
+            ) : job.status !== 'OPEN' ? (
+              <Button variant="outline" disabled className="opacity-50 cursor-not-allowed">
+                {job.status === 'CLOSED' ? 'Closed' : 'Not Available'}
+              </Button>
+            ) : (
+              <Button
+                variant="accent"
+                onClick={() => setIsApplicationModalOpen(true)}
+                disabled={applyMutation.isPending}
+              >
+                {applyMutation.isPending ? 'Submitting...' : 'Apply Now'}
+              </Button>
+            )
+          ) : null}
         </div>
+
+        {/* Application Modal */}
+        <ApplicationModal
+          isOpen={isApplicationModalOpen}
+          onClose={() => setIsApplicationModalOpen(false)}
+          onSubmit={(data) => applyMutation.mutate(data)}
+          isSubmitting={applyMutation.isPending}
+          jobTitle={job.title}
+        />
       </div>
     </div>
   );

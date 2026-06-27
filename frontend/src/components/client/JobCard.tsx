@@ -1,4 +1,4 @@
-import { MapPin, DollarSign, Briefcase, Clock } from 'lucide-react';
+import { MapPin, DollarSign, Briefcase, Clock, Users } from 'lucide-react';
 import type { Job } from '@/types';
 import { JobStatusBadge } from './JobStatusBadge';
 import { Button } from '@/components/ui/Button';
@@ -66,6 +66,10 @@ export function JobCard({ job, onDelete }: JobCardProps) {
       <div className="flex gap-2 pt-1 border-t border-border">
         <Button size="sm" variant="outline" className="flex-1" onClick={() => navigate(`/jobs/${job.id}/edit`)}>
           Edit
+        </Button>
+        <Button size="sm" variant="accent" className="flex-1 gap-2" onClick={() => navigate(`/client/jobs/${job.id}/applicants`)}>
+          <Users className="w-4 h-4" />
+          View Applicants
         </Button>
         {onDelete && (
           <Button size="sm" variant="ghost" className="text-error hover:bg-error/10" onClick={() => onDelete(job.id)}>

@@ -5,6 +5,8 @@ import { useQuery } from '@tanstack/react-query';
 import { Logo } from '@/components/ui/Logo';
 import { Button } from '@/components/ui/Button';
 import { applicationService } from '@/services/application.service';
+import { offerService } from '@/services/offer.service';
+import { contractService } from '@/services/contract.service';
 import {
   Briefcase,
   MessageSquare,
@@ -17,6 +19,7 @@ import {
   DollarSign,
   ChevronRight,
   User,
+  FileText,
 } from 'lucide-react';
 
 /* ─── Stat Card ─── */
@@ -85,13 +88,29 @@ export function Dashboard() {
     queryFn: () => applicationService.getMyApplications(),
   });
 
+  const { data: offersData } = useQuery({
+    queryKey: ['freelancerOffers'],
+    queryFn: () => offerService.getFreelancerOffers(),
+  });
+
+  const { data: contractsData } = useQuery({
+    queryKey: ['contracts'],
+    queryFn: () => contractService.getContracts(),
+  });
+
   const applications = applicationsData?.applications || [];
+  const offers = offersData?.offers || [];
+  const contracts = contractsData?.contracts || [];
 
   // Calculate application stats
   const totalApplications = applications.length;
-  const pendingApplications = applications.filter(a => a.status === 'PENDING').length;
-  const shortlistedApplications = applications.filter(a => a.status === 'SHORTLISTED').length;
-  const hiredApplications = applications.filter(a => a.status === 'HIRED').length;
+
+  // Calculate offer stats
+  const pendingOffers = offers.filter(o => o.status === 'PENDING').length;
+
+  // Calculate contract stats
+  const activeContracts = contracts.filter(c => c.status === 'ACTIVE').length;
+  const completedContracts = contracts.filter(c => c.status === 'COMPLETED').length;
 
   const handleLogout = async () => {
     await logout();
@@ -112,7 +131,9 @@ export function Dashboard() {
             { icon: User, label: 'Profile', path: '/profile' },
             { icon: Briefcase, label: 'Find Jobs', path: '/find-jobs' },
             { icon: Users, label: 'Applications', path: '/applications' },
-            { icon: DollarSign, label: 'Saved Jobs', path: '/saved-jobs' },
+            { icon: DollarSign, label: 'Offers', path: '/freelancer/offers' },
+            { icon: FileText, label: 'Contracts', path: '/contracts' },
+            { icon: Bell, label: 'Saved Jobs', path: '/saved-jobs' },
             { icon: MessageSquare, label: 'Messages', path: '/messages' },
             { icon: Bell, label: 'Notifications', path: '/notifications' },
             { icon: Settings, label: 'Settings', path: '/settings' },
@@ -186,9 +207,9 @@ export function Dashboard() {
           {/* Stats grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
             <StatCard icon={Users} label="Total Applications" value={totalApplications.toString()} color="bg-accent" />
-            <StatCard icon={TrendingUp} label="Pending" value={pendingApplications.toString()} color="bg-yellow-500" />
-            <StatCard icon={Briefcase} label="Shortlisted" value={shortlistedApplications.toString()} color="bg-purple-500" />
-            <StatCard icon={DollarSign} label="Hired" value={hiredApplications.toString()} color="bg-success" />
+            <StatCard icon={TrendingUp} label="Pending Offers" value={pendingOffers.toString()} color="bg-yellow-500" />
+            <StatCard icon={FileText} label="Active Contracts" value={activeContracts.toString()} color="bg-purple-500" />
+            <StatCard icon={DollarSign} label="Completed Contracts" value={completedContracts.toString()} color="bg-success" />
           </div>
 
           {/* Two column layout */}

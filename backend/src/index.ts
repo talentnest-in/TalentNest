@@ -175,6 +175,8 @@ import { onboardingRoutes } from './routes/onboarding.routes';
 import { savedJobRoutes } from './routes/saved-job.routes';
 import { applicationRoutes } from './routes/application.routes';
 import { clientApplicationRoutes } from './routes/client-application.routes';
+import { offerRoutes } from './routes/offer.routes';
+import { contractRoutes } from './routes/contract.routes';
 
 server.register(authRoutes, { prefix: '/api/v1/auth' });
 server.register(freelancerRoutes, { prefix: '/api/v1/freelancers' });
@@ -186,6 +188,8 @@ server.register(onboardingRoutes, { prefix: '/api/v1/onboarding' });
 server.register(savedJobRoutes, { prefix: '/api/v1' });
 server.register(applicationRoutes, { prefix: '/api/v1' });
 server.register(clientApplicationRoutes, { prefix: '/api/v1' });
+server.register(offerRoutes, { prefix: '/api/v1/offers' });
+server.register(contractRoutes, { prefix: '/api/v1/contracts' });
 
 // Health check route
 server.get('/health', async (request, reply) => {
