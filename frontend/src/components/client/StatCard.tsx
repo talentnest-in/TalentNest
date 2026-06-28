@@ -21,7 +21,7 @@ export function StatCard({ icon: Icon, label, value, color, subtitle }: Props) {
           <Icon className="h-5 w-5 text-white" />
         </div>
       </div>
-      <p className="text-2xl font-bold text-text">{value}</p>
+      <p className="text-2xl font-heading font-bold text-text">{value}</p>
       <p className="text-sm font-medium text-text mt-0.5">{label}</p>
       {subtitle && <p className="text-xs text-text-muted mt-1">{subtitle}</p>}
     </motion.div>

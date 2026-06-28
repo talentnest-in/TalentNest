@@ -2,9 +2,8 @@ import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { motion } from 'framer-motion';
 import { useMutation } from '@tanstack/react-query';
-import { Logo } from '@/components/ui/Logo';
+import { AuthLayout } from '@/components/layouts/AuthLayout';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Checkbox } from '@/components/ui/Checkbox';
@@ -61,137 +60,119 @@ export function Login() {
   const apiError = (mutation.error as AxiosError<ApiError>)?.response?.data?.message;
 
   return (
-    <div className="min-h-screen bg-background flex flex-col justify-center py-12 sm:px-6 lg:px-8">
-      <motion.div
-        initial={{ opacity: 0, y: -16 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.35, ease: 'easeOut' }}
-        className="sm:mx-auto sm:w-full sm:max-w-md flex flex-col items-center"
-      >
-        <Logo className="h-10 mb-6" />
-        <h1 className="text-3xl font-heading font-bold tracking-tight text-primary text-center">
-          Welcome back 👋
-        </h1>
-        <p className="mt-2 text-sm text-text-muted text-center">Sign in to your account to continue</p>
-      </motion.div>
-
-      <motion.div
-        initial={{ opacity: 0, y: 16 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.35, delay: 0.08, ease: 'easeOut' }}
-        className="mt-8 sm:mx-auto sm:w-full sm:max-w-[440px]"
-      >
-        <div className="bg-surface border border-border/50 shadow-sm rounded-2xl py-10 px-8 sm:px-12">
-          {/* API Error Banner */}
-          {apiError && (
-            <div className="mb-5 rounded-xl bg-error/5 border border-error/20 px-4 py-3 text-sm text-error">
-              {apiError}
-            </div>
-          )}
-
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-5" noValidate>
-            <div className="space-y-1.5">
-              <label htmlFor="email" className="block text-sm font-medium text-text">
-                Email address
-              </label>
-              <Input
-                id="email"
-                type="email"
-                autoComplete="email"
-                placeholder="you@example.com"
-                aria-invalid={!!errors.email}
-                {...register('email')}
-              />
-              {errors.email && (
-                <p className="text-xs text-error mt-1">{errors.email.message}</p>
-              )}
-            </div>
-
-            <div className="space-y-1.5">
-              <label htmlFor="password" className="block text-sm font-medium text-text">
-                Password
-              </label>
-              <Input
-                id="password"
-                type="password"
-                autoComplete="current-password"
-                placeholder="Enter your password"
-                aria-invalid={!!errors.password}
-                {...register('password')}
-              />
-              {errors.password && (
-                <p className="text-xs text-error mt-1">{errors.password.message}</p>
-              )}
-            </div>
-
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Checkbox id="remember-me" {...register('rememberMe')} />
-                <label htmlFor="remember-me" className="text-sm text-text-muted cursor-pointer">
-                  Remember me
-                </label>
-              </div>
-              <Link
-                to="/forgot-password"
-                className="text-sm font-medium text-accent hover:text-accent/80 transition-colors"
-              >
-                Forgot password?
-              </Link>
-            </div>
-
-            <Button
-              type="submit"
-              variant="accent"
-              className="w-full text-base font-semibold"
-              disabled={mutation.isPending}
-            >
-              {mutation.isPending ? (
-                <span className="flex items-center gap-2 justify-center">
-                  <span className="h-4 w-4 rounded-full border-2 border-white border-t-transparent animate-spin" />
-                  Signing in…
-                </span>
-              ) : (
-                'Log in'
-              )}
-            </Button>
-          </form>
-
-          <div className="mt-8">
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-border" />
-              </div>
-              <div className="relative flex justify-center text-sm">
-                <span className="bg-surface px-4 text-text-muted">or continue with</span>
-              </div>
-            </div>
-
-            <div className="mt-6 grid grid-cols-1 gap-4">
-              <Button 
-                variant="outline" 
-                className="w-full gap-2 font-medium" 
-                type="button"
-                onClick={() => window.location.href = `${BACKEND_URL}/api/v1/auth/google`}
-              >
-                <svg className="h-5 w-5" aria-hidden="true" viewBox="0 0 24 24">
-                  <path d="M12.0003 4.75C13.7703 4.75 15.3553 5.36002 16.6053 6.54998L20.0303 3.125C17.9502 1.19 15.2353 0 12.0003 0C7.31028 0 3.25527 2.69 1.28027 6.60998L5.27028 9.70498C6.21525 6.86002 8.87028 4.75 12.0003 4.75Z" fill="#EA4335" />
-                  <path d="M23.49 12.275C23.49 11.49 23.415 10.73 23.3 10H12V14.51H18.47C18.18 15.99 17.34 17.25 16.08 18.1L19.945 21.1C22.2 19.01 23.49 15.92 23.49 12.275Z" fill="#4285F4" />
-                  <path d="M5.26498 14.2949C5.02498 13.5699 4.88501 12.7999 4.88501 11.9999C4.88501 11.1999 5.01998 10.4299 5.26498 9.7049L1.275 6.60986C0.46 8.22986 0 10.0599 0 11.9999C0 13.9399 0.46 15.7699 1.28 17.3899L5.26498 14.2949Z" fill="#FBBC05" />
-                  <path d="M12.0004 24.0001C15.2404 24.0001 17.9654 22.935 19.9454 21.095L16.0804 18.095C15.0054 18.82 13.6204 19.245 12.0004 19.245C8.8704 19.245 6.21537 17.135 5.2654 14.29L1.27539 17.385C3.25539 21.31 7.3104 24.0001 12.0004 24.0001Z" fill="#34A853" />
-                </svg>
-                Google
-              </Button>
-            </div>
-          </div>
-
-          <p className="mt-8 text-center text-sm text-text-muted">
-            Don't have an account?{' '}
-            <Link to="/signup" className="font-semibold text-accent hover:text-accent/80 transition-colors">
-              Sign up
-            </Link>
-          </p>
+    <AuthLayout
+      title="Welcome back 👋"
+      subtitle="Sign in to your account to continue"
+      showTagline
+    >
+      {/* API Error Banner */}
+      {apiError && (
+        <div className="mb-5 rounded-xl bg-error/5 border border-error/20 px-4 py-3 text-sm text-error">
+          {apiError}
         </div>
-      </motion.div>
-    </div>
+      )}
+
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-5" noValidate>
+        <div className="space-y-1.5">
+          <label htmlFor="email" className="block text-sm font-medium text-text">
+            Email address
+          </label>
+          <Input
+            id="email"
+            type="email"
+            autoComplete="email"
+            placeholder="you@example.com"
+            aria-invalid={!!errors.email}
+            {...register('email')}
+          />
+          {errors.email && (
+            <p className="text-xs text-error mt-1">{errors.email.message}</p>
+          )}
+        </div>
+
+        <div className="space-y-1.5">
+          <label htmlFor="password" className="block text-sm font-medium text-text">
+            Password
+          </label>
+          <Input
+            id="password"
+            type="password"
+            autoComplete="current-password"
+            placeholder="Enter your password"
+            aria-invalid={!!errors.password}
+            {...register('password')}
+          />
+          {errors.password && (
+            <p className="text-xs text-error mt-1">{errors.password.message}</p>
+          )}
+        </div>
+
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Checkbox id="remember-me" {...register('rememberMe')} />
+            <label htmlFor="remember-me" className="text-sm text-text-muted cursor-pointer">
+              Remember me
+            </label>
+          </div>
+          <Link
+            to="/forgot-password"
+            className="text-sm font-medium text-accent hover:text-accent/80 transition-colors"
+          >
+            Forgot password?
+          </Link>
+        </div>
+
+        <Button
+          type="submit"
+          variant="accent"
+          className="w-full text-base font-semibold"
+          disabled={mutation.isPending}
+        >
+          {mutation.isPending ? (
+            <span className="flex items-center gap-2 justify-center">
+              <span className="h-4 w-4 rounded-full border-2 border-white border-t-transparent animate-spin" />
+              Signing in…
+            </span>
+          ) : (
+            'Log in'
+          )}
+        </Button>
+      </form>
+
+      <div className="mt-8">
+        <div className="relative">
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t border-border" />
+          </div>
+          <div className="relative flex justify-center text-sm">
+            <span className="bg-surface px-4 text-text-muted">or continue with</span>
+          </div>
+        </div>
+
+        <div className="mt-6 grid grid-cols-1 gap-4">
+          <Button 
+            variant="outline" 
+            className="w-full gap-2 font-medium" 
+            type="button"
+            onClick={() => window.location.href = `${BACKEND_URL}/api/v1/auth/google`}
+          >
+            <svg className="h-5 w-5" aria-hidden="true" viewBox="0 0 24 24">
+              <path d="M12.0003 4.75C13.7703 4.75 15.3553 5.36002 16.6053 6.54998L20.0303 3.125C17.9502 1.19 15.2353 0 12.0003 0C7.31028 0 3.25527 2.69 1.28027 6.60998L5.27028 9.70498C6.21525 6.86002 8.87028 4.75 12.0003 4.75Z" fill="#EA4335" />
+              <path d="M23.49 12.275C23.49 11.49 23.415 10.73 23.3 10H12V14.51H18.47C18.18 15.99 17.34 17.25 16.08 18.1L19.945 21.1C22.2 19.01 23.49 15.92 23.49 12.275Z" fill="#4285F4" />
+              <path d="M5.26498 14.2949C5.02498 13.5699 4.88501 12.7999 4.88501 11.9999C4.88501 11.1999 5.01998 10.4299 5.26498 9.7049L1.275 6.60986C0.46 8.22986 0 10.0599 0 11.9999C0 13.9399 0.46 15.7699 1.28 17.3899L5.26498 14.2949Z" fill="#FBBC05" />
+              <path d="M12.0004 24.0001C15.2404 24.0001 17.9654 22.935 19.9454 21.095L16.0804 18.095C15.0054 18.82 13.6204 19.245 12.0004 19.245C8.8704 19.245 6.21537 17.135 5.2654 14.29L1.27539 17.385C3.25539 21.31 7.3104 24.0001 12.0004 24.0001Z" fill="#34A853" />
+            </svg>
+            Google
+          </Button>
+        </div>
+      </div>
+
+      <p className="mt-8 text-center text-sm text-text-muted">
+        Don't have an account?{' '}
+        <Link to="/signup" className="font-semibold text-accent hover:text-accent/80 transition-colors">
+          Sign up
+        </Link>
+      </p>
+    </AuthLayout>
   );
 }

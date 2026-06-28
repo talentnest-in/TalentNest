@@ -4,19 +4,19 @@ import { useAuth } from '@/contexts/AuthContext';
 import { clientService } from '@/services/client.service';
 import { offerService } from '@/services/offer.service';
 import { contractService } from '@/services/contract.service';
-import { Logo } from '@/components/ui/Logo';
+import { DashboardLayout } from '@/components/layouts/DashboardLayout';
 import { Button } from '@/components/ui/Button';
 import { StatCard } from '@/components/client/StatCard';
 import { JobCard } from '@/components/client/JobCard';
 import { CompanyCard } from '@/components/client/CompanyCard';
 import { EmptyState } from '@/components/client/EmptyState';
 import {
-  Briefcase, Building2, LayoutDashboard, Settings, LogOut,
+  Briefcase, Building2, LayoutDashboard, Settings,
   Plus, Bell, TrendingUp, FileText, CheckCircle, Users, DollarSign,
 } from 'lucide-react';
 
 export function ClientDashboard() {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
 
   const { data, isLoading } = useQuery({
@@ -44,11 +44,6 @@ export function ClientDashboard() {
   const activeContracts = contracts.filter(c => c.status === 'ACTIVE').length;
   const completedContracts = contracts.filter(c => c.status === 'COMPLETED').length;
 
-  const handleLogout = async () => {
-    await logout();
-    navigate('/login', { replace: true });
-  };
-
   const navItems = [
     { icon: LayoutDashboard, label: 'Dashboard', path: '/client-dashboard' },
     { icon: Briefcase, label: 'Jobs', path: '/client/jobs' },
@@ -60,63 +55,24 @@ export function ClientDashboard() {
   ];
 
   return (
-    <div className="min-h-screen bg-background flex">
-      {/* Sidebar */}
-      <aside className="hidden lg:flex flex-col w-64 bg-primary text-white px-4 py-6">
-        <div className="px-2 mb-10">
-          <Logo className="h-8" withText />
+    <DashboardLayout navItems={navItems}>
+      <header className="sticky top-0 z-10 bg-surface/80 backdrop-blur-lg border-b border-border/50 px-6 py-4 flex items-center justify-between -mx-6 -mt-6 mb-8">
+        <div>
+          <h1 className="text-xl font-heading font-bold text-text">Welcome back, {user?.name?.split(' ')[0] ?? 'there'} 👋</h1>
+          <p className="text-sm text-text-muted">Here's your hiring overview.</p>
         </div>
-        <nav className="flex-1 space-y-1">
-          {navItems.map(({ icon: Icon, label, path }) => (
-            <button
-              key={label}
-              onClick={() => navigate(path)}
-              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors ${
-                window.location.pathname === path
-                  ? 'bg-white/10 text-white'
-                  : 'text-white/60 hover:text-white hover:bg-white/5'
-              }`}
-            >
-              <Icon className="h-5 w-5" />
-              {label}
-            </button>
-          ))}
-        </nav>
-        <div className="border-t border-white/10 pt-4 mt-4">
-          <div className="flex items-center gap-3 px-2">
-            <div className="h-9 w-9 rounded-full bg-accent flex items-center justify-center text-sm font-bold text-white">
-              {user?.name?.[0]?.toUpperCase() ?? 'C'}
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium truncate">{user?.name ?? 'Client'}</p>
-              <p className="text-xs text-white/50 truncate">{user?.email}</p>
-            </div>
-            <button onClick={handleLogout} className="text-white/40 hover:text-white transition-colors" title="Log out">
-              <LogOut className="h-4 w-4" />
-            </button>
-          </div>
+        <div className="flex items-center gap-3">
+          <Button onClick={() => navigate('/jobs/new')} className="gap-2">
+            <Plus className="w-4 h-4" />
+            Post a Job
+          </Button>
+          <button className="h-10 w-10 rounded-xl border border-border bg-background flex items-center justify-center hover:bg-border/30">
+            <Bell className="h-5 w-5 text-text-muted" />
+          </button>
         </div>
-      </aside>
+      </header>
 
-      {/* Main */}
-      <main className="flex-1 overflow-auto">
-        <header className="sticky top-0 z-10 bg-surface/80 backdrop-blur-lg border-b border-border/50 px-6 py-4 flex items-center justify-between">
-          <div>
-            <h1 className="text-xl font-bold text-text">Welcome back, {user?.name?.split(' ')[0] ?? 'there'} 👋</h1>
-            <p className="text-sm text-text-muted">Here's your hiring overview.</p>
-          </div>
-          <div className="flex items-center gap-3">
-            <Button onClick={() => navigate('/jobs/new')} className="gap-2">
-              <Plus className="w-4 h-4" />
-              Post a Job
-            </Button>
-            <button className="h-10 w-10 rounded-xl border border-border bg-background flex items-center justify-center hover:bg-border/30">
-              <Bell className="h-5 w-5 text-text-muted" />
-            </button>
-          </div>
-        </header>
-
-        <div className="p-6 lg:p-8 max-w-7xl mx-auto space-y-8">
+      <div className="space-y-8">
           {isLoading ? (
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-5">
               {[...Array(4)].map((_, i) => (
@@ -189,8 +145,7 @@ export function ClientDashboard() {
               </div>
             </>
           )}
-        </div>
-      </main>
-    </div>
+      </div>
+    </DashboardLayout>
   );
 }

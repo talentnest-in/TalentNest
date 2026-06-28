@@ -3,10 +3,9 @@ import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Link, useParams, useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
 import { useMutation } from '@tanstack/react-query';
 import { CheckCircle2 } from 'lucide-react';
-import { Logo } from '@/components/ui/Logo';
+import { AuthLayout } from '@/components/layouts/AuthLayout';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { authService } from '@/services/auth.service';
@@ -43,61 +42,41 @@ export function ResetPassword() {
   const apiError = (mutation.error as AxiosError<ApiError>)?.response?.data?.message;
 
   return (
-    <div className="min-h-screen bg-background flex flex-col justify-center py-12 sm:px-6 lg:px-8">
-      <motion.div
-        initial={{ opacity: 0, y: -16 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.35, ease: 'easeOut' }}
-        className="sm:mx-auto sm:w-full sm:max-w-md flex flex-col items-center"
-      >
-        <Logo className="h-10 mb-6" />
-        <h1 className="text-3xl font-heading font-bold tracking-tight text-primary text-center">
-          {success ? 'Password Reset' : 'Create new password'}
-        </h1>
-        <p className="mt-2 text-sm text-text-muted text-center max-w-xs">
-          {success
-            ? "Your password has been successfully reset. You can now log in."
-            : "Your new password must be different from previous used passwords."}
-        </p>
-      </motion.div>
-
-      <motion.div
-        initial={{ opacity: 0, y: 16 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.35, delay: 0.08, ease: 'easeOut' }}
-        className="mt-8 sm:mx-auto sm:w-full sm:max-w-[440px]"
-      >
-        <div className="bg-surface border border-border/50 shadow-sm rounded-2xl py-10 px-8 sm:px-12">
-          {success ? (
-            /* ── Success state ── */
-            <div className="flex flex-col items-center text-center">
-              <div className="h-14 w-14 rounded-full bg-success/10 flex items-center justify-center mb-5">
-                <CheckCircle2 className="h-6 w-6 text-success" />
-              </div>
-              <p className="text-sm text-text-muted mb-6">
-                You can now log in with your new password.
-              </p>
-              <Button onClick={() => navigate('/login')} variant="accent" className="w-full">
-                Go to login
-              </Button>
+    <AuthLayout
+      title={success ? 'Password Reset' : 'Create new password'}
+      subtitle={success ? "Your password has been successfully reset. You can now log in." : "Your new password must be different from previous used passwords."}
+      showTagline
+    >
+      {success ? (
+        /* ── Success state ── */
+        <div className="flex flex-col items-center text-center">
+          <div className="h-14 w-14 rounded-full bg-success/10 flex items-center justify-center mb-5">
+            <CheckCircle2 className="h-6 w-6 text-success" />
+          </div>
+          <p className="text-sm text-text-muted mb-6">
+            You can now log in with your new password.
+          </p>
+          <Button onClick={() => navigate('/login')} variant="accent" className="w-full">
+            Go to login
+          </Button>
+        </div>
+      ) : (
+        /* ── Form state ── */
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-5" noValidate>
+          {apiError && (
+            <div className="rounded-xl bg-error/5 border border-error/20 px-4 py-3 text-sm text-error">
+              {apiError}
             </div>
-          ) : (
-            /* ── Form state ── */
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-5" noValidate>
-              {apiError && (
-                <div className="rounded-xl bg-error/5 border border-error/20 px-4 py-3 text-sm text-error">
-                  {apiError}
-                </div>
-              )}
+          )}
 
-              <div className="space-y-1.5">
-                <label htmlFor="password" className="block text-sm font-medium text-text">
-                  New password
-                </label>
-                <Input
-                  id="password"
-                  type="password"
-                  placeholder="Enter new password"
+          <div className="space-y-1.5">
+            <label htmlFor="password" className="block text-sm font-medium text-text">
+              New password
+            </label>
+            <Input
+              id="password"
+              type="password"
+              placeholder="Enter new password"
                   aria-invalid={!!errors.password}
                   {...register('password')}
                 />
@@ -148,8 +127,6 @@ export function ResetPassword() {
               </div>
             </form>
           )}
-        </div>
-      </motion.div>
-    </div>
+    </AuthLayout>
   );
 }

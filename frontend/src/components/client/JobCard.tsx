@@ -20,7 +20,7 @@ export function JobCard({ job, onDelete }: JobCardProps) {
   };
 
   return (
-    <div className="bg-surface border border-border rounded-2xl p-5 hover:shadow-md transition-shadow flex flex-col gap-4">
+    <div className="bg-surface border border-border/50 rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow flex flex-col gap-4">
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1 min-w-0">
           <h3 className="font-semibold text-text text-lg leading-snug line-clamp-1">{job.title}</h3>

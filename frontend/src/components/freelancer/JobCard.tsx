@@ -15,7 +15,7 @@ export function JobCard({ job, showSaveButton = true }: JobCardProps) {
   const companyName = company?.name || 'Company';
 
   return (
-    <div className="bg-surface border border-border rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow">
+    <div className="bg-surface border border-border/50 rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow">
       <div className="flex items-start justify-between gap-4">
         {/* Company Info */}
         <div className="flex items-start gap-4 flex-1">
