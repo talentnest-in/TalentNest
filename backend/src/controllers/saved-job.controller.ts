@@ -107,39 +107,57 @@ export const removeSavedJob = async (
 
 // ── Get Saved Jobs ─────────────────────────────────────────────────────────────
 export const getSavedJobs = async (
-  request: FastifyRequest,
+  request: FastifyRequest<{ Querystring: { page?: string; limit?: string } }>,
   reply: FastifyReply
 ) => {
   const userId = request.user.id;
+  const { page = '1', limit = '10' } = request.query;
+  const skip = (parseInt(page) - 1) * parseInt(limit);
+  const take = parseInt(limit);
 
   const profile = await prisma.freelancerProfile.findUnique({
     where: { userId },
   });
 
   if (!profile) {
-    return reply.send({ savedJobs: [] });
+    return reply.send({ savedJobs: [], pagination: { page: 1, limit: 10, total: 0, pages: 0 } });
   }
 
-  const savedJobs = await prisma.savedJob.findMany({
-    where: {
-      freelancerProfileId: profile.id,
-    },
-    include: {
-      job: {
-        include: {
-          clientProfile: {
-            include: {
-              company: true,
+  const [savedJobs, total] = await Promise.all([
+    prisma.savedJob.findMany({
+      where: {
+        freelancerProfileId: profile.id,
+      },
+      include: {
+        job: {
+          include: {
+            clientProfile: {
+              include: {
+                company: true,
+              },
             },
+            skills: true,
           },
-          skills: true,
         },
       },
-    },
-    orderBy: {
-      createdAt: 'desc',
+      orderBy: {
+        createdAt: 'desc',
+      },
+      skip,
+      take,
+    }),
+    prisma.savedJob.count({
+      where: { freelancerProfileId: profile.id },
+    }),
+  ]);
+
+  return reply.send({
+    savedJobs,
+    pagination: {
+      page: parseInt(page),
+      limit: parseInt(limit),
+      total,
+      pages: Math.ceil(total / parseInt(limit)),
     },
   });
-
-  return reply.send({ savedJobs });
 };

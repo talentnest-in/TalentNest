@@ -5,6 +5,7 @@ import './index.css';
 import App from './App.tsx';
 import { ThemeProvider } from './contexts/ThemeProvider.tsx';
 import { AuthProvider } from './contexts/AuthContext.tsx';
+import { ErrorBoundary } from './components/shared/ErrorBoundary';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -15,12 +16,14 @@ const queryClient = new QueryClient({
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <QueryClientProvider client={queryClient}>
-      <ThemeProvider defaultTheme="light" storageKey="talentnest-theme">
-        <AuthProvider>
-          <App />
-        </AuthProvider>
-      </ThemeProvider>
-    </QueryClientProvider>
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <ThemeProvider defaultTheme="light" storageKey="talentnest-theme">
+          <AuthProvider>
+            <App />
+          </AuthProvider>
+        </ThemeProvider>
+      </QueryClientProvider>
+    </ErrorBoundary>
   </StrictMode>,
 );

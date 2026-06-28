@@ -100,20 +100,22 @@ export const applyForJob = async (
 // ── Get My Applications ─────────────────────────────────────────────────────────────
 
 export const getMyApplications = async (
-  request: FastifyRequest<{ Querystring: { page?: string; search?: string; status?: string } }>,
+  request: FastifyRequest<{ Querystring: { page?: string; limit?: string; search?: string; status?: string } }>,
   reply: FastifyReply
 ) => {
   const userId = request.user.id;
   const page = parseInt(request.query.page || '1') || 1;
+  const limit = parseInt(request.query.limit || '10') || 10;
   const search = request.query.search || '';
   const status = request.query.status;
+  const skip = (page - 1) * limit;
 
   const profile = await prisma.freelancerProfile.findUnique({
     where: { userId },
   });
 
   if (!profile) {
-    return reply.send({ applications: [], total: 0, page, totalPages: 0 });
+    return reply.send({ applications: [], pagination: { page, limit, total: 0, pages: 0 } });
   }
 
   const where: any = {
@@ -149,19 +151,20 @@ export const getMyApplications = async (
         },
       },
       orderBy: { createdAt: 'desc' },
-      skip: (page - 1) * 12,
-      take: 12,
+      skip,
+      take: limit,
     }),
     prisma.jobApplication.count({ where }),
   ]);
 
-  const totalPages = Math.ceil(total / 12);
-
   return reply.send({
     applications,
-    total,
-    page,
-    totalPages,
+    pagination: {
+      page,
+      limit,
+      total,
+      pages: Math.ceil(total / limit),
+    },
   });
 };
 

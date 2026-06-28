@@ -43,7 +43,7 @@ export const updateClientProfile = async (request: FastifyRequest, reply: Fastif
 export const uploadClientLogo = async (request: FastifyRequest, reply: FastifyReply) => {
   const file = await request.file();
   if (!file) return reply.status(400).send({ message: 'No file uploaded' });
-  const logoUrl = await uploadFile(file);
+  const logoUrl = await uploadFile(file, 'logo');
   await prisma.clientProfile.upsert({
     where: { userId: request.user.id },
     create: { userId: request.user.id, logoUrl },

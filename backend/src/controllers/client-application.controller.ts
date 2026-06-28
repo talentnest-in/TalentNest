@@ -13,13 +13,15 @@ type UpdateStatusInput = z.infer<typeof updateStatusSchema>;
 // ── Get All Applicants for Client ─────────────────────────────────────────────────────
 
 export const getAllClientApplicants = async (
-  request: FastifyRequest<{ Querystring: { page?: string; search?: string; status?: string } }>,
+  request: FastifyRequest<{ Querystring: { page?: string; limit?: string; search?: string; status?: string } }>,
   reply: FastifyReply
 ) => {
   const userId = request.user.id;
   const page = parseInt(request.query.page || '1') || 1;
+  const limit = parseInt(request.query.limit || '12') || 12;
   const search = request.query.search || '';
   const status = request.query.status;
+  const skip = (page - 1) * limit;
 
   // Get client profile
   const clientProfile = await prisma.clientProfile.findUnique({
@@ -73,33 +75,36 @@ export const getAllClientApplicants = async (
         },
       },
       orderBy: { createdAt: 'desc' },
-      skip: (page - 1) * 12,
-      take: 12,
+      skip,
+      take: limit,
     }),
     prisma.jobApplication.count({ where }),
   ]);
 
-  const totalPages = Math.ceil(total / 12);
-
   return reply.send({
     applications,
-    total,
-    page,
-    totalPages,
+    pagination: {
+      page,
+      limit,
+      total,
+      pages: Math.ceil(total / limit),
+    },
   });
 };
 
 // ── Get Applicants for Job ───────────────────────────────────────────────────────────
 
 export const getJobApplicants = async (
-  request: FastifyRequest<{ Params: { jobId: string }; Querystring: { page?: string; search?: string; status?: string } }>,
+  request: FastifyRequest<{ Params: { jobId: string }; Querystring: { page?: string; limit?: string; search?: string; status?: string } }>,
   reply: FastifyReply
 ) => {
   const jobId = request.params.jobId;
   const userId = request.user.id;
   const page = parseInt(request.query.page || '1') || 1;
+  const limit = parseInt(request.query.limit || '12') || 12;
   const search = request.query.search || '';
   const status = request.query.status;
+  const skip = (page - 1) * limit;
 
   // Verify job belongs to this client
   const job = await prisma.job.findUnique({
@@ -127,7 +132,6 @@ export const getJobApplicants = async (
     where.profile = {
       OR: [
         { user: { name: { contains: search, mode: 'insensitive' } } },
-        { title: { contains: search, mode: 'insensitive' } },
       ],
     };
   }
@@ -157,19 +161,20 @@ export const getJobApplicants = async (
         },
       },
       orderBy: { createdAt: 'desc' },
-      skip: (page - 1) * 12,
-      take: 12,
+      skip,
+      take: limit,
     }),
     prisma.jobApplication.count({ where }),
   ]);
 
-  const totalPages = Math.ceil(total / 12);
-
   return reply.send({
     applications,
-    total,
-    page,
-    totalPages,
+    pagination: {
+      page,
+      limit,
+      total,
+      pages: Math.ceil(total / limit),
+    },
   });
 };
 

@@ -35,6 +35,9 @@ model User {
   freelancerContracts  Contract[]        @relation("FreelancerContracts")
 
   @@unique([provider, providerId])
+  @@index([email])
+  @@index([role])
+  @@index([createdAt])
 }
 
 model FreelancerProfile {
@@ -162,6 +165,10 @@ model Job {
   savedJobs       SavedJob[]
   applications    JobApplication[]
   contracts       Contract[]
+
+  @@index([status])
+  @@index([createdAt])
+  @@index([clientProfileId])
 }
 
 model JobSkill {
@@ -213,6 +220,10 @@ model JobApplication {
   offer               Offer?
 
   @@unique([freelancerProfileId, jobId])
+  @@index([jobId])
+  @@index([freelancerProfileId])
+  @@index([status])
+  @@index([createdAt])
 }
 
 // ─── Sprint 6: Offers & Contracts ─────────────────────────────────────────────────────
@@ -254,6 +265,11 @@ model Offer {
   contract          Contract?
 
   @@unique([applicationId])
+  @@index([freelancerId])
+  @@index([clientId])
+  @@index([status])
+  @@index([expiresAt])
+  @@index([createdAt])
 }
 
 model Contract {
@@ -278,4 +294,9 @@ model Contract {
   job               Job            @relation(fields: [jobId], references: [id], onDelete: Cascade)
   client            User           @relation("ClientContracts", fields: [clientId], references: [id], onDelete: Cascade)
   freelancer        User           @relation("FreelancerContracts", fields: [freelancerId], references: [id], onDelete: Cascade)
+
+  @@index([freelancerId])
+  @@index([clientId])
+  @@index([status])
+  @@index([createdAt])
 }

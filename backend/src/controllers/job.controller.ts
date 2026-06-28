@@ -42,23 +42,42 @@ export const createJob = async (request: FastifyRequest, reply: FastifyReply) =>
 };
 
 export const getMyJobs = async (
-  request: FastifyRequest<{ Querystring: { status?: string; search?: string } }>,
+  request: FastifyRequest<{ Querystring: { status?: string; search?: string; page?: string; limit?: string } }>,
   reply: FastifyReply
 ) => {
-  const { status, search } = request.query;
+  const { status, search, page = '1', limit = '10' } = request.query;
+  const skip = (parseInt(page) - 1) * parseInt(limit);
+  const take = parseInt(limit);
+  
   const profile = await prisma.clientProfile.findUnique({ where: { userId: request.user.id } });
-  if (!profile) return reply.send({ jobs: [] });
+  if (!profile) return reply.send({ jobs: [], pagination: { page: 1, limit: 10, total: 0, pages: 0 } });
 
-  const jobs = await prisma.job.findMany({
-    where: {
-      clientProfileId: profile.id,
-      ...(status ? { status: status as any } : {}),
-      ...(search ? { title: { contains: search, mode: 'insensitive' } } : {}),
+  const where = {
+    clientProfileId: profile.id,
+    ...(status ? { status: status as any } : {}),
+    ...(search ? { title: { contains: search, mode: 'insensitive' as const } } : {}),
+  };
+
+  const [jobs, total] = await Promise.all([
+    prisma.job.findMany({
+      where,
+      include: jobInclude,
+      orderBy: { createdAt: 'desc' },
+      skip,
+      take,
+    }),
+    prisma.job.count({ where }),
+  ]);
+  
+  return reply.send({
+    jobs,
+    pagination: {
+      page: parseInt(page),
+      limit: parseInt(limit),
+      total,
+      pages: Math.ceil(total / parseInt(limit)),
     },
-    include: jobInclude,
-    orderBy: { createdAt: 'desc' },
   });
-  return reply.send({ jobs });
 };
 
 // ── Freelancer Marketplace ────────────────────────────────────────────────────

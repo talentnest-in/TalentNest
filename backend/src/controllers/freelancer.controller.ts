@@ -65,7 +65,7 @@ export const uploadResume = async (request: FastifyRequest, reply: FastifyReply)
   const file = await request.file();
   if (!file) return reply.status(400).send({ message: 'No file uploaded' });
 
-  const resumeUrl = await uploadFile(file);
+  const resumeUrl = await uploadFile(file, 'resume');
 
   const profile = await prisma.freelancerProfile.upsert({
     where: { userId: request.user.id },
@@ -80,7 +80,7 @@ export const uploadAvatar = async (request: FastifyRequest, reply: FastifyReply)
   const file = await request.file();
   if (!file) return reply.status(400).send({ message: 'No file uploaded' });
 
-  const avatar = await uploadFile(file);
+  const avatar = await uploadFile(file, 'avatar');
 
   await prisma.user.update({
     where: { id: request.user.id },

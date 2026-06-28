@@ -10,17 +10,40 @@ const projectSchema = z.object({
   imageUrl: z.string().nullable().catch(null),
 });
 
-export const getProjects = async (request: FastifyRequest, reply: FastifyReply) => {
+export const getProjects = async (
+  request: FastifyRequest<{ Querystring: { page?: string; limit?: string } }>,
+  reply: FastifyReply
+) => {
+  const { page = '1', limit = '10' } = request.query;
+  const skip = (parseInt(page) - 1) * parseInt(limit);
+  const take = parseInt(limit);
+
   const profile = await prisma.freelancerProfile.findUnique({
     where: { userId: request.user.id },
   });
-  if (!profile) return reply.send({ projects: [] });
+  if (!profile) return reply.send({ projects: [], pagination: { page: 1, limit: 10, total: 0, pages: 0 } });
 
-  const projects = await prisma.portfolioProject.findMany({
-    where: { freelancerProfileId: profile.id },
-    orderBy: { createdAt: 'desc' },
+  const [projects, total] = await Promise.all([
+    prisma.portfolioProject.findMany({
+      where: { freelancerProfileId: profile.id },
+      orderBy: { createdAt: 'desc' },
+      skip,
+      take,
+    }),
+    prisma.portfolioProject.count({
+      where: { freelancerProfileId: profile.id },
+    }),
+  ]);
+  
+  return reply.send({
+    projects,
+    pagination: {
+      page: parseInt(page),
+      limit: parseInt(limit),
+      total,
+      pages: Math.ceil(total / parseInt(limit)),
+    },
   });
-  return reply.send({ projects });
 };
 
 export const addProject = async (request: FastifyRequest, reply: FastifyReply) => {
@@ -54,6 +77,6 @@ export const uploadProjectImage = async (request: FastifyRequest, reply: Fastify
   const file = await request.file();
   if (!file) return reply.status(400).send({ message: 'No file uploaded' });
 
-  const imageUrl = await uploadFile(file);
+  const imageUrl = await uploadFile(file, 'portfolio');
   return reply.send({ imageUrl });
 };

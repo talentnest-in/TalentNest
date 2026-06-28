@@ -44,7 +44,7 @@ export const uploadCompanyLogo = async (request: FastifyRequest, reply: FastifyR
   const file = await request.file();
   if (!file) return reply.status(400).send({ message: 'No file uploaded' });
 
-  const logoUrl = await uploadFile(file);
+  const logoUrl = await uploadFile(file, 'logo');
   const profile = await getOrCreateClientProfile(request.user.id);
 
   const company = await prisma.company.update({

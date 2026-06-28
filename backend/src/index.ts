@@ -45,9 +45,11 @@ server.register(cors, {
 
 server.register(helmet);
 
+// Register general rate limit for API endpoints
 server.register(rateLimit, {
   max: 100,
   timeWindow: '1 minute',
+  skipOnError: true,
 });
 
 // Register JWT & Cookie for Auth
