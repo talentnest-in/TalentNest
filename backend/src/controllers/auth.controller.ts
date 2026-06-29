@@ -27,12 +27,17 @@ const resetPasswordSchema = z.object({
 });
 
 // ── Cookie options ───────────────────────────────────────────────────────────
-const COOKIE_OPTIONS = {
-  path: '/',
-  httpOnly: true,
-  secure: process.env.NODE_ENV === 'production', // Must be true if sameSite is 'none'
-  sameSite: process.env.NODE_ENV === 'production' ? ('none' as const) : ('lax' as const),
-  maxAge: 60 * 60 * 24 * 7, // 7 days in seconds
+const getCookieOptions = (request: FastifyRequest) => {
+  const isProduction = process.env.NODE_ENV === 'production';
+  const isHttps = request.headers['x-forwarded-proto'] === 'https' || request.protocol === 'https';
+  
+  return {
+    path: '/',
+    httpOnly: true,
+    secure: isProduction || isHttps, // Use secure cookies in production or when using HTTPS
+    sameSite: (isProduction || isHttps) ? ('none' as const) : ('lax' as const),
+    maxAge: 60 * 60 * 24 * 7, // 7 days in seconds
+  };
 };
 
 // ── Register ─────────────────────────────────────────────────────────────────
@@ -64,7 +69,7 @@ export const register = async (request: FastifyRequest, reply: FastifyReply) => 
 
     const token = await reply.jwtSign({ id: user.id, role: user.role });
 
-    reply.setCookie('token', token, COOKIE_OPTIONS);
+    reply.setCookie('token', token, getCookieOptions(request));
 
     return reply.status(201).send({ user, token });
   } catch (error) {
@@ -95,7 +100,7 @@ export const login = async (request: FastifyRequest, reply: FastifyReply) => {
 
     const token = await reply.jwtSign({ id: user.id, role: user.role });
 
-    reply.setCookie('token', token, COOKIE_OPTIONS);
+    reply.setCookie('token', token, getCookieOptions(request));
 
     return reply.send({
       user: { 

@@ -151,6 +151,8 @@ server.decorate('authenticate', async (request: FastifyRequest, reply: FastifyRe
       }
     }
     console.error('Authentication failed - No valid token found');
+    console.error('Request cookies:', Object.keys(request.cookies));
+    console.error('Request auth header:', request.headers.authorization);
     return reply.status(401).send({ statusCode: 401, error: 'Unauthorized', message: 'Authentication required' });
   }
 });

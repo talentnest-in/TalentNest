@@ -25,18 +25,24 @@ interface GitHubEmail {
 }
 
 // ─── Cookie options (same as auth.controller) ────────────────────────────────
-const COOKIE_OPTIONS = {
-  path: '/',
-  httpOnly: true,
-  secure: process.env.NODE_ENV === 'production', // Must be true if sameSite is 'none'
-  sameSite: process.env.NODE_ENV === 'production' ? ('none' as const) : ('lax' as const),
-  maxAge: 60 * 60 * 24 * 7, // 7 days
+const getCookieOptions = (request: FastifyRequest) => {
+  const isProduction = process.env.NODE_ENV === 'production';
+  const isHttps = request.headers['x-forwarded-proto'] === 'https' || request.protocol === 'https';
+  
+  return {
+    path: '/',
+    httpOnly: true,
+    secure: isProduction || isHttps,
+    sameSite: (isProduction || isHttps) ? ('none' as const) : ('lax' as const),
+    maxAge: 60 * 60 * 24 * 7, // 7 days
+  };
 };
 
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
 
 // ─── Helper: upsert OAuth user and sign JWT ───────────────────────────────────
 async function handleOAuthUser(
+  request: FastifyRequest,
   reply: FastifyReply,
   opts: {
     email: string;
@@ -73,7 +79,7 @@ async function handleOAuthUser(
   }
 
   const token = await reply.jwtSign({ id: user.id, role: user.role });
-  reply.setCookie('token', token, COOKIE_OPTIONS);
+  reply.setCookie('token', token, getCookieOptions(request));
 
   // Redirect to frontend callback page with token in query string
   return reply.redirect(`${FRONTEND_URL}/oauth/callback?token=${token}`);
@@ -102,7 +108,7 @@ export const googleCallback = async (request: FastifyRequest, reply: FastifyRepl
       return reply.redirect(`${FRONTEND_URL}/login?error=email_not_verified`);
     }
 
-    return handleOAuthUser(reply, {
+    return handleOAuthUser(request, reply, {
       email: profile.email,
       name: profile.name,
       avatar: profile.picture,
@@ -152,7 +158,7 @@ export const githubCallback = async (request: FastifyRequest, reply: FastifyRepl
       return reply.redirect(`${FRONTEND_URL}/login?error=no_email`);
     }
 
-    return handleOAuthUser(reply, {
+    return handleOAuthUser(request, reply, {
       email,
       name: profile.name ?? profile.login,
       avatar: profile.avatar_url,
