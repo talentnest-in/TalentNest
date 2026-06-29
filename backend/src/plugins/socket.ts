@@ -17,7 +17,23 @@ export default async function socketPlugin(fastify: FastifyInstance) {
   
   const io = new SocketIOServer(httpServer, {
     cors: {
-      origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+      origin: (origin, callback) => {
+        // Allow requests with no origin (like mobile apps, curl, etc.)
+        if (!origin) return callback(null, true);
+        
+        // Allow configured frontend URL
+        const allowedOrigins = [
+          process.env.FRONTEND_URL?.replace(/\/$/, ''),
+          'http://localhost:5173',
+          'https://talentnest-zrk2.onrender.com',
+        ].filter(Boolean);
+        
+        if (allowedOrigins.includes(origin)) {
+          callback(null, true);
+        } else {
+          callback(new Error('Not allowed by CORS'), false);
+        }
+      },
       credentials: true,
     },
   });
@@ -28,6 +44,7 @@ export default async function socketPlugin(fastify: FastifyInstance) {
       const token = socket.handshake.auth.token || socket.handshake.headers.authorization?.replace('Bearer ', '');
       
       if (!token) {
+        console.error('Socket auth failed: No token provided');
         return next(new Error('Authentication error: No token provided'));
       }
 
@@ -39,12 +56,14 @@ export default async function socketPlugin(fastify: FastifyInstance) {
       });
 
       if (!user) {
+        console.error('Socket auth failed: User not found', decoded.id);
         return next(new Error('Authentication error: User not found'));
       }
 
       socket.data = { userId: user.id, userName: user.name } as SocketData;
       next();
     } catch (error) {
+      console.error('Socket authentication error:', error);
       next(new Error('Authentication error: Invalid token'));
     }
   });

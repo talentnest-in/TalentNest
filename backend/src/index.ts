@@ -38,7 +38,23 @@ const server = Fastify({
 
 // Register Security Middlewares
 server.register(cors, {
-  origin: process.env.FRONTEND_URL ? process.env.FRONTEND_URL.replace(/\/$/, '') : 'http://localhost:5173',
+  origin: (origin, callback) => {
+    // Allow requests with no origin (like mobile apps, curl, etc.)
+    if (!origin) return callback(null, true);
+    
+    // Allow configured frontend URL
+    const allowedOrigins = [
+      process.env.FRONTEND_URL?.replace(/\/$/, ''),
+      'http://localhost:5173',
+      'https://talentnest-zrk2.onrender.com',
+    ].filter(Boolean);
+    
+    if (allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'), false);
+    }
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
 });
@@ -121,7 +137,7 @@ server.decorate('authenticate', async (request: FastifyRequest, reply: FastifyRe
   try {
     // Try Authorization: Bearer header first
     await request.jwtVerify();
-  } catch {
+  } catch (err) {
     // Fallback: try HttpOnly cookie
     const token = request.cookies.token;
     if (token) {
@@ -129,10 +145,12 @@ server.decorate('authenticate', async (request: FastifyRequest, reply: FastifyRe
         const decoded = server.jwt.verify(token);
         request.user = decoded as any;
         return;
-      } catch {
+      } catch (cookieErr) {
         // Token in cookie is also invalid — fall through to 401
+        console.error('Cookie token verification failed:', cookieErr);
       }
     }
+    console.error('Authentication failed - No valid token found');
     return reply.status(401).send({ statusCode: 401, error: 'Unauthorized', message: 'Authentication required' });
   }
 });
