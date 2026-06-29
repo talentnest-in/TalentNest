@@ -5,10 +5,10 @@ interface ContractStatusBadgeProps {
 }
 
 const statusConfig: Record<ContractStatus, { label: string; className: string }> = {
-  ACTIVE: { label: 'Active', className: 'bg-blue-100 text-blue-800 border-blue-200' },
-  COMPLETED: { label: 'Completed', className: 'bg-green-100 text-green-800 border-green-200' },
-  CANCELLED: { label: 'Cancelled', className: 'bg-gray-100 text-gray-800 border-gray-200' },
-  DISPUTED: { label: 'Disputed', className: 'bg-red-100 text-red-800 border-red-200' },
+  ACTIVE: { label: 'Active', className: 'bg-primary/10 text-primary border-primary/20' },
+  COMPLETED: { label: 'Completed', className: 'bg-success/10 text-success border-success/20' },
+  CANCELLED: { label: 'Cancelled', className: 'bg-text-muted/10 text-text-muted border-text-muted/20' },
+  DISPUTED: { label: 'Disputed', className: 'bg-error/10 text-error border-error/20' },
 };
 
 export function ContractStatusBadge({ status }: ContractStatusBadgeProps) {

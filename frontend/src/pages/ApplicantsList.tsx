@@ -71,7 +71,7 @@ export function ApplicantsList() {
             <ArrowLeft className="w-4 h-4" />
             Back to Jobs
           </button>
-          <h1 className="text-2xl font-bold text-text mb-2">Applicants</h1>
+          <h1 className="text-2xl font-heading font-bold text-text mb-2">Applicants</h1>
           <p className="text-text-muted">
             {total > 0 ? `${total} applicant${total !== 1 ? 's' : ''}` : 'No applicants yet'}
           </p>

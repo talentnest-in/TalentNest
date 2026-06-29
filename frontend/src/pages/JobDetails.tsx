@@ -1,10 +1,10 @@
 import { useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { jobService } from '@/services/job.service';
 import { savedJobService } from '@/services/saved-job.service';
 import { applicationService } from '@/services/application.service';
-import { MapPin, DollarSign, Clock, Building2, Briefcase } from 'lucide-react';
+import { MapPin, DollarSign, Clock, Building2, Briefcase, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { SaveButton } from '@/components/freelancer/SaveButton';
 import { ApplicationModal } from '@/components/ui/ApplicationModal';
@@ -15,6 +15,7 @@ import { useAuth } from '@/contexts/AuthContext';
 export function JobDetails() {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [isApplicationModalOpen, setIsApplicationModalOpen] = useState(false);
 
@@ -89,7 +90,14 @@ export function JobDetails() {
       <div className="max-w-4xl mx-auto p-4 lg:p-8">
         {/* Header */}
         <div className="mb-6">
-          <h1 className="text-2xl font-bold text-text mb-2">{job.title}</h1>
+          <button
+            onClick={() => navigate(-1)}
+            className="flex items-center gap-2 text-text-muted hover:text-text mb-4 transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Back
+          </button>
+          <h1 className="text-2xl font-heading font-bold text-text mb-2">{job.title}</h1>
           <div className="flex items-center gap-4 text-sm text-text-muted">
             <span>Posted on {postedDate}</span>
             {job.status === 'OPEN' && (

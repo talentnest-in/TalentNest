@@ -26,6 +26,8 @@ import { FreelancerOffersList } from '@/pages/FreelancerOffersList';
 import { ContractsList } from '@/pages/ContractsList';
 import { ContractDetails } from '@/pages/ContractDetails';
 import { ProjectWorkspace } from '@/pages/ProjectWorkspace';
+import { Communications } from '@/pages/Communications';
+import { ConversationDetail } from '@/pages/ConversationDetail';
 
 function App() {
   return (
@@ -75,6 +77,8 @@ function App() {
             <Route path="/contracts" element={<ContractsList />} />
             <Route path="/contracts/:id" element={<ContractDetails />} />
             <Route path="/workspace/:id" element={<ProjectWorkspace />} />
+            <Route path="/communications" element={<Communications />} />
+            <Route path="/conversations/:id" element={<ConversationDetail />} />
           </Route>
         </Route>
 

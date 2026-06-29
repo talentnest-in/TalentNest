@@ -79,7 +79,7 @@ export function FindJobs() {
       <div className="max-w-7xl mx-auto p-4 lg:p-8">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-2xl font-bold text-text mb-2">Find Jobs</h1>
+          <h1 className="text-2xl font-heading font-bold text-text mb-2">Find Jobs</h1>
           <p className="text-text-muted">Discover your next opportunity</p>
         </div>
 

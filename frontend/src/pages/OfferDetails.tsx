@@ -79,7 +79,7 @@ export function OfferDetails() {
     <div className="max-w-4xl mx-auto px-4 py-8">
       <button
         onClick={() => navigate(-1)}
-        className="flex items-center gap-2 text-sm text-text-muted hover:text-text mb-6 transition-colors"
+        className="flex items-center gap-2 text-sm text-text-muted hover:text-text mb-6 transition-colors font-medium"
       >
         <ArrowLeft className="w-4 h-4" />
         Back
@@ -88,7 +88,7 @@ export function OfferDetails() {
       <div className="bg-surface border border-border/50 rounded-xl p-6 mb-6">
         <div className="flex items-start justify-between mb-4">
           <div className="flex-1">
-            <h1 className="text-2xl font-bold text-text mb-2">{offer.title}</h1>
+            <h1 className="text-2xl font-heading font-bold text-text mb-2">{offer.title}</h1>
             <p className="text-sm text-text-muted">{job.title}</p>
           </div>
           <OfferStatusBadge status={offer.status} />

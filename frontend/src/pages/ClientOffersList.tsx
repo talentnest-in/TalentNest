@@ -54,7 +54,7 @@ export function ClientOffersList() {
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-text mb-2">My Offers</h1>
+        <h1 className="text-2xl font-heading font-bold text-text mb-2">My Offers</h1>
         <p className="text-sm text-text-muted">Manage offers you've sent to freelancers</p>
       </div>
 

@@ -48,7 +48,7 @@ export function ContractsList() {
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-text mb-2">Contracts</h1>
+        <h1 className="text-2xl font-heading font-bold text-text mb-2">Contracts</h1>
         <p className="text-sm text-text-muted">View and manage your active and past contracts</p>
       </div>
 

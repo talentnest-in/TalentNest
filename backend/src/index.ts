@@ -71,7 +71,7 @@ import path from 'path';
 
 server.register(multipart, {
   limits: {
-    fileSize: 10 * 1024 * 1024, // 10MB limit
+    fileSize: 20 * 1024 * 1024, // 20MB limit
   },
 });
 
@@ -179,6 +179,13 @@ import { applicationRoutes } from './routes/application.routes';
 import { clientApplicationRoutes } from './routes/client-application.routes';
 import { offerRoutes } from './routes/offer.routes';
 import { contractRoutes } from './routes/contract.routes';
+import { chatRoutes } from './routes/chat.routes';
+import { notificationRoutes } from './routes/notification.routes';
+import { uploadRoutes } from './routes/upload.routes';
+import { milestoneRoutes } from './routes/milestone.routes';
+import { noteRoutes } from './routes/note.routes';
+import { workspaceFileRoutes } from './routes/workspace-file.routes';
+import socketPlugin from './plugins/socket';
 
 server.register(authRoutes, { prefix: '/api/v1/auth' });
 server.register(freelancerRoutes, { prefix: '/api/v1/freelancers' });
@@ -192,6 +199,15 @@ server.register(applicationRoutes, { prefix: '/api/v1' });
 server.register(clientApplicationRoutes, { prefix: '/api/v1' });
 server.register(offerRoutes, { prefix: '/api/v1/offers' });
 server.register(contractRoutes, { prefix: '/api/v1/contracts' });
+server.register(chatRoutes, { prefix: '/api/v1/chat' });
+server.register(notificationRoutes, { prefix: '/api/v1' });
+server.register(uploadRoutes, { prefix: '/api/v1/upload' });
+server.register(milestoneRoutes, { prefix: '/api/v1' });
+server.register(noteRoutes, { prefix: '/api/v1' });
+server.register(workspaceFileRoutes, { prefix: '/api/v1' });
+
+// Register Socket.IO plugin
+server.register(socketPlugin);
 
 // Health check route
 server.get('/health', async (request, reply) => {

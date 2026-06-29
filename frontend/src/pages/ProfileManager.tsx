@@ -15,10 +15,6 @@ import { User, Briefcase, GraduationCap, FolderDot, Plus, Loader2 } from 'lucide
 import type { Experience, Education, PortfolioProject } from '@/types';
 import { BACKEND_URL } from '@/lib/constants';
 
-// ─── Shared input style ───────────────────────────────────────────────────────
-const inp = 'w-full bg-background border border-border rounded-lg px-4 py-2.5 text-sm text-text placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-accent';
-const label = 'text-sm font-medium text-text-muted mb-1 block';
-
 // ─── Experience Form ─────────────────────────────────────────────────────────
 function ExperienceForm({
   initial,
@@ -58,26 +54,26 @@ function ExperienceForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <div><label className={label}>Company *</label>
-        <input className={inp} required value={form.company} onChange={e => setForm({ ...form, company: e.target.value })} placeholder="e.g. Google" />
+      <div><label className="text-sm font-medium text-text-muted mb-1 block">Company *</label>
+        <input className="w-full bg-background border border-border rounded-xl px-4 py-3 text-sm text-text placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-accent" required value={form.company} onChange={e => setForm({ ...form, company: e.target.value })} placeholder="e.g. Google" />
       </div>
-      <div><label className={label}>Role / Title *</label>
-        <input className={inp} required value={form.role} onChange={e => setForm({ ...form, role: e.target.value })} placeholder="e.g. Senior Engineer" />
+      <div><label className="text-sm font-medium text-text-muted mb-1 block">Role / Title *</label>
+        <input className="w-full bg-background border border-border rounded-xl px-4 py-3 text-sm text-text placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-accent" required value={form.role} onChange={e => setForm({ ...form, role: e.target.value })} placeholder="e.g. Senior Engineer" />
       </div>
       <div className="grid grid-cols-2 gap-4">
-        <div><label className={label}>Start Date *</label>
-          <input type="date" className={inp} required value={form.startDate} onChange={e => setForm({ ...form, startDate: e.target.value })} />
+        <div><label className="text-sm font-medium text-text-muted mb-1 block">Start Date *</label>
+          <input type="date" className="w-full bg-background border border-border rounded-xl px-4 py-3 text-sm text-text placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-accent" required value={form.startDate} onChange={e => setForm({ ...form, startDate: e.target.value })} />
         </div>
-        <div><label className={label}>End Date</label>
-          <input type="date" className={inp} disabled={form.current} value={form.endDate} onChange={e => setForm({ ...form, endDate: e.target.value })} />
+        <div><label className="text-sm font-medium text-text-muted mb-1 block">End Date</label>
+          <input type="date" className="w-full bg-background border border-border rounded-xl px-4 py-3 text-sm text-text placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-accent" disabled={form.current} value={form.endDate} onChange={e => setForm({ ...form, endDate: e.target.value })} />
         </div>
       </div>
       <label className="flex items-center gap-2 text-sm text-text cursor-pointer">
         <input type="checkbox" checked={form.current} onChange={e => setForm({ ...form, current: e.target.checked, endDate: '' })} />
         I currently work here
       </label>
-      <div><label className={label}>Description</label>
-        <textarea className={`${inp} h-24 resize-none`} value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} placeholder="Describe your role..." />
+      <div><label className="text-sm font-medium text-text-muted mb-1 block">Description</label>
+        <textarea className="w-full bg-background border border-border rounded-xl px-4 py-3 text-sm text-text placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-accent h-24 resize-none" value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} placeholder="Describe your role..." />
       </div>
       <div className="flex justify-end gap-3 pt-2">
         <Button type="button" variant="outline" onClick={onCancel}>Cancel</Button>
@@ -124,23 +120,23 @@ function EducationForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <div><label className={label}>Institution *</label>
-        <input className={inp} required value={form.institution} onChange={e => setForm({ ...form, institution: e.target.value })} placeholder="e.g. MIT" />
+      <div><label className="text-sm font-medium text-text-muted mb-1 block">Institution *</label>
+        <input className="w-full bg-background border border-border rounded-xl px-4 py-3 text-sm text-text placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-accent" required value={form.institution} onChange={e => setForm({ ...form, institution: e.target.value })} placeholder="e.g. MIT" />
       </div>
       <div className="grid grid-cols-2 gap-4">
-        <div><label className={label}>Degree *</label>
-          <input className={inp} required value={form.degree} onChange={e => setForm({ ...form, degree: e.target.value })} placeholder="e.g. B.Tech" />
+        <div><label className="text-sm font-medium text-text-muted mb-1 block">Degree *</label>
+          <input className="w-full bg-background border border-border rounded-xl px-4 py-3 text-sm text-text placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-accent" required value={form.degree} onChange={e => setForm({ ...form, degree: e.target.value })} placeholder="e.g. B.Tech" />
         </div>
-        <div><label className={label}>Field of Study *</label>
-          <input className={inp} required value={form.fieldOfStudy} onChange={e => setForm({ ...form, fieldOfStudy: e.target.value })} placeholder="e.g. Computer Science" />
+        <div><label className="text-sm font-medium text-text-muted mb-1 block">Field of Study *</label>
+          <input className="w-full bg-background border border-border rounded-xl px-4 py-3 text-sm text-text placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-accent" required value={form.fieldOfStudy} onChange={e => setForm({ ...form, fieldOfStudy: e.target.value })} placeholder="e.g. Computer Science" />
         </div>
       </div>
       <div className="grid grid-cols-2 gap-4">
-        <div><label className={label}>Start Date *</label>
-          <input type="date" className={inp} required value={form.startDate} onChange={e => setForm({ ...form, startDate: e.target.value })} />
+        <div><label className="text-sm font-medium text-text-muted mb-1 block">Start Date *</label>
+          <input type="date" className="w-full bg-background border border-border rounded-xl px-4 py-3 text-sm text-text placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-accent" required value={form.startDate} onChange={e => setForm({ ...form, startDate: e.target.value })} />
         </div>
-        <div><label className={label}>End Date</label>
-          <input type="date" className={inp} value={form.endDate} onChange={e => setForm({ ...form, endDate: e.target.value })} />
+        <div><label className="text-sm font-medium text-text-muted mb-1 block">End Date</label>
+          <input type="date" className="w-full bg-background border border-border rounded-xl px-4 py-3 text-sm text-text placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-accent" value={form.endDate} onChange={e => setForm({ ...form, endDate: e.target.value })} />
         </div>
       </div>
       <div className="flex justify-end gap-3 pt-2">
@@ -200,17 +196,17 @@ function PortfolioForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <div><label className={label}>Project Title *</label>
-        <input className={inp} required value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} placeholder="e.g. E-Commerce App" />
+      <div><label className="text-sm font-medium text-text-muted mb-1 block">Project Title *</label>
+        <input className="w-full bg-background border border-border rounded-xl px-4 py-3 text-sm text-text placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-accent" required value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} placeholder="e.g. E-Commerce App" />
       </div>
-      <div><label className={label}>Description *</label>
-        <textarea className={`${inp} h-24 resize-none`} required value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} placeholder="Describe what you built..." />
+      <div><label className="text-sm font-medium text-text-muted mb-1 block">Description *</label>
+        <textarea className="w-full bg-background border border-border rounded-xl px-4 py-3 text-sm text-text placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-accent h-24 resize-none" required value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} placeholder="Describe what you built..." />
       </div>
-      <div><label className={label}>Project URL</label>
-        <input className={inp} type="url" value={form.projectUrl} onChange={e => setForm({ ...form, projectUrl: e.target.value })} placeholder="https://..." />
+      <div><label className="text-sm font-medium text-text-muted mb-1 block">Project URL</label>
+        <input className="w-full bg-background border border-border rounded-xl px-4 py-3 text-sm text-text placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-accent" type="url" value={form.projectUrl} onChange={e => setForm({ ...form, projectUrl: e.target.value })} placeholder="https://..." />
       </div>
       <div>
-        <label className={label}>Project Image</label>
+        <label className="text-sm font-medium text-text-muted mb-1 block">Project Image</label>
         {form.imageUrl && (
           <img src={`${BACKEND_URL}${form.imageUrl}`} alt="Preview" className="w-full h-40 object-cover rounded-lg mb-2" />
         )}
@@ -296,7 +292,7 @@ export function ProfileManager() {
     <div className="min-h-screen bg-background">
       <div className="max-w-6xl mx-auto p-4 lg:p-8 space-y-6">
         <div>
-          <h1 className="text-2xl font-bold text-text">Profile Manager</h1>
+          <h1 className="text-2xl font-heading font-bold text-text">Profile Manager</h1>
           <p className="text-text-muted mt-1">Manage your freelancer profile and portfolio.</p>
         </div>
 
@@ -354,11 +350,11 @@ export function ProfileManager() {
                     </div>
                     {isEditingBasic ? (
                       <div className="space-y-4">
-                        <input className={inp} placeholder="Professional Title (e.g. Senior Frontend Developer)" value={basicForm.title} onChange={e => setBasicForm({ ...basicForm, title: e.target.value })} />
-                        <textarea className={`${inp} h-24 resize-none`} placeholder="Professional Bio" value={basicForm.bio} onChange={e => setBasicForm({ ...basicForm, bio: e.target.value })} />
+                        <input className="w-full bg-background border border-border rounded-xl px-4 py-3 text-sm text-text placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-accent" placeholder="Professional Title (e.g. Senior Frontend Developer)" value={basicForm.title} onChange={e => setBasicForm({ ...basicForm, title: e.target.value })} />
+                        <textarea className="w-full bg-background border border-border rounded-xl px-4 py-3 text-sm text-text placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-accent h-24 resize-none" placeholder="Professional Bio" value={basicForm.bio} onChange={e => setBasicForm({ ...basicForm, bio: e.target.value })} />
                         <div className="grid grid-cols-2 gap-4">
-                          <input type="number" className={inp} placeholder="Hourly Rate ($)" value={basicForm.hourlyRate} onChange={e => setBasicForm({ ...basicForm, hourlyRate: e.target.value })} />
-                          <input className={inp} placeholder="Location (e.g. Remote, NY)" value={basicForm.location} onChange={e => setBasicForm({ ...basicForm, location: e.target.value })} />
+                          <input type="number" className="w-full bg-background border border-border rounded-xl px-4 py-3 text-sm text-text placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-accent" placeholder="Hourly Rate ($)" value={basicForm.hourlyRate} onChange={e => setBasicForm({ ...basicForm, hourlyRate: e.target.value })} />
+                          <input className="w-full bg-background border border-border rounded-xl px-4 py-3 text-sm text-text placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-accent" placeholder="Location (e.g. Remote, NY)" value={basicForm.location} onChange={e => setBasicForm({ ...basicForm, location: e.target.value })} />
                         </div>
                         <div className="flex gap-2 justify-end">
                           <Button variant="outline" onClick={() => setIsEditingBasic(false)}>Cancel</Button>

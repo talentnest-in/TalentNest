@@ -1,6 +1,7 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
 import { prisma } from '../lib/prisma';
 import { z } from 'zod';
+import { createNotification } from './notification.controller';
 
 // ── Validation Schemas ──
 const createOfferSchema = z.object({
@@ -120,6 +121,15 @@ export const createOffer = async (request: FastifyRequest, reply: FastifyReply) 
       client: true,
       freelancer: true,
     },
+  });
+
+  // Notify freelancer of new offer
+  await createNotification({
+    userId: offer.freelancerId,
+    type: 'NEW_OFFER',
+    title: 'New Offer Received',
+    message: `You have received a new offer for ${offer.application.job.title} from ${offer.client.name}`,
+    link: `/freelancer/offers/${offer.id}`,
   });
 
   return reply.status(201).send({ offer });
@@ -314,7 +324,12 @@ export const acceptOffer = async (
   const offer = await prisma.offer.findUnique({
     where: { id },
     include: {
-      application: true,
+      application: {
+        include: {
+          job: true,
+        },
+      },
+      client: true,
     },
   });
 
@@ -329,6 +344,17 @@ export const acceptOffer = async (
 
   // Verify offer is still pending and not expired
   if (offer.status !== 'PENDING') {
+    // If already accepted, return the existing contract (idempotent)
+    if (offer.status === 'ACCEPTED') {
+      const existingContract = await prisma.contract.findUnique({
+        where: { offerId: offer.id },
+        include: { offer: true, job: true, client: true, freelancer: true },
+      });
+      const existingConversation = existingContract
+        ? await prisma.conversation.findUnique({ where: { contractId: existingContract.id } })
+        : null;
+      return reply.send({ offer, contract: existingContract, conversation: existingConversation });
+    }
     return reply.status(400).send({ message: 'Offer is no longer available' });
   }
 
@@ -373,7 +399,25 @@ export const acceptOffer = async (
       },
     });
 
-    return { offer: updatedOffer, contract };
+    // Create conversation for the contract
+    const conversation = await tx.conversation.create({
+      data: {
+        contractId: contract.id,
+        clientId: contract.clientId,
+        freelancerId: contract.freelancerId,
+      },
+    });
+
+    return { offer: updatedOffer, contract, conversation };
+  });
+
+  // Notify client of accepted offer and contract creation
+  await createNotification({
+    userId: offer.clientId,
+    type: 'OFFER_ACCEPTED',
+    title: 'Offer Accepted',
+    message: `Your offer for ${offer.application.job.title} was accepted. A new contract has been created.`,
+    link: `/client/contracts/${result.contract.id}`,
   });
 
   return reply.send(result);

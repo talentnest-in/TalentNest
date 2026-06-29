@@ -5,6 +5,7 @@ import './index.css';
 import App from './App.tsx';
 import { ThemeProvider } from './contexts/ThemeProvider.tsx';
 import { AuthProvider } from './contexts/AuthContext.tsx';
+import { SocketProvider } from './contexts/SocketContext.tsx';
 import { ErrorBoundary } from './components/shared/ErrorBoundary';
 
 const queryClient = new QueryClient({
@@ -20,7 +21,9 @@ createRoot(document.getElementById('root')!).render(
       <QueryClientProvider client={queryClient}>
         <ThemeProvider defaultTheme="light" storageKey="talentnest-theme">
           <AuthProvider>
-            <App />
+            <SocketProvider>
+              <App />
+            </SocketProvider>
           </AuthProvider>
         </ThemeProvider>
       </QueryClientProvider>

@@ -1,6 +1,7 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
 import { prisma } from '../lib/prisma';
 import { z } from 'zod';
+import { createNotification } from './notification.controller';
 
 // ── Validation Schemas ─────────────────────────────────────────────────────────────
 
@@ -92,6 +93,15 @@ export const applyForJob = async (
         },
       },
     },
+  });
+
+  // Notify client of new application
+  await createNotification({
+    userId: job.clientProfile.userId,
+    type: 'NEW_APPLICATION',
+    title: 'New Job Application',
+    message: `You have received a new application for ${job.title}`,
+    link: `/client/jobs/${jobId}/applicants`,
   });
 
   return reply.status(201).send({ application });

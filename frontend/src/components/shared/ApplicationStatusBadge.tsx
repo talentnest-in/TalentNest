@@ -1,12 +1,12 @@
 import type { ApplicationStatus } from '@/types';
 
 const statusConfig: Record<ApplicationStatus, { label: string; color: string }> = {
-  PENDING: { label: 'Pending', color: 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20' },
-  REVIEWING: { label: 'Reviewing', color: 'bg-blue-500/10 text-blue-400 border-blue-500/20' },
-  SHORTLISTED: { label: 'Shortlisted', color: 'bg-purple-500/10 text-purple-400 border-purple-500/20' },
-  REJECTED: { label: 'Rejected', color: 'bg-red-500/10 text-red-400 border-red-500/20' },
-  HIRED: { label: 'Hired', color: 'bg-green-500/10 text-green-400 border-green-500/20' },
-  WITHDRAWN: { label: 'Withdrawn', color: 'bg-gray-500/10 text-gray-400 border-gray-500/20' },
+  PENDING: { label: 'Pending', color: 'bg-warning/10 text-warning border-warning/20' },
+  REVIEWING: { label: 'Reviewing', color: 'bg-primary/10 text-primary border-primary/20' },
+  SHORTLISTED: { label: 'Shortlisted', color: 'bg-accent/10 text-accent border-accent/20' },
+  REJECTED: { label: 'Rejected', color: 'bg-error/10 text-error border-error/20' },
+  HIRED: { label: 'Hired', color: 'bg-success/10 text-success border-success/20' },
+  WITHDRAWN: { label: 'Withdrawn', color: 'bg-text-muted/10 text-text-muted border-text-muted/20' },
 };
 
 interface ApplicationStatusBadgeProps {

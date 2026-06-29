@@ -2,18 +2,30 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useParams } from 'react-router-dom';
 import { contractService } from '@/services/contract.service';
+import { chatService } from '@/services/chat.service';
 import { WorkspaceSidebar } from '@/components/ui/WorkspaceSidebar';
 import { ContractSummaryCard } from '@/components/ui/ContractSummaryCard';
-import { Folder, MessageSquare, CheckSquare, FileText } from 'lucide-react';
+import { WorkspaceChat } from '@/components/workspace/WorkspaceChat';
+import { WorkspaceFiles } from '@/components/workspace/WorkspaceFiles';
+import { WorkspaceMilestones } from '@/components/workspace/WorkspaceMilestones';
+import { WorkspaceNotes } from '@/components/workspace/WorkspaceNotes';
+import { MessageSquare, Loader2 } from 'lucide-react';
 
 export function ProjectWorkspace() {
   const { id } = useParams<{ id: string }>();
   const [activeTab, setActiveTab] = useState('overview');
 
+
   const { data, isLoading, error } = useQuery({
     queryKey: ['contract', id],
     queryFn: () => contractService.getContractDetails(id!),
     enabled: !!id,
+  });
+
+  const { data: conversation, isLoading: isLoadingConversation } = useQuery({
+    queryKey: ['conversation', id],
+    queryFn: () => chatService.getOrCreateConversation(id!),
+    enabled: !!id && activeTab === 'messages',
   });
 
   if (isLoading) {
@@ -51,50 +63,41 @@ export function ProjectWorkspace() {
         );
       case 'messages':
         return (
-          <div className="bg-surface border border-border/50 rounded-xl p-6">
-            <div className="flex flex-col items-center justify-center py-16">
-              <MessageSquare className="w-12 h-12 text-text-muted mb-4" />
-              <h3 className="text-lg font-semibold text-text mb-2">Messages</h3>
-              <p className="text-sm text-text-muted text-center max-w-sm">
-                Messaging feature coming soon. This will allow you to communicate with your project partner.
-              </p>
-            </div>
+          <div className="bg-surface border border-border/50 rounded-xl h-[calc(100vh-12rem)]">
+            {isLoadingConversation ? (
+              <div className="flex flex-col items-center justify-center h-full py-16">
+                <Loader2 className="w-8 h-8 text-accent animate-spin mb-4" />
+                <h3 className="text-lg font-semibold text-text mb-2">Loading messages...</h3>
+              </div>
+            ) : conversation ? (
+              <WorkspaceChat conversationId={conversation.id} />
+            ) : (
+              <div className="flex flex-col items-center justify-center h-full py-16">
+                <MessageSquare className="w-12 h-12 text-text-muted mb-4" />
+                <h3 className="text-lg font-semibold text-text mb-2">No Conversation</h3>
+                <p className="text-sm text-text-muted text-center max-w-sm">
+                  Conversation could not be loaded.
+                </p>
+              </div>
+            )}
           </div>
         );
       case 'files':
         return (
-          <div className="bg-surface border border-border/50 rounded-xl p-6">
-            <div className="flex flex-col items-center justify-center py-16">
-              <Folder className="w-12 h-12 text-text-muted mb-4" />
-              <h3 className="text-lg font-semibold text-text mb-2">Files</h3>
-              <p className="text-sm text-text-muted text-center max-w-sm">
-                File sharing feature coming soon. This will allow you to upload and share project files.
-              </p>
-            </div>
+          <div className="bg-surface border border-border/50 rounded-xl h-[calc(100vh-12rem)]">
+            <WorkspaceFiles contractId={id!} />
           </div>
         );
       case 'milestones':
         return (
-          <div className="bg-surface border border-border/50 rounded-xl p-6">
-            <div className="flex flex-col items-center justify-center py-16">
-              <CheckSquare className="w-12 h-12 text-text-muted mb-4" />
-              <h3 className="text-lg font-semibold text-text mb-2">Milestones</h3>
-              <p className="text-sm text-text-muted text-center max-w-sm">
-                Milestone tracking feature coming soon. This will help you track project progress.
-              </p>
-            </div>
+          <div className="bg-surface border border-border/50 rounded-xl h-[calc(100vh-12rem)]">
+            <WorkspaceMilestones contractId={id!} />
           </div>
         );
       case 'notes':
         return (
-          <div className="bg-surface border border-border/50 rounded-xl p-6">
-            <div className="flex flex-col items-center justify-center py-16">
-              <FileText className="w-12 h-12 text-text-muted mb-4" />
-              <h3 className="text-lg font-semibold text-text mb-2">Notes</h3>
-              <p className="text-sm text-text-muted text-center max-w-sm">
-                Notes feature coming soon. This will allow you to keep project notes and documentation.
-              </p>
-            </div>
+          <div className="bg-surface border border-border/50 rounded-xl h-[calc(100vh-12rem)]">
+            <WorkspaceNotes contractId={id!} />
           </div>
         );
       default:
@@ -112,7 +115,7 @@ export function ProjectWorkspace() {
       <div className="flex-1 overflow-y-auto bg-background">
         <div className="max-w-6xl mx-auto px-4 py-8">
           <div className="mb-6">
-            <h1 className="text-2xl font-bold text-text mb-2">{contract.title}</h1>
+            <h1 className="text-2xl font-heading font-bold text-text mb-2">{contract.title}</h1>
             <p className="text-sm text-text-muted">Project Workspace</p>
           </div>
           {renderContent()}

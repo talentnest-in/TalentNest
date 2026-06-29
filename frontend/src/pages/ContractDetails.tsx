@@ -90,7 +90,7 @@ export function ContractDetails() {
     <div className="max-w-6xl mx-auto px-4 py-8">
       <button
         onClick={() => navigate('/contracts')}
-        className="flex items-center gap-2 text-sm text-text-muted hover:text-text mb-6 transition-colors"
+        className="flex items-center gap-2 text-sm text-text-muted hover:text-text mb-6 transition-colors font-medium"
       >
         <ArrowLeft className="w-4 h-4" />
         Back to Contracts

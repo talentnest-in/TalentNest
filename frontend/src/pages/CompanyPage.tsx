@@ -84,7 +84,7 @@ export function CompanyPage() {
         </button>
 
         <div>
-          <h1 className="text-2xl font-bold text-text">Company Profile</h1>
+          <h1 className="text-2xl font-heading font-bold text-text">Company Profile</h1>
           <p className="text-text-muted mt-1">Manage your company details and branding.</p>
         </div>
 

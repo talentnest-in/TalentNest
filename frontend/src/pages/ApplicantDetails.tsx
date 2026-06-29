@@ -89,14 +89,14 @@ export function ApplicantDetails() {
         <div className="mb-6">
           <button
             onClick={() => navigate(-1)}
-            className="flex items-center gap-2 text-text-muted hover:text-text mb-4 transition-colors"
+            className="flex items-center gap-2 text-text-muted hover:text-text mb-4 transition-colors font-medium"
           >
             <ArrowLeft className="w-4 h-4" />
             Back
           </button>
           <div className="flex items-start justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-text mb-2">{user?.name || 'Anonymous'}</h1>
+              <h1 className="text-2xl font-heading font-bold text-text mb-2">{user?.name || 'Anonymous'}</h1>
               <p className="text-text-muted">{profile.title || 'Freelancer'}</p>
             </div>
             <div className="flex items-center gap-4">

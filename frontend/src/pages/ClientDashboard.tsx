@@ -84,7 +84,7 @@ export function ClientDashboard() {
               {/* Stats */}
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-5">
                 <StatCard icon={TrendingUp} label="Active Jobs" value={data?.activeJobs ?? 0} color="bg-accent" subtitle="Currently hiring" />
-                <StatCard icon={DollarSign} label="Pending Offers" value={pendingOffers.toString()} color="bg-yellow-500" subtitle="Awaiting response" />
+                <StatCard icon={DollarSign} label="Pending Offers" value={pendingOffers.toString()} color="bg-warning" subtitle="Awaiting response" />
                 <StatCard icon={FileText} label="Active Contracts" value={activeContracts.toString()} color="bg-primary" subtitle="In progress" />
                 <StatCard icon={CheckCircle} label="Completed Contracts" value={completedContracts.toString()} color="bg-success" subtitle="Successfully completed" />
               </div>
