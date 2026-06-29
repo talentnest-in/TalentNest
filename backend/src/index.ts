@@ -221,7 +221,7 @@ server.register(offerRoutes, { prefix: '/api/v1/offers' });
 server.register(contractRoutes, { prefix: '/api/v1/contracts' });
 server.register(chatRoutes, { prefix: '/api/v1/chat' });
 server.register(notificationRoutes, { prefix: '/api/v1' });
-server.register(uploadRoutes, { prefix: '/api/v1/upload' });
+server.register(uploadRoutes, { prefix: '/api/v1' });
 server.register(milestoneRoutes, { prefix: '/api/v1' });
 server.register(noteRoutes, { prefix: '/api/v1' });
 server.register(workspaceFileRoutes, { prefix: '/api/v1' });

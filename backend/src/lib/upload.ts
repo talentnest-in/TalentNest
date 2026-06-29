@@ -1,8 +1,7 @@
 import { MultipartFile } from '@fastify/multipart';
-import fs from 'fs';
 import path from 'path';
-import { pipeline } from 'stream/promises';
 import crypto from 'crypto';
+import { uploadToCloudinary } from './cloudinary';
 
 export type UploadType = 'avatar' | 'logo' | 'portfolio' | 'resume';
 
@@ -29,7 +28,22 @@ const FILE_SIZE_LIMITS: Record<UploadType, number> = {
   resume: 10 * 1024 * 1024, // 10MB
 };
 
-export async function uploadFile(file: MultipartFile, type: UploadType): Promise<string> {
+const CLOUDINARY_FOLDERS: Record<UploadType, string> = {
+  avatar: 'talentnest/avatars',
+  logo: 'talentnest/company-logos',
+  portfolio: 'talentnest/portfolio',
+  resume: 'talentnest/resumes',
+};
+
+export interface UploadResult {
+  secure_url: string;
+  public_id: string;
+  resource_type: string;
+  bytes: number;
+  format: string;
+}
+
+export async function uploadFile(file: MultipartFile, type: UploadType): Promise<UploadResult> {
   // Check file size
   const fileSize = file.file.bytesRead;
   const maxSize = FILE_SIZE_LIMITS[type];
@@ -57,15 +71,16 @@ export async function uploadFile(file: MultipartFile, type: UploadType): Promise
     throw new Error(`Invalid file extension. Allowed extensions: ${ALLOWED_EXTENSIONS[type].join(', ')}`);
   }
 
-  const uploadsDir = path.join(__dirname, '..', '..', 'public', 'uploads');
-  if (!fs.existsSync(uploadsDir)) {
-    fs.mkdirSync(uploadsDir, { recursive: true });
-  }
-
-  const randomName = crypto.randomBytes(16).toString('hex') + ext;
-  const filePath = path.join(uploadsDir, randomName);
+  // Convert file to buffer
+  const buffer = await file.toBuffer();
   
-  await pipeline(file.file, fs.createWriteStream(filePath));
+  // Generate unique filename
+  const randomName = crypto.randomBytes(16).toString('hex');
+  const filename = `${randomName}${ext}`;
   
-  return `/public/uploads/${randomName}`;
+  // Upload to Cloudinary
+  const folder = CLOUDINARY_FOLDERS[type];
+  const result = await uploadToCloudinary(buffer, filename, mimeType, folder);
+  
+  return result;
 }

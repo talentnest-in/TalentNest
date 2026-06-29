@@ -1,6 +1,7 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
 import { prisma } from '../lib/prisma';
 import { uploadFile } from '../lib/upload';
+import { deleteFromCloudinary } from '../lib/cloudinary';
 import { z } from 'zod';
 
 const profileSchema = z.object({
@@ -43,13 +44,31 @@ export const updateClientProfile = async (request: FastifyRequest, reply: Fastif
 export const uploadClientLogo = async (request: FastifyRequest, reply: FastifyReply) => {
   const file = await request.file();
   if (!file) return reply.status(400).send({ message: 'No file uploaded' });
-  const logoUrl = await uploadFile(file, 'logo');
+  const uploadResult = await uploadFile(file, 'logo');
+  
+  // Delete old logo from Cloudinary if exists
+  const existingProfile = await prisma.clientProfile.findUnique({
+    where: { userId: request.user.id },
+  });
+  if (existingProfile?.logoUrl) {
+    try {
+      const urlParts = existingProfile.logoUrl.split('/');
+      const filename = urlParts[urlParts.length - 1];
+      if (filename) {
+        const publicId = `talentnest/company-logos/${filename.split('.')[0]}`;
+        await deleteFromCloudinary(publicId);
+      }
+    } catch (err) {
+      request.log.warn('Failed to delete old logo from Cloudinary');
+    }
+  }
+  
   await prisma.clientProfile.upsert({
     where: { userId: request.user.id },
-    create: { userId: request.user.id, logoUrl },
-    update: { logoUrl },
+    create: { userId: request.user.id, logoUrl: uploadResult.secure_url },
+    update: { logoUrl: uploadResult.secure_url },
   });
-  return reply.send({ logoUrl });
+  return reply.send({ logoUrl: uploadResult.secure_url });
 };
 
 // ── Client Dashboard ───────────────────────────────────────────────────────────

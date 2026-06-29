@@ -1,5 +1,6 @@
 import { Check, CheckCheck, Download, FileText, Image as ImageIcon } from 'lucide-react';
 import type { Message, MessageAttachment } from '@/services/chat.service';
+import { api } from '@/lib/api';
 
 interface ChatBubbleProps {
   message: Message;
@@ -39,9 +40,31 @@ export function ChatBubble({ message, isOwn }: ChatBubbleProps) {
     }
     
     return (
-      <a
-        href={attachment.fileUrl}
-        download={attachment.fileName}
+      <button
+        onClick={async () => {
+          try {
+            const response = await api.get('/download', {
+              params: {
+                url: attachment.fileUrl,
+                fileName: attachment.fileName,
+              },
+              responseType: 'blob',
+            });
+            
+            const blob = new Blob([response.data]);
+            const downloadUrl = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = downloadUrl;
+            link.download = attachment.fileName;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(downloadUrl);
+          } catch (error) {
+            console.error('Download failed:', error);
+            alert('Failed to download file');
+          }
+        }}
         className="mt-2 flex items-center gap-3 p-3 bg-background/50 rounded-lg hover:bg-background/70 transition-colors"
       >
         <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
@@ -56,7 +79,7 @@ export function ChatBubble({ message, isOwn }: ChatBubbleProps) {
           <p className="text-xs text-text-muted">{(attachment.size / 1024 / 1024).toFixed(2)} MB</p>
         </div>
         <Download className="w-4 h-4 text-text-muted shrink-0" />
-      </a>
+      </button>
     );
   };
 

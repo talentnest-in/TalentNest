@@ -1,6 +1,7 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
 import { prisma } from '../lib/prisma';
 import { uploadFile } from '../lib/upload';
+import { deleteFromCloudinary } from '../lib/cloudinary';
 import { z } from 'zod';
 
 // ── Validation Schemas ──
@@ -65,12 +66,29 @@ export const uploadResume = async (request: FastifyRequest, reply: FastifyReply)
   const file = await request.file();
   if (!file) return reply.status(400).send({ message: 'No file uploaded' });
 
-  const resumeUrl = await uploadFile(file, 'resume');
+  const uploadResult = await uploadFile(file, 'resume');
+
+  // Delete old resume from Cloudinary if exists
+  const existingProfile = await prisma.freelancerProfile.findUnique({
+    where: { userId: request.user.id },
+  });
+  if (existingProfile?.resumeUrl) {
+    try {
+      const urlParts = existingProfile.resumeUrl.split('/');
+      const filename = urlParts[urlParts.length - 1];
+      if (filename) {
+        const publicId = `talentnest/resumes/${filename.split('.')[0]}`;
+        await deleteFromCloudinary(publicId);
+      }
+    } catch (err) {
+      request.log.warn('Failed to delete old resume from Cloudinary');
+    }
+  }
 
   const profile = await prisma.freelancerProfile.upsert({
     where: { userId: request.user.id },
-    update: { resumeUrl },
-    create: { userId: request.user.id, resumeUrl },
+    update: { resumeUrl: uploadResult.secure_url },
+    create: { userId: request.user.id, resumeUrl: uploadResult.secure_url },
   });
 
   return reply.send({ resumeUrl: profile.resumeUrl });
@@ -80,14 +98,31 @@ export const uploadAvatar = async (request: FastifyRequest, reply: FastifyReply)
   const file = await request.file();
   if (!file) return reply.status(400).send({ message: 'No file uploaded' });
 
-  const avatar = await uploadFile(file, 'avatar');
+  const uploadResult = await uploadFile(file, 'avatar');
+
+  // Delete old avatar from Cloudinary if exists
+  const existingUser = await prisma.user.findUnique({
+    where: { id: request.user.id },
+  });
+  if (existingUser?.avatar) {
+    try {
+      const urlParts = existingUser.avatar.split('/');
+      const filename = urlParts[urlParts.length - 1];
+      if (filename) {
+        const publicId = `talentnest/avatars/${filename.split('.')[0]}`;
+        await deleteFromCloudinary(publicId);
+      }
+    } catch (err) {
+      request.log.warn('Failed to delete old avatar from Cloudinary');
+    }
+  }
 
   await prisma.user.update({
     where: { id: request.user.id },
-    data: { avatar },
+    data: { avatar: uploadResult.secure_url },
   });
 
-  return reply.send({ avatar });
+  return reply.send({ avatar: uploadResult.secure_url });
 };
 
 // ── Skills ──

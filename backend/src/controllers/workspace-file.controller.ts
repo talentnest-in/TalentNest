@@ -1,13 +1,13 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
 import { z } from 'zod';
 import { prisma } from '../lib/prisma';
-import path from 'path';
-import fs from 'fs/promises';
+import { deleteFromCloudinary } from '../lib/cloudinary';
 
 // ── Validation Schemas ───────────────────────────────────────────────────────
 const createFileSchema = z.object({
   fileName: z.string().min(1),
   fileUrl: z.string().url(),
+  publicId: z.string().min(1),
   mimeType: z.string().min(1),
   size: z.number().positive(),
 });
@@ -91,6 +91,7 @@ export const createFile = async (
         uploaderId: userId,
         fileName: data.fileName,
         fileUrl: data.fileUrl,
+        publicId: data.publicId,
         mimeType: data.mimeType,
         size: data.size,
       },
@@ -151,13 +152,13 @@ export const deleteFile = async (
       return reply.status(403).send({ error: 'Only the uploader can delete this file' });
     }
 
-    // Delete physical file
-    try {
-      const filePath = path.join(process.cwd(), 'uploads', file.fileName);
-      await fs.unlink(filePath);
-    } catch (err) {
-      // File might not exist, continue with database deletion
-      request.log.warn('Physical file not found, deleting database record only');
+    // Delete from Cloudinary
+    if (file.publicId) {
+      try {
+        await deleteFromCloudinary(file.publicId);
+      } catch (err) {
+        request.log.warn('Failed to delete from Cloudinary, deleting database record only');
+      }
     }
 
     await prisma.workspaceFile.delete({

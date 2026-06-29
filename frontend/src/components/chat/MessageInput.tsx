@@ -49,12 +49,13 @@ export function MessageInput({ onSendMessage, onTypingStart, disabled }: Message
       'image/png',
       'image/webp',
       'application/pdf',
+      'application/msword',
       'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
       'application/zip',
     ];
     
     if (!allowedTypes.includes(file.type)) {
-      alert('Invalid file type. Allowed: JPG, PNG, WEBP, PDF, DOCX, ZIP');
+      alert('Invalid file type. Allowed: JPG, PNG, WEBP, PDF, DOC, DOCX, ZIP');
       return;
     }
 
@@ -66,6 +67,7 @@ export function MessageInput({ onSendMessage, onTypingStart, disabled }: Message
         messageId: '',
         fileName: uploadedFile.fileName,
         fileUrl: uploadedFile.fileUrl,
+        publicId: uploadedFile.publicId,
         mimeType: uploadedFile.mimeType,
         size: uploadedFile.size,
         createdAt: new Date().toISOString(),

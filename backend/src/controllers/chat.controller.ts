@@ -10,6 +10,7 @@ const sendMessageSchema = z.object({
   attachments: z.array(z.object({
     fileName: z.string(),
     fileUrl: z.string(),
+    publicId: z.string(),
     mimeType: z.string(),
     size: z.number(),
   })).optional(),
@@ -149,6 +150,7 @@ export const sendMessage = async (
             create: attachments.map(att => ({
               fileName: att.fileName,
               fileUrl: att.fileUrl,
+              publicId: att.publicId,
               mimeType: att.mimeType,
               size: att.size,
             })),

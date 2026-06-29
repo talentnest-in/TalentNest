@@ -37,7 +37,7 @@ interface WorkspaceFile {
   const { data: files, isLoading } = useQuery({
     queryKey: ['workspace-files', contractId],
     queryFn: async () => {
-      const response = await api.get(`/api/v1/workspace/files/${contractId}`);
+      const response = await api.get(`/workspace/files/${contractId}`);
       return response.data as WorkspaceFile[];
     },
     enabled: !!contractId,
@@ -74,12 +74,15 @@ interface WorkspaceFile {
       const formData = new FormData();
       formData.append('file', file);
       
-      const uploadResponse = await api.post('/api/v1/upload', formData);
+      const uploadResponse = await api.post('/upload', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
 
       // Then create the workspace file record
-      const fileResponse = await api.post(`/api/v1/workspace/files/${contractId}`, {
+      const fileResponse = await api.post(`/workspace/files/${contractId}`, {
         fileName: uploadResponse.data.fileName,
         fileUrl: uploadResponse.data.fileUrl,
+        publicId: uploadResponse.data.publicId,
         mimeType: uploadResponse.data.mimeType,
         size: uploadResponse.data.size,
       });
@@ -98,7 +101,7 @@ interface WorkspaceFile {
 
   const deleteMutation = useMutation({
     mutationFn: async (fileId: string) => {
-      await api.delete(`/api/v1/workspace/files/${contractId}/${fileId}`);
+      await api.delete(`/workspace/files/${contractId}/${fileId}`);
       
       // Emit socket event for real-time update
       if (socket) {
@@ -129,12 +132,13 @@ interface WorkspaceFile {
       'image/png',
       'image/webp',
       'application/pdf',
+      'application/msword',
       'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
       'application/zip',
     ];
     
     if (!allowedTypes.includes(file.type)) {
-      alert('Invalid file type. Allowed: JPG, PNG, WEBP, PDF, DOCX, ZIP');
+      alert('Invalid file type. Allowed: JPG, PNG, WEBP, PDF, DOC, DOCX, ZIP');
       return;
     }
 
@@ -186,12 +190,13 @@ interface WorkspaceFile {
       'image/png',
       'image/webp',
       'application/pdf',
+      'application/msword',
       'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
       'application/zip',
     ];
     
     if (!allowedTypes.includes(file.type)) {
-      alert('Invalid file type. Allowed: JPG, PNG, WEBP, PDF, DOCX, ZIP');
+      alert('Invalid file type. Allowed: JPG, PNG, WEBP, PDF, DOC, DOCX, ZIP');
       return;
     }
 
@@ -326,14 +331,36 @@ interface WorkspaceFile {
                     {new Date(file.createdAt).toLocaleDateString()}
                   </p>
                   <div className="flex items-center justify-between mt-2">
-                    <a
-                      href={file.fileUrl}
-                      download={file.fileName}
+                    <button
+                      onClick={async () => {
+                        try {
+                          const response = await api.get('/download', {
+                            params: {
+                              url: file.fileUrl,
+                              fileName: file.fileName,
+                            },
+                            responseType: 'blob',
+                          });
+                          
+                          const blob = new Blob([response.data]);
+                          const downloadUrl = window.URL.createObjectURL(blob);
+                          const link = document.createElement('a');
+                          link.href = downloadUrl;
+                          link.download = file.fileName;
+                          document.body.appendChild(link);
+                          link.click();
+                          document.body.removeChild(link);
+                          window.URL.revokeObjectURL(downloadUrl);
+                        } catch (error) {
+                          console.error('Download failed:', error);
+                          alert('Failed to download file');
+                        }
+                      }}
                       className="flex items-center gap-1 text-xs text-accent hover:text-accent/90"
                     >
                       <Download className="w-3 h-3" />
                       Download
-                    </a>
+                    </button>
                     {file.uploaderId === user?.id && (
                       <button
                         onClick={() => {

@@ -36,6 +36,7 @@ export interface MessageAttachment {
   messageId: string;
   fileName: string;
   fileUrl: string;
+  publicId: string;
   mimeType: string;
   size: number;
   createdAt: string;
@@ -90,12 +91,13 @@ export const chatService = {
   async uploadFile(file: File): Promise<{
     fileName: string;
     fileUrl: string;
+    publicId: string;
     mimeType: string;
     size: number;
   }> {
     const formData = new FormData();
     formData.append('file', file);
-    const response = await api.post('/api/v1/upload', formData, {
+    const response = await api.post('/upload', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },

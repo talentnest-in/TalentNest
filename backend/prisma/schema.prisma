@@ -361,6 +361,7 @@ model MessageAttachment {
   messageId  String
   fileName   String
   fileUrl    String
+  publicId   String?
   mimeType   String
   size       Int
   createdAt  DateTime @default(now())
@@ -446,6 +447,7 @@ model WorkspaceFile {
   uploaderId     String
   fileName       String
   fileUrl        String
+  publicId       String
   mimeType       String
   size           Int
   createdAt      DateTime     @default(now())

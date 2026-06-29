@@ -1,6 +1,7 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
 import { prisma } from '../lib/prisma';
 import { uploadFile } from '../lib/upload';
+import { deleteFromCloudinary } from '../lib/cloudinary';
 import { z } from 'zod';
 
 const projectSchema = z.object({
@@ -69,6 +70,22 @@ export const updateProject = async (request: FastifyRequest<{ Params: { id: stri
 
 export const deleteProject = async (request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) => {
   const { id } = request.params;
+  
+  const project = await prisma.portfolioProject.findUnique({ where: { id } });
+  if (project?.imageUrl) {
+    try {
+      // Extract public_id from Cloudinary URL if it's a Cloudinary URL
+      const urlParts = project.imageUrl.split('/');
+      const filename = urlParts[urlParts.length - 1];
+      if (filename) {
+        const publicId = `talentnest/portfolio/${filename.split('.')[0] || filename}`;
+        await deleteFromCloudinary(publicId);
+      }
+    } catch (err) {
+      request.log.warn('Failed to delete from Cloudinary');
+    }
+  }
+  
   await prisma.portfolioProject.delete({ where: { id } });
   return reply.send({ success: true });
 };
@@ -77,6 +94,6 @@ export const uploadProjectImage = async (request: FastifyRequest, reply: Fastify
   const file = await request.file();
   if (!file) return reply.status(400).send({ message: 'No file uploaded' });
 
-  const imageUrl = await uploadFile(file, 'portfolio');
-  return reply.send({ imageUrl });
+  const uploadResult = await uploadFile(file, 'portfolio');
+  return reply.send({ imageUrl: uploadResult.secure_url });
 };
