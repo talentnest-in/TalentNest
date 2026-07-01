@@ -28,6 +28,18 @@ import { ContractDetails } from '@/pages/ContractDetails';
 import { ProjectWorkspace } from '@/pages/ProjectWorkspace';
 import { Communications } from '@/pages/Communications';
 import { ConversationDetail } from '@/pages/ConversationDetail';
+import { AcademyMarketplace } from '@/pages/AcademyMarketplace';
+import { AcademyCourseDetails } from '@/pages/AcademyCourseDetails';
+import { AcademyMyLearning } from '@/pages/AcademyMyLearning';
+import { AcademyLearning } from '@/pages/AcademyLearning';
+import { AcademyCertificate } from '@/pages/AcademyCertificate';
+import { AcademyCreator } from '@/pages/AcademyCreator';
+import { AcademyCreatorCreate } from '@/pages/AcademyCreatorCreate';
+import { AcademyCreatorCourse } from '@/pages/AcademyCreatorCourse';
+import { AcademyCreatorAnalytics } from '@/pages/AcademyCreatorAnalytics';
+import { AcademyBecomeCreator } from '@/pages/AcademyBecomeCreator';
+import { AcademyMyCourses } from '@/pages/AcademyMyCourses';
+import { AcademyCreatorProfile } from '@/pages/AcademyCreatorProfile';
 
 function App() {
   return (
@@ -79,6 +91,20 @@ function App() {
             <Route path="/workspace/:id" element={<ProjectWorkspace />} />
             <Route path="/communications" element={<Communications />} />
             <Route path="/conversations/:id" element={<ConversationDetail />} />
+            
+            {/* ── Academy routes (shared) ── */}
+            <Route path="/academy" element={<AcademyMarketplace />} />
+            <Route path="/academy/course/:slug" element={<AcademyCourseDetails />} />
+            <Route path="/academy/my-learning" element={<AcademyMyLearning />} />
+            <Route path="/academy/learning/:courseId" element={<AcademyLearning />} />
+            <Route path="/academy/certificate/:id" element={<AcademyCertificate />} />
+            <Route path="/academy/become-creator" element={<AcademyBecomeCreator />} />
+            <Route path="/academy/creator" element={<AcademyCreator />} />
+            <Route path="/academy/creator/create" element={<AcademyCreatorCreate />} />
+            <Route path="/academy/creator/my-courses" element={<AcademyMyCourses />} />
+            <Route path="/academy/creator/course/:id" element={<AcademyCreatorCourse />} />
+            <Route path="/academy/creator/analytics" element={<AcademyCreatorAnalytics />} />
+            <Route path="/academy/creator/:id" element={<AcademyCreatorProfile />} />
           </Route>
         </Route>
 

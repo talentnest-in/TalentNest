@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { freelancerService } from '@/services/freelancer.service';
 import { portfolioService } from '@/services/portfolio.service';
+import { certificateService, courseService, creatorService } from '@/services/academy.service';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
@@ -11,7 +12,8 @@ import { ExperienceTimeline } from '@/components/freelancer/ExperienceTimeline';
 import { EducationCards } from '@/components/freelancer/EducationCards';
 import { PortfolioGrid } from '@/components/freelancer/PortfolioGrid';
 import { ResumeCard } from '@/components/freelancer/ResumeCard';
-import { User, Briefcase, GraduationCap, FolderDot, Plus, Loader2 } from 'lucide-react';
+import { CertificateCard } from '@/components/academy/CertificateCard';
+import { User, Briefcase, GraduationCap, FolderDot, Plus, Loader2, BookOpen, Award } from 'lucide-react';
 import type { Experience, Education, PortfolioProject } from '@/types';
 import { BACKEND_URL } from '@/lib/constants';
 
@@ -232,7 +234,22 @@ export function ProfileManager() {
     queryFn: freelancerService.getProfile,
   });
 
-  const [activeTab, setActiveTab] = useState<'overview' | 'experience' | 'education' | 'portfolio'>('overview');
+  const { data: certificates } = useQuery({
+    queryKey: ['certificates'],
+    queryFn: certificateService.getUserCertificates,
+  });
+
+  const { data: createdCourses } = useQuery({
+    queryKey: ['creator-courses'],
+    queryFn: () => courseService.getCreatorCourses(),
+  });
+
+  const { data: creatorProfile } = useQuery({
+    queryKey: ['creator-profile'],
+    queryFn: creatorService.getCreatorProfile,
+  });
+
+  const [activeTab, setActiveTab] = useState<'overview' | 'experience' | 'education' | 'portfolio' | 'academy'>('overview');
   const [isEditingBasic, setIsEditingBasic] = useState(false);
   const [basicForm, setBasicForm] = useState({ title: '', bio: '', hourlyRate: '', location: '' });
 
@@ -286,6 +303,7 @@ export function ProfileManager() {
     { id: 'experience', label: 'Experience', icon: Briefcase },
     { id: 'education', label: 'Education', icon: GraduationCap },
     { id: 'portfolio', label: 'Portfolio', icon: FolderDot },
+    { id: 'academy', label: 'Academy', icon: BookOpen },
   ] as const;
 
   return (
@@ -435,6 +453,74 @@ export function ProfileManager() {
                     onEdit={(p) => setPortModal({ open: true, item: p })}
                     onDelete={async (id) => { await portfolioService.deleteProject(id); invalidate(); }}
                   />
+                </div>
+              )}
+
+              {/* ── Academy Tab ── */}
+              {activeTab === 'academy' && (
+                <div className="space-y-8">
+                  {/* Creator Badge */}
+                  {creatorProfile && (
+                    <div className="bg-gradient-to-r from-orange-50 to-orange-100 rounded-xl p-6 border border-orange-200">
+                      <div className="flex items-center gap-4">
+                        <div className="w-16 h-16 bg-orange-500 rounded-full flex items-center justify-center">
+                          <Award className="w-8 h-8 text-white" />
+                        </div>
+                        <div>
+                          <h3 className="text-lg font-semibold text-gray-900">Course Creator</h3>
+                          <p className="text-sm text-gray-600">You are a verified course creator on TalentNest Academy</p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Certificates */}
+                  <div>
+                    <h3 className="text-lg font-semibold text-text mb-4">My Certificates</h3>
+                    {certificates && certificates.length > 0 ? (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {certificates.map((cert) => (
+                          <CertificateCard key={cert.id} certificate={cert} />
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-center py-8 text-text-muted">
+                        <Award className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                        <p>No certificates yet. Enroll in courses to earn certificates!</p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Created Courses */}
+                  {createdCourses && createdCourses.length > 0 && (
+                    <div>
+                      <h3 className="text-lg font-semibold text-text mb-4">My Courses</h3>
+                      <div className="space-y-3">
+                        {createdCourses.map((course) => (
+                          <div key={course.id} className="flex items-center gap-4 p-4 bg-gray-50 rounded-lg">
+                            <div className="w-12 h-12 bg-gray-200 rounded-lg overflow-hidden flex-shrink-0">
+                              {course.thumbnail ? (
+                                <img src={course.thumbnail} alt={course.title} className="w-full h-full object-cover" />
+                              ) : (
+                                <div className="w-full h-full flex items-center justify-center">
+                                  <BookOpen className="w-6 h-6 text-gray-400" />
+                                </div>
+                              )}
+                            </div>
+                            <div className="flex-1">
+                              <p className="font-medium text-text">{course.title}</p>
+                              <p className="text-sm text-text-muted">{course._count?.enrollments || 0} students enrolled</p>
+                            </div>
+                            <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                              course.status === 'PUBLISHED' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'
+                            }`}>
+                              {course.status}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </motion.div>

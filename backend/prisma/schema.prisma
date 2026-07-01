@@ -39,6 +39,14 @@ model User {
   notifications        Notification[]    @relation("UserNotifications")
   uploadedFiles        WorkspaceFile[]   @relation("UploadedFiles")
 
+  // Academy relations
+  creatorCourses       Course[]         @relation("CreatorCourses")
+  studentEnrollments   Enrollment[]     @relation("StudentEnrollments")
+  studentReviews       CourseReview[]   @relation("StudentReviews")
+  userWishlists        CourseWishlist[] @relation("UserWishlists")
+  studentPurchases     CoursePurchase[] @relation("StudentPurchases")
+  creatorProfile       CreatorProfile?
+
   @@unique([provider, providerId])
   @@index([email])
   @@index([role])
@@ -460,4 +468,355 @@ model WorkspaceFile {
   @@index([conversationId])
   @@index([uploaderId])
   @@index([createdAt])
+}
+
+// ─── Sprint 8: TalentNest Academy (Course Marketplace) ─────────────────────────────
+
+enum CourseStatus {
+  DRAFT
+  PENDING_REVIEW
+  PUBLISHED
+  REJECTED
+}
+
+enum CourseLevel {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+}
+
+enum LessonType {
+  VIDEO
+  ARTICLE
+  PDF
+  RESOURCE
+  ASSIGNMENT
+  QUIZ
+}
+
+enum EnrollmentStatus {
+  ACTIVE
+  COMPLETED
+  CANCELLED
+}
+
+model CourseCategory {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  slug        String   @unique
+  description String?  @db.Text
+  icon        String?
+  order       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  courses     Course[]
+}
+
+model CourseTag {
+  id        String   @id @default(uuid())
+  name      String   @unique
+  slug      String   @unique
+  createdAt DateTime @default(now())
+
+  courses   CourseTagRelation[]
+}
+
+model Course {
+  id              String          @id @default(uuid())
+  creatorId       String
+  categoryId      String
+  title           String
+  slug            String          @unique
+  subtitle        String?
+  description     String          @db.Text
+  thumbnail       String?
+  price           Float           @default(0)
+  discountPrice   Float?
+  level           CourseLevel     @default(BEGINNER)
+  language        String          @default("English")
+  duration        Int?            // in minutes
+  status          CourseStatus    @default(DRAFT)
+  visibility      Boolean         @default(true)
+  requirements    String[]        @db.Text
+  whatYouWillLearn String[]        @db.Text
+  targetAudience  String[]        @db.Text
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  creator         User            @relation("CreatorCourses", fields: [creatorId], references: [id], onDelete: Cascade)
+  category        CourseCategory  @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  sections        CourseSection[]
+  enrollments     Enrollment[]
+  reviews         CourseReview[]
+  wishlists       CourseWishlist[]
+  purchases       CoursePurchase[]
+  tags            CourseTagRelation[]
+  analytics       CourseAnalytics?
+
+  @@index([creatorId])
+  @@index([categoryId])
+  @@index([status])
+  @@index([slug])
+  @@index([createdAt])
+}
+
+model CourseTagRelation {
+  courseId String
+  tagId    String
+  course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  tag      CourseTag @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([courseId, tagId])
+}
+
+model CourseSection {
+  id          String   @id @default(uuid())
+  courseId    String
+  title       String
+  description String?  @db.Text
+  order       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  course      Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  lessons     Lesson[]
+
+  @@index([courseId])
+  @@index([order])
+}
+
+model Lesson {
+  id          String     @id @default(uuid())
+  sectionId   String
+  title       String
+  description String?    @db.Text
+  content     String?    @db.Text
+  videoUrl    String?
+  attachments String[]   @db.Text
+  duration    Int?       // in minutes
+  type        LessonType @default(VIDEO)
+  order       Int        @default(0)
+  isPreview   Boolean    @default(false)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  section     CourseSection @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  progress    LessonProgress[]
+  quiz        Quiz?
+
+  @@index([sectionId])
+  @@index([order])
+}
+
+model Enrollment {
+  id              String           @id @default(uuid())
+  courseId        String
+  studentId       String
+  status          EnrollmentStatus @default(ACTIVE)
+  progress        Float            @default(0) // percentage
+  enrolledAt      DateTime         @default(now())
+  completedAt     DateTime?
+  lastAccessedAt  DateTime         @default(now())
+
+  course          Course           @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  student         User             @relation("StudentEnrollments", fields: [studentId], references: [id], onDelete: Cascade)
+  progressRecords LessonProgress[]
+  quizAttempts    QuizAttempt[]
+  certificate     Certificate?
+
+  @@unique([courseId, studentId])
+  @@index([studentId])
+  @@index([courseId])
+  @@index([status])
+  @@index([enrolledAt])
+}
+
+model LessonProgress {
+  id            String     @id @default(uuid())
+  enrollmentId  String
+  lessonId      String
+  completed     Boolean    @default(false)
+  completedAt   DateTime?
+  timeSpent     Int        @default(0) // in seconds
+  lastAccessedAt DateTime  @default(now())
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+
+  enrollment    Enrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+  lesson        Lesson     @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  @@unique([enrollmentId, lessonId])
+  @@index([enrollmentId])
+  @@index([lessonId])
+}
+
+model Quiz {
+  id              String   @id @default(uuid())
+  lessonId        String   @unique
+  title           String
+  description     String?  @db.Text
+  passPercentage  Int      @default(70) // percentage to pass
+  maxAttempts     Int      @default(3)
+  timeLimit       Int?     // in minutes, null means unlimited
+  shuffleQuestions Boolean @default(false)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  lesson          Lesson         @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  questions       QuizQuestion[]
+  attempts        QuizAttempt[]
+
+  @@index([lessonId])
+}
+
+model QuizQuestion {
+  id          String       @id @default(uuid())
+  quizId      String
+  question    String       @db.Text
+  explanation String?      @db.Text
+  order       Int          @default(0)
+  points      Int          @default(1)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  quiz        Quiz         @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  answers     QuizAnswer[]
+
+  @@index([quizId])
+  @@index([order])
+}
+
+model QuizAnswer {
+  id          String       @id @default(uuid())
+  questionId  String
+  answer      String       @db.Text
+  isCorrect   Boolean      @default(false)
+  order       Int          @default(0)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  question    QuizQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@index([questionId])
+  @@index([order])
+}
+
+model QuizAttempt {
+  id              String   @id @default(uuid())
+  quizId          String
+  enrollmentId    String
+  score           Float
+  passed          Boolean
+  attemptNumber   Int
+  startedAt       DateTime @default(now())
+  completedAt     DateTime?
+  timeSpent       Int?     // in seconds
+
+  quiz            Quiz      @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  enrollment      Enrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+
+  @@index([quizId])
+  @@index([enrollmentId])
+  @@index([startedAt])
+}
+
+model Certificate {
+  id              String   @id @default(uuid())
+  enrollmentId    String   @unique
+  certificateId   String   @unique
+  verificationCode String  @unique
+  issuedAt        DateTime @default(now())
+
+  enrollment      Enrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+
+  @@index([certificateId])
+  @@index([verificationCode])
+  @@index([issuedAt])
+}
+
+model CourseReview {
+  id          String   @id @default(uuid())
+  courseId    String
+  studentId   String
+  rating      Int      // 1-5
+  review      String   @db.Text
+  reply       String?  @db.Text
+  repliedAt   DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  course      Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  student     User     @relation("StudentReviews", fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([courseId, studentId])
+  @@index([courseId])
+  @@index([studentId])
+  @@index([rating])
+  @@index([createdAt])
+}
+
+model CourseWishlist {
+  id          String   @id @default(uuid())
+  courseId    String
+  userId      String
+  createdAt   DateTime @default(now())
+
+  course      Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  user        User     @relation("UserWishlists", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([courseId, userId])
+  @@index([userId])
+  @@index([courseId])
+}
+
+model CreatorProfile {
+  id              String   @id @default(uuid())
+  userId          String   @unique
+  bio             String?  @db.Text
+  website         String?
+  socialLinks     Json?
+  followersCount  Int      @default(0)
+  studentsCount   Int      @default(0)
+  totalRevenue    Float    @default(0)
+  averageRating   Float?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model CoursePurchase {
+  id              String   @id @default(uuid())
+  courseId        String
+  studentId       String
+  amount          Float
+  currency        String   @default("USD")
+  discountAmount  Float    @default(0)
+  purchasedAt     DateTime @default(now())
+
+  course          Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  student         User     @relation("StudentPurchases", fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([courseId, studentId])
+  @@index([studentId])
+  @@index([courseId])
+  @@index([purchasedAt])
+}
+
+model CourseAnalytics {
+  id              String   @id @default(uuid())
+  courseId        String   @unique
+  totalViews      Int      @default(0)
+  totalEnrollments Int     @default(0)
+  totalRevenue    Float    @default(0)
+  averageRating   Float?
+  completionRate  Float?
+  lastUpdated     DateTime @default(now())
+
+  course          Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@index([courseId])
 }

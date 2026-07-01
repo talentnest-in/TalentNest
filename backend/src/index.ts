@@ -7,6 +7,14 @@ import jwt from '@fastify/jwt';
 import cookie from '@fastify/cookie';
 import { ZodError } from 'zod';
 import { authRoutes } from './routes/auth.routes';
+import { courseRoutes } from './routes/course.routes';
+import { lessonRoutes } from './routes/lesson.routes';
+import { enrollmentRoutes } from './routes/enrollment.routes';
+import { quizRoutes } from './routes/quiz.routes';
+import { certificateRoutes } from './routes/certificate.routes';
+import { reviewRoutes } from './routes/review.routes';
+import { creatorRoutes } from './routes/creator.routes';
+import { analyticsRoutes } from './routes/analytics.routes';
 
 // ── Startup Environment Validation ───────────────────────────────────────────
 const REQUIRED_ENV_VARS = ['DATABASE_URL', 'JWT_SECRET', 'COOKIE_SECRET'];
@@ -225,6 +233,14 @@ server.register(uploadRoutes, { prefix: '/api/v1' });
 server.register(milestoneRoutes, { prefix: '/api/v1' });
 server.register(noteRoutes, { prefix: '/api/v1' });
 server.register(workspaceFileRoutes, { prefix: '/api/v1' });
+server.register(courseRoutes, { prefix: '/api/v1' });
+server.register(lessonRoutes, { prefix: '/api/v1' });
+server.register(enrollmentRoutes, { prefix: '/api/v1' });
+server.register(quizRoutes, { prefix: '/api/v1' });
+server.register(certificateRoutes, { prefix: '/api/v1' });
+server.register(reviewRoutes, { prefix: '/api/v1' });
+server.register(creatorRoutes, { prefix: '/api/v1' });
+server.register(analyticsRoutes, { prefix: '/api/v1' });
 
 // Register Socket.IO plugin
 server.register(socketPlugin);

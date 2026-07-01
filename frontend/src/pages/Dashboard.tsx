@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/Button';
 import { applicationService } from '@/services/application.service';
 import { offerService } from '@/services/offer.service';
 import { contractService } from '@/services/contract.service';
+import { enrollmentService, courseService } from '@/services/academy.service';
 import {
   Briefcase,
   MessageSquare,
@@ -19,6 +20,8 @@ import {
   ChevronRight,
   User,
   FileText,
+  BookOpen,
+  Play,
 } from 'lucide-react';
 
 /* ─── Stat Card ─── */
@@ -97,9 +100,21 @@ export function Dashboard() {
     queryFn: () => contractService.getContracts(),
   });
 
+  const { data: enrollmentsData } = useQuery({
+    queryKey: ['enrollments'],
+    queryFn: () => enrollmentService.getUserEnrollments({ status: 'ACTIVE' }),
+  });
+
+  const { data: coursesData } = useQuery({
+    queryKey: ['courses'],
+    queryFn: () => courseService.getAllCourses({ limit: 4, sortBy: 'rating', sortOrder: 'desc' }),
+  });
+
   const applications = applicationsData?.applications || [];
   const offers = offersData?.offers || [];
   const contracts = contractsData?.contracts || [];
+  const enrollments = enrollmentsData || [];
+  const recommendedCourses = coursesData?.courses || [];
 
   // Calculate application stats
   const totalApplications = applications.length;
@@ -118,6 +133,7 @@ export function Dashboard() {
     { icon: Users, label: 'Applications', path: '/applications' },
     { icon: DollarSign, label: 'Offers', path: '/freelancer/offers' },
     { icon: FileText, label: 'Contracts', path: '/contracts' },
+    { icon: BookOpen, label: 'Academy', path: '/academy' },
     { icon: Bell, label: 'Saved Jobs', path: '/saved-jobs' },
     { icon: MessageSquare, label: 'Messages', path: '/messages' },
     { icon: Bell, label: 'Notifications', path: '/notifications' },
@@ -231,6 +247,114 @@ export function Dashboard() {
                 </Button>
               </div>
             </motion.div>
+          </div>
+
+          {/* Academy Section */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Continue Learning */}
+            {enrollments.length > 0 && (
+              <motion.div
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3 }}
+                className="bg-surface border border-border/50 rounded-2xl shadow-sm p-6"
+              >
+                <div className="flex items-center justify-between mb-5">
+                  <h2 className="text-lg font-heading font-semibold text-text">Continue Learning</h2>
+                  <button
+                    onClick={() => navigate('/academy/my-learning')}
+                    className="text-sm text-accent hover:text-accent/80 font-medium flex items-center gap-1 transition-colors"
+                  >
+                    View all <ChevronRight className="h-4 w-4" />
+                  </button>
+                </div>
+                <div className="space-y-4">
+                  {enrollments.slice(0, 3).map((enrollment) => (
+                    <div
+                      key={enrollment.id}
+                      onClick={() => navigate(`/academy/learning/${enrollment.course.id}`)}
+                      className="flex items-center gap-4 p-3 rounded-xl hover:bg-border/30 cursor-pointer transition-colors"
+                    >
+                      <div className="w-16 h-12 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
+                        {enrollment.course.thumbnail ? (
+                          <img
+                            src={enrollment.course.thumbnail}
+                            alt={enrollment.course.title}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center">
+                            <BookOpen className="w-6 h-6 text-gray-400" />
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-text truncate">{enrollment.course.title}</p>
+                        <p className="text-xs text-text-muted">{enrollment.course.creator.name}</p>
+                        <div className="flex items-center gap-2 mt-1">
+                          <div className="flex-1 h-1.5 bg-gray-200 rounded-full">
+                            <div
+                              className="h-1.5 bg-accent rounded-full"
+                              style={{ width: `${enrollment.progress}%` }}
+                            />
+                          </div>
+                          <span className="text-xs text-text-muted">{(enrollment.progress || 0).toFixed(0)}%</span>
+                        </div>
+                      </div>
+                      <Play className="h-5 w-5 text-accent flex-shrink-0" />
+                    </div>
+                  ))}
+                </div>
+              </motion.div>
+            )}
+
+            {/* Recommended Courses */}
+            {recommendedCourses.length > 0 && (
+              <motion.div
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.4 }}
+                className="bg-surface border border-border/50 rounded-2xl shadow-sm p-6"
+              >
+                <div className="flex items-center justify-between mb-5">
+                  <h2 className="text-lg font-heading font-semibold text-text">Recommended Courses</h2>
+                  <button
+                    onClick={() => navigate('/academy')}
+                    className="text-sm text-accent hover:text-accent/80 font-medium flex items-center gap-1 transition-colors"
+                  >
+                    View all <ChevronRight className="h-4 w-4" />
+                  </button>
+                </div>
+                <div className="space-y-4">
+                  {recommendedCourses.slice(0, 3).map((course) => (
+                    <div
+                      key={course.id}
+                      onClick={() => navigate(`/academy/course/${course.slug}`)}
+                      className="flex items-center gap-4 p-3 rounded-xl hover:bg-border/30 cursor-pointer transition-colors"
+                    >
+                      <div className="w-16 h-12 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
+                        {course.thumbnail ? (
+                          <img
+                            src={course.thumbnail}
+                            alt={course.title}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center">
+                            <BookOpen className="w-6 h-6 text-gray-400" />
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-text truncate">{course.title}</p>
+                        <p className="text-xs text-text-muted">{course.level}</p>
+                        <p className="text-sm font-semibold text-accent">${(course.price || 0).toFixed(2)}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </motion.div>
+            )}
           </div>
       </div>
     </DashboardLayout>
