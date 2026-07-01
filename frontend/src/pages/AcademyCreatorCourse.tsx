@@ -22,6 +22,7 @@ export const AcademyCreatorCourse: React.FC = () => {
     mutationFn: (data: Partial<Course>) => courseService.updateCourse(id!, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['course', id] });
+      queryClient.invalidateQueries({ queryKey: ['creator-courses'] });
     },
   });
 

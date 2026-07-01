@@ -42,6 +42,7 @@ declare module '@fastify/jwt' {
 
 const server = Fastify({
   logger: true,
+  bodyLimit: 100 * 1024 * 1024, // 100MB limit for video uploads
 });
 
 // Register Security Middlewares
@@ -95,7 +96,7 @@ import path from 'path';
 
 server.register(multipart, {
   limits: {
-    fileSize: 20 * 1024 * 1024, // 20MB limit
+    fileSize: 100 * 1024 * 1024, // 100MB limit for video uploads
   },
 });
 

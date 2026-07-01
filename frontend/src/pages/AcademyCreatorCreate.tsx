@@ -58,12 +58,12 @@ export const AcademyCreatorCreate: React.FC = () => {
     }>,
   });
 
-  const { data: categories } = useQuery({
+  const { data: categories, isLoading: categoriesLoading } = useQuery({
     queryKey: ['course-categories'],
     queryFn: courseService.getCategories,
   });
 
-  const { data: tags } = useQuery({
+  const { data: tags, isLoading: tagsLoading } = useQuery({
     queryKey: ['course-tags'],
     queryFn: courseService.getTags,
   });
@@ -813,13 +813,15 @@ export const AcademyCreatorCreate: React.FC = () => {
             <button
               onClick={handleNext}
               disabled={
+                categoriesLoading ||
+                tagsLoading ||
                 (currentStep === 0 && (!formData.categoryId || !formData.title || !formData.description)) ||
                 createCourseMutation.isPending ||
                 uploadThumbnailMutation.isPending
               }
               className="px-6 py-3 bg-orange-500 text-white rounded-lg font-medium hover:bg-orange-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {currentStep === 0 ? 'Create Course' : 'Next'}
+              {categoriesLoading || tagsLoading ? 'Loading...' : createCourseMutation.isPending ? 'Creating...' : currentStep === 0 ? 'Create Course' : 'Next'}
             </button>
           )}
         </div>
