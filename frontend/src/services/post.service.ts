@@ -64,6 +64,6 @@ export const postService = {
     const response = await api.post('/upload', formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
-    return response.data.url;
+    return response.data.fileUrl || response.data.url;
   },
 };
