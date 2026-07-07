@@ -201,7 +201,8 @@ export function Signup() {
           <Button
             variant="outline"
             className="w-full h-11"
-            onClick={() => window.location.href = `${BACKEND_URL}/api/v1/auth/google`}
+            type="button"
+            onClick={() => handleOAuthLogin('google')}
           >
             <svg className="h-5 w-5 mr-2" aria-hidden="true" viewBox="0 0 24 24">
               <path

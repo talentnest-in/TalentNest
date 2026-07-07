@@ -15,6 +15,17 @@ export function OAuthCallback() {
     const token = params.get('token');
     const err = params.get('error');
 
+    // If this was opened in a popup (for PWA support), send token back and close
+    if (window.opener && window.opener !== window) {
+      if (err) {
+        window.opener.postMessage({ type: 'oauth-error', error: err }, window.location.origin);
+      } else if (token) {
+        window.opener.postMessage({ type: 'oauth-success', token }, window.location.origin);
+      }
+      window.close();
+      return;
+    }
+
     if (err) {
       setError(err);
       setTimeout(() => navigate('/login'), 3000);
