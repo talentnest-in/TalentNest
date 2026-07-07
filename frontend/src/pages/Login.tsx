@@ -59,32 +59,6 @@ export function Login() {
 
   const apiError = (mutation.error as AxiosError<ApiError>)?.response?.data?.message;
 
-  const handleOAuthLogin = (provider: 'google' | 'github') => {
-    const width = 500;
-    const height = 600;
-    const left = window.screenX + (window.outerWidth - width) / 2;
-    const top = window.screenY + (window.outerHeight - height) / 2;
-    
-    window.open(
-      `${BACKEND_URL}/api/v1/auth/${provider}`,
-      'oauth-login',
-      `width=${width},height=${height},left=${left},top=${top}`
-    );
-
-    const handleMessage = (event: MessageEvent) => {
-      if (event.origin !== window.location.origin) return;
-      if (event.data.type === 'oauth-success') {
-        window.removeEventListener('message', handleMessage);
-        navigate(`/oauth/callback?token=${event.data.token}`);
-      } else if (event.data.type === 'oauth-error') {
-        window.removeEventListener('message', handleMessage);
-        navigate(`/login?error=${event.data.error}`);
-      }
-    };
-
-    window.addEventListener('message', handleMessage);
-  };
-
   return (
     <AuthLayout
       title="Welcome back 👋"
@@ -180,7 +154,7 @@ export function Login() {
             variant="outline" 
             className="w-full gap-2 font-medium" 
             type="button"
-            onClick={() => handleOAuthLogin('google')}
+            onClick={() => window.location.href = `${BACKEND_URL}/api/v1/auth/google`}
           >
             <svg className="h-5 w-5" aria-hidden="true" viewBox="0 0 24 24">
               <path d="M12.0003 4.75C13.7703 4.75 15.3553 5.36002 16.6053 6.54998L20.0303 3.125C17.9502 1.19 15.2353 0 12.0003 0C7.31028 0 3.25527 2.69 1.28027 6.60998L5.27028 9.70498C6.21525 6.86002 8.87028 4.75 12.0003 4.75Z" fill="#EA4335" />

@@ -68,32 +68,6 @@ export function Signup() {
 
   const apiError = (mutation.error as AxiosError<ApiError>)?.response?.data?.message;
 
-  const handleOAuthLogin = (provider: 'google' | 'github') => {
-    const width = 500;
-    const height = 600;
-    const left = window.screenX + (window.outerWidth - width) / 2;
-    const top = window.screenY + (window.outerHeight - height) / 2;
-    
-    window.open(
-      `${BACKEND_URL}/api/v1/auth/${provider}`,
-      'oauth-login',
-      `width=${width},height=${height},left=${left},top=${top}`
-    );
-
-    const handleMessage = (event: MessageEvent) => {
-      if (event.origin !== window.location.origin) return;
-      if (event.data.type === 'oauth-success') {
-        window.removeEventListener('message', handleMessage);
-        navigate(`/oauth/callback?token=${event.data.token}`);
-      } else if (event.data.type === 'oauth-error') {
-        window.removeEventListener('message', handleMessage);
-        navigate(`/login?error=${event.data.error}`);
-      }
-    };
-
-    window.addEventListener('message', handleMessage);
-  };
-
   return (
     <AuthLayout
       title="Create an account"
@@ -227,8 +201,7 @@ export function Signup() {
           <Button
             variant="outline"
             className="w-full h-11"
-            type="button"
-            onClick={() => handleOAuthLogin('google')}
+            onClick={() => window.location.href = `${BACKEND_URL}/api/v1/auth/google`}
           >
             <svg className="h-5 w-5 mr-2" aria-hidden="true" viewBox="0 0 24 24">
               <path
