@@ -122,17 +122,53 @@ export const login = async (request: FastifyRequest, reply: FastifyReply) => {
   }
 };
 
-// ── Logout ───────────────────────────────────────────────────────────────────
+// ── Logout ────────────────────────────────────────────────────────────────────
 export const logout = async (request: FastifyRequest, reply: FastifyReply) => {
-  reply.clearCookie('token', { path: '/' });
-  return reply.send({ message: 'Logged out successfully' });
+  reply.clearCookie('token', getCookieOptions(request));
+  return reply.send({ statusCode: 200, message: 'Logged out successfully' });
 };
 
-// ── Get Me ───────────────────────────────────────────────────────────────────
+// ── Refresh Token ────────────────────────────────────────────────────────────
+export const refresh = async (request: FastifyRequest, reply: FastifyReply) => {
+  try {
+    // Check for existing token
+    let token = (request.cookies as any).token;
+    if (!token && request.headers.authorization?.startsWith('Bearer ')) {
+      token = request.headers.authorization.split(' ')[1];
+    }
+
+    if (!token) {
+      return reply.status(401).send({ statusCode: 401, error: 'Unauthorized', message: 'No token provided' });
+    }
+
+    // Verify token (ignoring expiration if we want to allow refreshing an expired token, but fastify-jwt verify throws on expired by default. Let's just decode and re-issue if valid or recently expired. For now we will just verify and re-issue).
+    // Actually, we can use request.server.jwt.decode to get the payload, verify the user exists, and issue a new token.
+    const decoded: any = (request.server as any).jwt.decode(token);
+    
+    if (!decoded || !decoded.id) {
+       return reply.status(401).send({ statusCode: 401, error: 'Unauthorized', message: 'Invalid token' });
+    }
+
+    const user = await prisma.user.findUnique({ where: { id: decoded.id } });
+    if (!user) {
+      return reply.status(401).send({ statusCode: 401, error: 'Unauthorized', message: 'User not found' });
+    }
+
+    const newToken = await reply.jwtSign({ id: user.id, role: user.role });
+    reply.setCookie('token', newToken, getCookieOptions(request));
+
+    return reply.send({ statusCode: 200, token: newToken, message: 'Token refreshed' });
+  } catch (error) {
+    request.log.error(error, 'refresh failed');
+    return reply.status(500).send({ statusCode: 500, error: 'Internal Server Error' });
+  }
+};
+
+// ── Get Me ────────────────────────────────────────────────────────────────────
 export const getMe = async (request: FastifyRequest, reply: FastifyReply) => {
   try {
     const user = await prisma.user.findUnique({
-      where: { id: request.user.id },
+      where: { id: (request.user as any).id },
       select: { id: true, email: true, name: true, role: true, avatar: true, provider: true, createdAt: true, onboardingCompleted: true },
     });
 

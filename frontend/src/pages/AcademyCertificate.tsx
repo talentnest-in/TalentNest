@@ -6,12 +6,12 @@ import { certificateService } from '@/services/academy.service';
 import { CertificateViewer } from '@/components/academy';
 
 export const AcademyCertificate: React.FC = () => {
-  const { id } = useParams<{ id: string }>();
+  const { code } = useParams<{ code: string }>();
 
   const { data: certificate, isLoading, error } = useQuery({
-    queryKey: ['certificate', id],
-    queryFn: () => certificateService.getCertificateById(id!),
-    enabled: !!id,
+    queryKey: ['certificate', code],
+    queryFn: () => certificateService.verifyCertificate(code!),
+    enabled: !!code,
     retry: false,
   });
 

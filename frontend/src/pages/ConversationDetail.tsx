@@ -162,12 +162,20 @@ export function ConversationDetail() {
                 />
               ))}
               {isTyping && (
-                <div className="flex justify-start">
-                  <div className="bg-surface border border-border rounded-2xl px-4 py-3">
-                    <div className="flex gap-1">
-                      <div className="w-2 h-2 bg-text-muted rounded-full animate-bounce" />
-                      <div className="w-2 h-2 bg-text-muted rounded-full animate-bounce delay-100" />
-                      <div className="w-2 h-2 bg-text-muted rounded-full animate-bounce delay-200" />
+                <div className="flex items-end gap-2">
+                  {otherUser?.avatar ? (
+                    <img src={otherUser.avatar} alt="" className="w-6 h-6 rounded-full object-cover flex-shrink-0" />
+                  ) : (
+                    <div className="w-6 h-6 rounded-full bg-primary/20 text-primary text-xs flex items-center justify-center font-bold flex-shrink-0">
+                      {otherUser?.name?.charAt(0) || '?'}
+                    </div>
+                  )}
+                  <div className="bg-surface border border-border rounded-2xl rounded-bl-sm px-4 py-3">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-xs text-text-muted mr-1">{otherUser?.name?.split(' ')[0]} is typing</span>
+                      <div className="w-1.5 h-1.5 bg-text-muted rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                      <div className="w-1.5 h-1.5 bg-text-muted rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                      <div className="w-1.5 h-1.5 bg-text-muted rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
                     </div>
                   </div>
                 </div>

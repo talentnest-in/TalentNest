@@ -6,11 +6,13 @@ interface JobFiltersProps {
   minBudget?: string;
   maxBudget?: string;
   isRemote?: string;
+  datePosted?: string;
   sortBy?: string;
   onTypeChange: (type: JobType | undefined) => void;
   onMinBudgetChange: (value: string) => void;
   onMaxBudgetChange: (value: string) => void;
   onRemoteChange: (value: string) => void;
+  onDatePostedChange: (value: string) => void;
   onSortChange: (value: string) => void;
   onClear: () => void;
   hasActiveFilters: boolean;
@@ -21,11 +23,13 @@ export function JobFilters({
   minBudget,
   maxBudget,
   isRemote,
+  datePosted,
   sortBy,
   onTypeChange,
   onMinBudgetChange,
   onMaxBudgetChange,
   onRemoteChange,
+  onDatePostedChange,
   onSortChange,
   onClear,
   hasActiveFilters,
@@ -108,13 +112,28 @@ export function JobFilters({
         </div>
       </div>
 
+      {/* Date Posted */}
+      <div>
+        <label className="text-sm font-medium text-text mb-2 block">Date Posted</label>
+        <select
+          value={datePosted || 'any'}
+          onChange={(e) => onDatePostedChange(e.target.value)}
+          className="w-full px-3 py-2 border border-border rounded-lg text-sm bg-background text-text focus:outline-none focus:ring-2 focus:ring-accent"
+        >
+          <option value="any">Any Time</option>
+          <option value="24h">Past 24 Hours</option>
+          <option value="week">Past Week</option>
+          <option value="month">Past Month</option>
+        </select>
+      </div>
+
       {/* Sort By */}
       <div>
         <label className="text-sm font-medium text-text mb-2 block">Sort By</label>
         <select
           value={sortBy || 'newest'}
           onChange={(e) => onSortChange(e.target.value)}
-          className="w-full px-3 py-2 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent"
+          className="w-full px-3 py-2 border border-border rounded-lg text-sm bg-background text-text focus:outline-none focus:ring-2 focus:ring-accent"
         >
           <option value="newest">Newest First</option>
           <option value="oldest">Oldest First</option>

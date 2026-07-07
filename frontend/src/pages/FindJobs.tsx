@@ -21,6 +21,7 @@ export function FindJobs() {
     minBudget: undefined,
     maxBudget: undefined,
     isRemote: undefined,
+    datePosted: undefined,
     sortBy: 'newest',
     page: '1',
   });
@@ -36,7 +37,7 @@ export function FindJobs() {
   // Reset page when filters change
   useEffect(() => {
     setFilters((prev) => ({ ...prev, page: '1' }));
-  }, [debouncedSearch, filters.type, filters.minBudget, filters.maxBudget, filters.isRemote, filters.sortBy]);
+  }, [debouncedSearch, filters.type, filters.minBudget, filters.maxBudget, filters.isRemote, filters.datePosted, filters.sortBy]);
 
   const queryKey = ['jobs', { ...filters, search: debouncedSearch }];
 
@@ -49,10 +50,11 @@ export function FindJobs() {
   const handleMinBudgetChange = (value: string) => setFilters((prev) => ({ ...prev, minBudget: value || undefined }));
   const handleMaxBudgetChange = (value: string) => setFilters((prev) => ({ ...prev, maxBudget: value || undefined }));
   const handleRemoteChange = (value: string) => setFilters((prev) => ({ ...prev, isRemote: value || undefined }));
+  const handleDatePostedChange = (value: string) => setFilters((prev) => ({ ...prev, datePosted: value === 'any' ? undefined : value }));
   const handleSortChange = (value: string) => setFilters((prev) => ({ ...prev, sortBy: value as any }));
   const handlePageChange = (page: number) => setFilters((prev) => ({ ...prev, page: page.toString() }));
 
-  const hasActiveFilters = !!filters.type || !!filters.minBudget || !!filters.maxBudget || !!filters.isRemote;
+  const hasActiveFilters = !!filters.type || !!filters.minBudget || !!filters.maxBudget || !!filters.isRemote || !!filters.datePosted;
 
   const handleClearFilters = () => {
     setFilters({
@@ -60,6 +62,7 @@ export function FindJobs() {
       minBudget: undefined,
       maxBudget: undefined,
       isRemote: undefined,
+      datePosted: undefined,
       sortBy: 'newest',
       page: '1',
     });
@@ -108,11 +111,13 @@ export function FindJobs() {
               minBudget={filters.minBudget}
               maxBudget={filters.maxBudget}
               isRemote={filters.isRemote}
+              datePosted={filters.datePosted}
               sortBy={filters.sortBy}
               onTypeChange={handleTypeChange}
               onMinBudgetChange={handleMinBudgetChange}
               onMaxBudgetChange={handleMaxBudgetChange}
               onRemoteChange={handleRemoteChange}
+              onDatePostedChange={handleDatePostedChange}
               onSortChange={handleSortChange}
               onClear={handleClearFilters}
               hasActiveFilters={hasActiveFilters}

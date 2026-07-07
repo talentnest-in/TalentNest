@@ -4,6 +4,7 @@ import {
   register,
   login,
   logout,
+  refresh,
   getMe,
   forgotPassword,
   resetPassword,
@@ -34,6 +35,7 @@ export async function authRoutes(server: FastifyInstance) {
   server.post('/register', { config: { rateLimit: authRateLimitOptions } }, register);
   server.post('/login', { config: { rateLimit: authRateLimitOptions } }, login);
   server.post('/logout', logout);
+  server.post('/refresh', refresh);
   server.get('/me', { preValidation: [server.authenticate] }, getMe);
   server.post('/forgot-password', { config: { rateLimit: passwordResetRateLimitOptions } }, forgotPassword);
   server.post('/reset-password', { config: { rateLimit: passwordResetRateLimitOptions } }, resetPassword);

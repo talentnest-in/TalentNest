@@ -2,7 +2,6 @@ import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { clientService } from '@/services/client.service';
-import { offerService } from '@/services/offer.service';
 import { contractService } from '@/services/contract.service';
 import { DashboardLayout } from '@/components/layouts/DashboardLayout';
 import { Button } from '@/components/ui/Button';
@@ -12,7 +11,7 @@ import { CompanyCard } from '@/components/client/CompanyCard';
 import { EmptyState } from '@/components/client/EmptyState';
 import {
   Briefcase, Building2, LayoutDashboard, Settings,
-  Plus, Bell, TrendingUp, FileText, CheckCircle, Users, DollarSign,
+  Plus, TrendingUp, FileText, CheckCircle, Users, DollarSign,
 } from 'lucide-react';
 
 export function ClientDashboard() {
@@ -24,25 +23,21 @@ export function ClientDashboard() {
     queryFn: clientService.getDashboard,
   });
 
-  const { data: offersData } = useQuery({
-    queryKey: ['clientOffers'],
-    queryFn: () => offerService.getClientOffers(),
-  });
-
   const { data: contractsData } = useQuery({
     queryKey: ['contracts'],
     queryFn: () => contractService.getContracts(),
   });
 
-  const offers = offersData?.offers || [];
   const contracts = contractsData?.contracts || [];
-
-  // Calculate offer stats
-  const pendingOffers = offers.filter(o => o.status === 'PENDING').length;
 
   // Calculate contract stats
   const activeContracts = contracts.filter(c => c.status === 'ACTIVE').length;
   const completedContracts = contracts.filter(c => c.status === 'COMPLETED').length;
+  
+  // Calculate total spend
+  const totalSpend = contracts
+    .filter(c => c.status === 'COMPLETED' || c.status === 'ACTIVE')
+    .reduce((sum, c) => sum + (c.amount || 0), 0);
 
   const navItems = [
     { icon: LayoutDashboard, label: 'Dashboard', path: '/client-dashboard' },
@@ -50,29 +45,25 @@ export function ClientDashboard() {
     { icon: Users, label: 'Applicants', path: '/client/applicants' },
     { icon: DollarSign, label: 'Offers', path: '/client/offers' },
     { icon: FileText, label: 'Contracts', path: '/contracts' },
+    { icon: Users, label: 'Community', path: '/community' },
     { icon: Building2, label: 'Company', path: '/company' },
     { icon: Settings, label: 'Settings', path: '/settings' },
   ];
 
   return (
     <DashboardLayout navItems={navItems}>
-      <header className="sticky top-0 z-10 bg-surface/80 backdrop-blur-lg border-b border-border/50 px-6 py-4 flex items-center justify-between -mx-6 -mt-6 mb-8">
-        <div>
-          <h1 className="text-xl font-heading font-bold text-text">Welcome back, {user?.name?.split(' ')[0] ?? 'there'} 👋</h1>
-          <p className="text-sm text-text-muted">Here's your hiring overview.</p>
-        </div>
-        <div className="flex items-center gap-3">
-          <Button onClick={() => navigate('/jobs/new')} className="gap-2">
-            <Plus className="w-4 h-4" />
-            Post a Job
-          </Button>
-          <button className="h-10 w-10 rounded-xl border border-border bg-background flex items-center justify-center hover:bg-border/30">
-            <Bell className="h-5 w-5 text-text-muted" />
-          </button>
-        </div>
-      </header>
-
       <div className="space-y-8">
+          {/* Welcome Message */}
+          <div className="mb-8 flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-heading font-bold text-text mb-2">Welcome back, {user?.name?.split(' ')[0] ?? 'there'} 👋</h1>
+              <p className="text-text-muted">Here's your hiring overview.</p>
+            </div>
+            <Button onClick={() => navigate('/jobs/new')} className="gap-2">
+              <Plus className="w-4 h-4" />
+              Post a Job
+            </Button>
+          </div>
           {isLoading ? (
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-5">
               {[...Array(4)].map((_, i) => (
@@ -84,7 +75,7 @@ export function ClientDashboard() {
               {/* Stats */}
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-5">
                 <StatCard icon={TrendingUp} label="Active Jobs" value={data?.activeJobs ?? 0} color="bg-accent" subtitle="Currently hiring" />
-                <StatCard icon={DollarSign} label="Pending Offers" value={pendingOffers.toString()} color="bg-warning" subtitle="Awaiting response" />
+                <StatCard icon={DollarSign} label="Total Spend" value={`$${totalSpend.toLocaleString()}`} color="bg-success" subtitle="Across all contracts" />
                 <StatCard icon={FileText} label="Active Contracts" value={activeContracts.toString()} color="bg-primary" subtitle="In progress" />
                 <StatCard icon={CheckCircle} label="Completed Contracts" value={completedContracts.toString()} color="bg-success" subtitle="Successfully completed" />
               </div>

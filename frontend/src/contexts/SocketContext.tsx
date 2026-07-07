@@ -8,6 +8,8 @@ interface SocketContextType {
   isConnected: boolean;
   onlineUsers: Set<string>;
   typingUsers: Map<string, string>; // conversationId -> userId
+  unreadNotifCount: number;
+  clearUnreadNotifCount: () => void;
   joinConversation: (conversationId: string) => void;
   leaveConversation: (conversationId: string) => void;
   sendMessage: (conversationId: string, content?: string, attachments?: any[]) => void;
@@ -21,6 +23,8 @@ const SocketContext = createContext<SocketContextType>({
   isConnected: false,
   onlineUsers: new Set(),
   typingUsers: new Map(),
+  unreadNotifCount: 0,
+  clearUnreadNotifCount: () => {},
   joinConversation: () => {},
   leaveConversation: () => {},
   sendMessage: () => {},
@@ -34,6 +38,7 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
   const [isConnected, setIsConnected] = useState(false);
   const [onlineUsers, setOnlineUsers] = useState<Set<string>>(new Set());
   const [typingUsers, setTypingUsers] = useState<Map<string, string>>(new Map());
+  const [unreadNotifCount, setUnreadNotifCount] = useState(0);
   const { user } = useAuth();
 
   useEffect(() => {
@@ -97,6 +102,11 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
       });
     });
 
+    // Real-time notification events — bump badge count
+    newSocket.on('notification:new', () => {
+      setUnreadNotifCount((prev) => prev + 1);
+    });
+
     setSocket(newSocket);
 
     return () => {
@@ -128,6 +138,8 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
     socket?.emit('message_read', { conversationId });
   };
 
+  const clearUnreadNotifCount = () => setUnreadNotifCount(0);
+
   return (
     <SocketContext.Provider
       value={{
@@ -135,6 +147,8 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
         isConnected,
         onlineUsers,
         typingUsers,
+        unreadNotifCount,
+        clearUnreadNotifCount,
         joinConversation,
         leaveConversation,
         sendMessage,

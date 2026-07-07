@@ -24,6 +24,11 @@ export const jobService = {
     const res = await api.get(`/jobs/${id}`);
     return res.data.job;
   },
+
+  getRecommendedJobs: async (limit = 6): Promise<{ jobs: Job[]; matched: boolean }> => {
+    const res = await api.get('/jobs/recommended', { params: { limit } });
+    return res.data;
+  },
 };
 
 // ── Client Job Management ───────────────────────────────────────────────────

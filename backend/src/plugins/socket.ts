@@ -12,6 +12,13 @@ interface SocketData {
 const onlineUsers = new Map<string, Set<string>>(); // userId -> socketIds
 const conversationRooms = new Map<string, Set<string>>(); // conversationId -> userIds
 
+let ioInstance: SocketIOServer | null = null;
+
+export const getIO = () => {
+  if (!ioInstance) throw new Error("Socket.io not initialized!");
+  return ioInstance;
+};
+
 export default async function socketPlugin(fastify: FastifyInstance) {
   const httpServer: HTTPServer = fastify.server;
   
@@ -37,6 +44,8 @@ export default async function socketPlugin(fastify: FastifyInstance) {
       credentials: true,
     },
   });
+
+  ioInstance = io;
 
   // JWT Authentication middleware
   io.use(async (socket, next) => {
@@ -79,6 +88,9 @@ export default async function socketPlugin(fastify: FastifyInstance) {
       onlineUsers.set(userId, new Set());
     }
     onlineUsers.get(userId)!.add(socket.id);
+
+    // Join personal notification room
+    socket.join(`user_${userId}`);
 
     // Broadcast online status
     socket.broadcast.emit('user_online', { userId, userName });
@@ -337,6 +349,26 @@ export default async function socketPlugin(fastify: FastifyInstance) {
         console.error('Failed to broadcast file deletion:', error);
       }
     });
+
+    // ── Community & Post Rooms ──────────────────────────────────────────
+    socket.on('join_post', (data: { postId: string }) => {
+      socket.join(`post:${data.postId}`);
+    });
+
+    socket.on('leave_post', (data: { postId: string }) => {
+      socket.leave(`post:${data.postId}`);
+    });
+
+    socket.on('join_community', (data: { communityId: string }) => {
+      socket.join(`community:${data.communityId}`);
+    });
+
+    socket.on('leave_community', (data: { communityId: string }) => {
+      socket.leave(`community:${data.communityId}`);
+    });
+    
+    // Join a general personal room for notifications
+    socket.join(`user_${userId}`);
 
     // ── Disconnect ────────────────────────────────────────────────────
     socket.on('disconnect', () => {

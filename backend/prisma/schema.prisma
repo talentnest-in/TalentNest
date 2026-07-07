@@ -47,6 +47,14 @@ model User {
   studentPurchases     CoursePurchase[] @relation("StudentPurchases")
   creatorProfile       CreatorProfile?
 
+  // Community relations
+  communitiesCreated  Community[]       @relation("CreatedCommunities")
+  communityMemberships CommunityMember[]
+  posts               Post[]
+  postLikes           PostLike[]
+  postComments        PostComment[]
+  postReports         PostReport[]
+
   @@unique([provider, providerId])
   @@index([email])
   @@index([role])
@@ -492,6 +500,7 @@ enum LessonType {
   EXTERNAL_LINK
   RESOURCE
   ASSIGNMENT
+  QUIZ
 }
 
 enum EnrollmentStatus {
@@ -747,4 +756,139 @@ model CourseAnalytics {
   course          Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
 
   @@index([courseId])
+}
+
+// ─── Sprint 9: Community Module ────────────────────────────────────────────────
+
+enum CommunityType {
+  PUBLIC
+  PRIVATE
+}
+
+enum CommunityRole {
+  MEMBER
+  MODERATOR
+  ADMIN
+}
+
+enum PostType {
+  TEXT
+  IMAGE
+  PDF
+  LINK
+}
+
+enum ReportStatus {
+  PENDING
+  REVIEWED
+}
+
+model Community {
+  id          String   @id @default(uuid())
+  name        String
+  slug        String   @unique
+  description String?  @db.Text
+  type        CommunityType @default(PUBLIC)
+  banner      String?
+  logo        String?
+  creatorId   String
+  rules       String[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  creator     User     @relation("CreatedCommunities", fields: [creatorId], references: [id], onDelete: Cascade)
+  members     CommunityMember[]
+  posts       Post[]
+
+  @@index([slug])
+  @@index([creatorId])
+  @@index([type])
+}
+
+model CommunityMember {
+  id          String        @id @default(uuid())
+  communityId String
+  userId      String
+  role        CommunityRole @default(MEMBER)
+  joinedAt    DateTime      @default(now())
+
+  community   Community     @relation(fields: [communityId], references: [id], onDelete: Cascade)
+  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([communityId, userId])
+  @@index([communityId])
+  @@index([userId])
+}
+
+model Post {
+  id          String   @id @default(uuid())
+  content     String   @db.Text
+  type        PostType @default(TEXT)
+  mediaUrls   String[]
+  linkUrl     String?
+  authorId    String
+  communityId String?
+  isPinned    Boolean  @default(false)
+  isHidden    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  author      User       @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  community   Community? @relation(fields: [communityId], references: [id], onDelete: Cascade)
+  likes       PostLike[]
+  comments    PostComment[]
+  reports     PostReport[]
+
+  @@index([authorId])
+  @@index([communityId])
+  @@index([createdAt])
+}
+
+model PostLike {
+  id        String   @id @default(uuid())
+  postId    String
+  userId    String
+  createdAt DateTime @default(now())
+
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, userId])
+  @@index([postId])
+  @@index([userId])
+}
+
+model PostComment {
+  id        String   @id @default(uuid())
+  postId    String
+  authorId  String
+  content   String   @db.Text
+  parentId  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  post      Post          @relation(fields: [postId], references: [id], onDelete: Cascade)
+  author    User          @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  parent    PostComment?  @relation("Replies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies   PostComment[] @relation("Replies")
+
+  @@index([postId])
+  @@index([authorId])
+  @@index([parentId])
+}
+
+model PostReport {
+  id         String       @id @default(uuid())
+  postId     String
+  reporterId String
+  reason     String
+  status     ReportStatus @default(PENDING)
+  createdAt  DateTime     @default(now())
+
+  post       Post         @relation(fields: [postId], references: [id], onDelete: Cascade)
+  reporter   User         @relation(fields: [reporterId], references: [id], onDelete: Cascade)
+
+  @@index([postId])
+  @@index([reporterId])
+  @@index([status])
 }

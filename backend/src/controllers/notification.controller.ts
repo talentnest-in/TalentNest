@@ -5,16 +5,18 @@ import { prisma } from '../lib/prisma';
 export const getNotifications = async (request: FastifyRequest, reply: FastifyReply) => {
   try {
     const userId = request.user.id;
-    const { page = 1, limit = 20 } = request.query as { page?: number; limit?: number };
+    const { page = '1', limit = '20' } = request.query as any;
 
-    const skip = (page - 1) * limit;
+    const pageNum = parseInt(page);
+    const limitNum = parseInt(limit);
+    const skip = (pageNum - 1) * limitNum;
 
     const [notifications, total] = await Promise.all([
       prisma.notification.findMany({
         where: { userId },
         orderBy: { createdAt: 'desc' },
         skip,
-        take: limit,
+        take: limitNum,
       }),
       prisma.notification.count({ where: { userId } }),
     ]);
@@ -26,10 +28,10 @@ export const getNotifications = async (request: FastifyRequest, reply: FastifyRe
     return reply.send({
       notifications,
       pagination: {
-        page,
-        limit,
+        page: pageNum,
+        limit: limitNum,
         total,
-        totalPages: Math.ceil(total / limit),
+        totalPages: Math.ceil(total / limitNum),
       },
       unreadCount,
     });

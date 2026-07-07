@@ -213,6 +213,9 @@ import { uploadRoutes } from './routes/upload.routes';
 import { milestoneRoutes } from './routes/milestone.routes';
 import { noteRoutes } from './routes/note.routes';
 import { workspaceFileRoutes } from './routes/workspace-file.routes';
+import { communityRoutes } from './routes/community.routes';
+import { postRoutes } from './routes/post.routes';
+import { searchRoutes } from './routes/search.routes';
 import socketPlugin from './plugins/socket';
 
 server.register(authRoutes, { prefix: '/api/v1/auth' });
@@ -240,6 +243,9 @@ server.register(certificateRoutes, { prefix: '/api/v1' });
 server.register(reviewRoutes, { prefix: '/api/v1' });
 server.register(creatorRoutes, { prefix: '/api/v1' });
 server.register(analyticsRoutes, { prefix: '/api/v1' });
+server.register(communityRoutes, { prefix: '/api/v1/community' });
+server.register(postRoutes, { prefix: '/api/v1/posts' });
+server.register(searchRoutes, { prefix: '/api/v1/search' });
 
 // Register Socket.IO plugin
 server.register(socketPlugin);

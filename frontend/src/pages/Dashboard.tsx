@@ -8,6 +8,7 @@ import { applicationService } from '@/services/application.service';
 import { offerService } from '@/services/offer.service';
 import { contractService } from '@/services/contract.service';
 import { enrollmentService, courseService } from '@/services/academy.service';
+import { jobService } from '@/services/job.service';
 import {
   Briefcase,
   MessageSquare,
@@ -22,6 +23,8 @@ import {
   FileText,
   BookOpen,
   Play,
+  Sparkles,
+  Star,
 } from 'lucide-react';
 
 /* ─── Stat Card ─── */
@@ -110,11 +113,18 @@ export function Dashboard() {
     queryFn: () => courseService.getAllCourses({ limit: 4, sortBy: 'rating', sortOrder: 'desc' }),
   });
 
+  const { data: recommendedJobsData } = useQuery({
+    queryKey: ['recommendedJobs'],
+    queryFn: () => jobService.getRecommendedJobs(6),
+  });
+
   const applications = applicationsData?.applications || [];
   const offers = offersData?.offers || [];
   const contracts = contractsData?.contracts || [];
   const enrollments = enrollmentsData || [];
   const recommendedCourses = coursesData?.courses || [];
+  const recommendedJobs = recommendedJobsData?.jobs || [];
+  const jobsMatched = recommendedJobsData?.matched ?? false;
 
   // Calculate application stats
   const totalApplications = applications.length;
@@ -124,7 +134,11 @@ export function Dashboard() {
 
   // Calculate contract stats
   const activeContracts = contracts.filter(c => c.status === 'ACTIVE').length;
-  const completedContracts = contracts.filter(c => c.status === 'COMPLETED').length;
+  
+  // Calculate earnings
+  const totalEarnings = contracts
+    .filter(c => c.status === 'COMPLETED')
+    .reduce((sum, c) => sum + (c.amount || 0), 0);
 
   const navItems = [
     { icon: TrendingUp, label: 'Dashboard', path: '/freelancer-dashboard' },
@@ -134,6 +148,7 @@ export function Dashboard() {
     { icon: DollarSign, label: 'Offers', path: '/freelancer/offers' },
     { icon: FileText, label: 'Contracts', path: '/contracts' },
     { icon: BookOpen, label: 'Academy', path: '/academy' },
+    { icon: Users, label: 'Community', path: '/community' },
     { icon: Bell, label: 'Saved Jobs', path: '/saved-jobs' },
     { icon: MessageSquare, label: 'Messages', path: '/messages' },
     { icon: Bell, label: 'Notifications', path: '/notifications' },
@@ -142,39 +157,90 @@ export function Dashboard() {
 
   return (
     <DashboardLayout navItems={navItems}>
-      <header className="sticky top-0 z-10 bg-surface/80 backdrop-blur-lg border-b border-border/50 px-6 py-4 flex items-center justify-between -mx-6 -mt-6 mb-8">
-        <div>
-          <h1 className="text-xl font-heading font-bold text-text">
-            Welcome back, {user?.name?.split(' ')[0] ?? 'there'} 👋
-          </h1>
-          <p className="text-sm text-text-muted">Here's what's happening with your account today.</p>
-        </div>
-        <div className="flex items-center gap-3">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-text-muted" />
-            <input
-              type="text"
-              placeholder="Search…"
-              className="h-10 w-60 rounded-xl border border-border bg-background pl-10 pr-4 text-sm placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-accent transition-colors"
-            />
-          </div>
-          <button className="relative h-10 w-10 rounded-xl border border-border bg-background flex items-center justify-center hover:bg-border/30 transition-colors">
-            <Bell className="h-5 w-5 text-text-muted" />
-            <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-accent text-[10px] text-white font-bold flex items-center justify-center">
-              3
-            </span>
-          </button>
-        </div>
-      </header>
-
       <div className="space-y-8">
+          {/* Welcome Message */}
+          <div className="mb-8">
+            <h1 className="text-3xl font-heading font-bold text-text mb-2">
+              Welcome back, {user?.name?.split(' ')[0] ?? 'there'} 👋
+            </h1>
+            <p className="text-text-muted">Here's what's happening with your account today.</p>
+          </div>
+
           {/* Stats grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            <StatCard icon={DollarSign} label="Total Earnings" value={`$${totalEarnings.toLocaleString()}`} color="bg-success" trend="+12% this month" />
             <StatCard icon={Users} label="Total Applications" value={totalApplications.toString()} color="bg-accent" />
             <StatCard icon={TrendingUp} label="Pending Offers" value={pendingOffers.toString()} color="bg-orange-500" />
             <StatCard icon={FileText} label="Active Contracts" value={activeContracts.toString()} color="bg-primary" />
-            <StatCard icon={DollarSign} label="Completed Contracts" value={completedContracts.toString()} color="bg-success" />
           </div>
+
+          {/* Recommended Jobs Section */}
+          {recommendedJobs.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.05 }}
+              className="bg-surface border border-border/50 rounded-2xl shadow-sm"
+            >
+              <div className="flex items-center justify-between px-6 pt-6 pb-3">
+                <div className="flex items-center gap-2">
+                  <div className="h-8 w-8 rounded-lg bg-accent/10 flex items-center justify-center">
+                    <Sparkles className="h-4 w-4 text-accent" />
+                  </div>
+                  <div>
+                    <h2 className="text-lg font-heading font-semibold text-text">Recommended for You</h2>
+                    <p className="text-xs text-text-muted">
+                      {jobsMatched ? 'Based on your skills' : 'Latest open jobs'}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => navigate('/find-jobs')}
+                  className="text-sm text-accent hover:text-accent/80 font-medium flex items-center gap-1 transition-colors"
+                >
+                  Browse all <ChevronRight className="h-4 w-4" />
+                </button>
+              </div>
+              <div className="px-6 pb-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {recommendedJobs.map((job: any) => (
+                  <div
+                    key={job.id}
+                    onClick={() => navigate(`/jobs/${job.id}`)}
+                    className="border border-border/60 rounded-xl p-4 hover:border-accent/40 hover:bg-accent/5 cursor-pointer transition-all duration-200 group"
+                  >
+                    <div className="flex items-start justify-between mb-2">
+                      <h3 className="text-sm font-semibold text-text group-hover:text-accent transition-colors line-clamp-2 flex-1 mr-2">
+                        {job.title}
+                      </h3>
+                      {jobsMatched && job.matchedSkills > 0 && (
+                        <span className="flex items-center gap-1 text-xs bg-accent/10 text-accent px-2 py-0.5 rounded-full whitespace-nowrap flex-shrink-0">
+                          <Star className="h-3 w-3" />
+                          {job.matchedSkills} match
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-xs text-text-muted mb-3 line-clamp-2">{job.description}</p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {job.skills?.slice(0, 3).map((skill: any) => (
+                        <span key={skill.id} className="text-xs bg-background text-text-muted px-2 py-0.5 rounded-md border border-border/50">
+                          {skill.name}
+                        </span>
+                      ))}
+                      {job.skills?.length > 3 && (
+                        <span className="text-xs text-text-muted">+{job.skills.length - 3}</span>
+                      )}
+                    </div>
+                    <div className="flex items-center justify-between mt-3 pt-3 border-t border-border/40">
+                      <span className="text-xs text-text-muted">{job.type} · {job.isRemote ? 'Remote' : job.location}</span>
+                      {job.budget && (
+                        <span className="text-sm font-semibold text-success">${job.budget.toLocaleString()}</span>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </motion.div>
+          )}
 
           {/* Two column layout */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

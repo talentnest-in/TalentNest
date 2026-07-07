@@ -147,6 +147,7 @@ export interface JobsQueryParams {
   minBudget?: string;
   maxBudget?: string;
   isRemote?: string;
+  datePosted?: string;
   sortBy?: 'newest' | 'oldest' | 'budget_low' | 'budget_high';
   page?: string;
 }
@@ -329,4 +330,91 @@ export interface ContractsResponse {
     total: number;
     pages: number;
   };
+}
+
+// ─── Sprint 9: Community Module ────────────────────────────────────────────────
+
+export type CommunityType = 'PUBLIC' | 'PRIVATE';
+export type CommunityRole = 'MEMBER' | 'MODERATOR' | 'ADMIN';
+export type PostType = 'TEXT' | 'IMAGE' | 'PDF' | 'LINK';
+export type ReportStatus = 'PENDING' | 'REVIEWED';
+
+export interface CommunityMember {
+  id: string;
+  communityId: string;
+  userId: string;
+  role: CommunityRole;
+  joinedAt: string;
+  user?: User;
+}
+
+export interface Community {
+  id: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  type: CommunityType;
+  banner: string | null;
+  logo: string | null;
+  creatorId: string;
+  rules: string[];
+  createdAt: string;
+  updatedAt: string;
+  // Populated by backend when authenticated
+  isMember?: boolean;
+  memberRole?: string | null;
+  _count?: {
+    members: number;
+    posts: number;
+  };
+  creator?: User;
+  members?: CommunityMember[];
+}
+
+export interface PostComment {
+  id: string;
+  postId: string;
+  authorId: string;
+  content: string;
+  parentId: string | null;
+  createdAt: string;
+  updatedAt: string;
+  author?: User;
+  replies?: PostComment[];
+}
+
+export interface PostLike {
+  id: string;
+  postId: string;
+  userId: string;
+  createdAt: string;
+}
+
+export interface Post {
+  id: string;
+  content: string;
+  type: PostType;
+  mediaUrls: string[];
+  linkUrl: string | null;
+  authorId: string;
+  communityId: string | null;
+  isPinned: boolean;
+  isHidden: boolean;
+  createdAt: string;
+  updatedAt: string;
+  author?: User;
+  community?: Pick<Community, 'id' | 'name' | 'slug' | 'type'>;
+  likes?: PostLike[];
+  comments?: PostComment[];
+  _count?: {
+    likes: number;
+    comments: number;
+  };
+}
+
+export interface SearchResult {
+  communities: Community[];
+  posts: Post[];
+  users: User[];
+  jobs: Job[];
 }

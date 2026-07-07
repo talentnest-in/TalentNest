@@ -88,6 +88,7 @@ const marketplaceQuerySchema = z.object({
   minBudget: z.string().optional(),
   maxBudget: z.string().optional(),
   isRemote: z.string().optional(),
+  datePosted: z.enum(['24h', 'week', 'month', 'any']).optional(),
   sortBy: z.enum(['newest', 'oldest', 'budget_low', 'budget_high']).optional(),
   page: z.string().optional(),
 });
@@ -97,7 +98,7 @@ export const getOpenJobs = async (
   reply: FastifyReply
 ) => {
   const query = marketplaceQuerySchema.parse(request.query);
-  const { search, type, skills, minBudget, maxBudget, isRemote, sortBy, page } = query;
+  const { search, type, skills, minBudget, maxBudget, isRemote, datePosted, sortBy, page } = query;
   
   const take = 12;
   const skip = (parseInt(page ?? '1') - 1) * take;
@@ -124,6 +125,16 @@ export const getOpenJobs = async (
     where.budget = {};
     if (minBudget) where.budget.gte = parseFloat(minBudget);
     if (maxBudget) where.budget.lte = parseFloat(maxBudget);
+  }
+
+  // Date posted filter
+  if (datePosted && datePosted !== 'any') {
+    const now = new Date();
+    let dateRange = new Date();
+    if (datePosted === '24h') dateRange.setDate(now.getDate() - 1);
+    if (datePosted === 'week') dateRange.setDate(now.getDate() - 7);
+    if (datePosted === 'month') dateRange.setMonth(now.getMonth() - 1);
+    where.createdAt = { gte: dateRange };
   }
 
   // Sorting
@@ -180,4 +191,58 @@ export const deleteJob = async (
 ) => {
   await prisma.job.delete({ where: { id: request.params.id } });
   return reply.send({ success: true });
+};
+
+// ── Freelancer Job Recommendations ────────────────────────────────────────────
+export const getRecommendedJobs = async (request: FastifyRequest, reply: FastifyReply) => {
+  try {
+    const userId = request.user.id;
+    const { limit = '6' } = request.query as any;
+    const limitNum = Math.min(parseInt(limit), 20);
+
+    // Fetch the freelancer's skill names
+    const freelancerProfile = await prisma.freelancerProfile.findUnique({
+      where: { userId },
+      include: { skills: { select: { name: true } } },
+    });
+
+    if (!freelancerProfile || freelancerProfile.skills.length === 0) {
+      // No skills — return latest open jobs as fallback
+      const jobs = await prisma.job.findMany({
+        where: { status: 'OPEN' },
+        include: jobIncludeFull,
+        orderBy: { createdAt: 'desc' },
+        take: limitNum,
+      });
+      return reply.send({ jobs, matched: false });
+    }
+
+    const freelancerSkillNames = freelancerProfile.skills.map((s) => s.name.toLowerCase());
+
+    // Fetch all open jobs with their skills
+    const openJobs = await prisma.job.findMany({
+      where: { status: 'OPEN' },
+      include: jobIncludeFull,
+      orderBy: { createdAt: 'desc' },
+      take: 100, // pool to rank from
+    });
+
+    // Rank by skill overlap percentage
+    const scored = openJobs.map((job) => {
+      const jobSkillNames = job.skills.map((s: any) => s.name.toLowerCase());
+      const overlap = jobSkillNames.filter((s: string) => freelancerSkillNames.includes(s)).length;
+      const score = jobSkillNames.length > 0 ? overlap / jobSkillNames.length : 0;
+      return { job, score, overlap };
+    });
+
+    // Sort by score desc, then by date desc for ties
+    scored.sort((a, b) => b.score - a.score || 0);
+
+    const recommended = scored.slice(0, limitNum).map((r) => ({ ...r.job, matchScore: r.score, matchedSkills: r.overlap }));
+
+    return reply.send({ jobs: recommended, matched: true });
+  } catch (error) {
+    request.log.error(error);
+    return reply.status(500).send({ statusCode: 500, error: 'Internal Server Error' });
+  }
 };
