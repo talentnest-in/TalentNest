@@ -21,9 +21,13 @@ const updatePostSchema = z.object({
 export const getPosts = async (request: FastifyRequest, reply: FastifyReply) => {
   try {
     const { page = '1', limit = '10', filter = 'newest' } = request.query as any;
-    const pageNum = parseInt(page);
-    const limitNum = parseInt(limit);
-    const skip = (pageNum - 1) * limitNum;
+    const pageStr = Array.isArray(page) ? page[0] : page;
+    const limitStr = Array.isArray(limit) ? limit[0] : limit;
+    const filterStr = Array.isArray(filter) ? filter[0] : filter;
+
+    const pageNum = parseInt(pageStr) || 1;
+    const limitNum = parseInt(limitStr) || 10;
+    const skip = Math.max(0, (pageNum - 1) * limitNum);
 
     // Filter can be 'newest' or 'popular'
     let orderBy: any = { createdAt: 'desc' };
@@ -68,9 +72,13 @@ export const getCommunityPosts = async (request: FastifyRequest, reply: FastifyR
   try {
     const { id: communityId } = request.params as { id: string };
     const { page = '1', limit = '10', filter = 'newest' } = request.query as any;
-    const pageNum = parseInt(page);
-    const limitNum = parseInt(limit);
-    const skip = (pageNum - 1) * limitNum;
+    const pageStr = Array.isArray(page) ? page[0] : page;
+    const limitStr = Array.isArray(limit) ? limit[0] : limit;
+    const filterStr = Array.isArray(filter) ? filter[0] : filter;
+
+    const pageNum = parseInt(pageStr) || 1;
+    const limitNum = parseInt(limitStr) || 10;
+    const skip = Math.max(0, (pageNum - 1) * limitNum);
 
     // Filter can be 'newest' or 'popular'
     let orderBy: any = { createdAt: 'desc' };
