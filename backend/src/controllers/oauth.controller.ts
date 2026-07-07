@@ -82,7 +82,7 @@ async function handleOAuthUser(
   reply.setCookie('token', token, getCookieOptions(request));
 
   // Redirect to frontend callback page with token in query string
-  return reply.redirect(`${FRONTEND_URL}/oauth/callback?token=${token}`);
+  return reply.redirect(`${FRONTEND_URL.replace(/\/$/, '')}/oauth/callback?token=${token}`);
 }
 
 // ─── Google OAuth Callback ────────────────────────────────────────────────────
@@ -99,13 +99,13 @@ export const googleCallback = async (request: FastifyRequest, reply: FastifyRepl
 
     if (!res.ok) {
       request.log.error('Failed to fetch Google user info');
-      return reply.redirect(`${FRONTEND_URL}/login?error=oauth_failed`);
+      return reply.redirect(`${FRONTEND_URL.replace(/\/$/, '')}/login?error=oauth_failed`);
     }
 
     const profile = (await res.json()) as GoogleUserInfo;
 
     if (!profile.email || !profile.verified_email) {
-      return reply.redirect(`${FRONTEND_URL}/login?error=email_not_verified`);
+      return reply.redirect(`${FRONTEND_URL.replace(/\/$/, '')}/login?error=email_not_verified`);
     }
 
     return handleOAuthUser(request, reply, {
@@ -117,7 +117,7 @@ export const googleCallback = async (request: FastifyRequest, reply: FastifyRepl
     });
   } catch (err) {
     request.log.error(err, 'Google OAuth callback failed');
-    return reply.redirect(`${FRONTEND_URL}/login?error=oauth_failed`);
+    return reply.redirect(`${FRONTEND_URL.replace(/\/$/, '')}/login?error=oauth_failed`);
   }
 };
 
@@ -139,7 +139,7 @@ export const githubCallback = async (request: FastifyRequest, reply: FastifyRepl
     const profileRes = await fetch('https://api.github.com/user', { headers });
     if (!profileRes.ok) {
       request.log.error('Failed to fetch GitHub user info');
-      return reply.redirect(`${FRONTEND_URL}/login?error=oauth_failed`);
+      return reply.redirect(`${FRONTEND_URL.replace(/\/$/, '')}/login?error=oauth_failed`);
     }
     const profile = (await profileRes.json()) as GitHubUserInfo;
 
@@ -155,7 +155,7 @@ export const githubCallback = async (request: FastifyRequest, reply: FastifyRepl
     }
 
     if (!email) {
-      return reply.redirect(`${FRONTEND_URL}/login?error=no_email`);
+      return reply.redirect(`${FRONTEND_URL.replace(/\/$/, '')}/login?error=no_email`);
     }
 
     return handleOAuthUser(request, reply, {
@@ -167,6 +167,6 @@ export const githubCallback = async (request: FastifyRequest, reply: FastifyRepl
     });
   } catch (err) {
     request.log.error(err, 'GitHub OAuth callback failed');
-    return reply.redirect(`${FRONTEND_URL}/login?error=oauth_failed`);
+    return reply.redirect(`${FRONTEND_URL.replace(/\/$/, '')}/login?error=oauth_failed`);
   }
 };
