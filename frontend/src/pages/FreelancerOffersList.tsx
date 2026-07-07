@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { offerService } from '@/services/offer.service';
 import { OfferCard } from '@/components/ui/OfferCard';
 import type { OfferStatus } from '@/types';
-import { Filter } from 'lucide-react';
+import { ArrowLeft, Filter } from 'lucide-react';
 
 export function FreelancerOffersList() {
   const navigate = useNavigate();
@@ -70,6 +70,15 @@ export function FreelancerOffersList() {
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
+      <div className="flex items-center gap-4 mb-8">
+        <button
+          onClick={() => navigate(-1)}
+          className="flex items-center gap-2 text-text-muted hover:text-text transition-colors"
+        >
+          <ArrowLeft className="w-5 h-5" />
+          <span className="text-sm">Back</span>
+        </button>
+      </div>
       <div className="mb-8">
         <h1 className="text-2xl font-heading font-bold text-text mb-2">Offers Received</h1>
         <p className="text-sm text-text-muted">View and manage offers from clients</p>

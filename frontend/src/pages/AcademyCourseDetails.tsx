@@ -22,6 +22,9 @@ export const AcademyCourseDetails: React.FC = () => {
     enabled: !!course?.id,
   });
 
+  // Check if course is completed
+  const isCourseCompleted = enrollment?.status === 'COMPLETED';
+
   const { data: wishlistStatus } = useQuery({
     queryKey: ['wishlist-check', course?.id],
     queryFn: () => reviewService.checkWishlist(course!.id),
@@ -181,25 +184,7 @@ export const AcademyCourseDetails: React.FC = () => {
                 </div>
 
                 <div className="space-y-3 mb-6">
-                  {isEnrolled ? (
-                    enrollment?.status === 'COMPLETED' ? (
-                      <Link
-                        to={`/academy/certificate/${enrollment.certificate?.id}`}
-                        className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors"
-                      >
-                        <Check className="w-5 h-5" />
-                        View Certificate
-                      </Link>
-                    ) : (
-                      <Link
-                        to={`/academy/learning/${course.id}`}
-                        className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-orange-500 text-white rounded-lg font-medium hover:bg-orange-600 transition-colors"
-                      >
-                        <Play className="w-5 h-5" />
-                        Continue Learning
-                      </Link>
-                    )
-                  ) : (
+                  {!isEnrolled ? (
                     <button
                       onClick={() => enrollMutation.mutate(course.id)}
                       disabled={enrollMutation.isPending}
@@ -207,6 +192,22 @@ export const AcademyCourseDetails: React.FC = () => {
                     >
                       {enrollMutation.isPending ? 'Enrolling...' : 'Enroll Now'}
                     </button>
+                  ) : isCourseCompleted ? (
+                    <Link
+                      to={`/academy/certificate/${enrollment?.certificate?.id}`}
+                      className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors"
+                    >
+                      <Check className="w-5 h-5" />
+                      View Certificate
+                    </Link>
+                  ) : (
+                    <Link
+                      to={`/academy/learning/${course.id}`}
+                      className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-orange-500 text-white rounded-lg font-medium hover:bg-orange-600 transition-colors"
+                    >
+                      <Play className="w-5 h-5" />
+                      Continue Learning
+                    </Link>
                   )}
 
                   <button

@@ -1,6 +1,6 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
 import { prisma } from '../lib/prisma';
-import { uploadToCloudinary } from '../lib/cloudinary';
+import { uploadVideoToCloudinary, uploadToCloudinary } from '../lib/cloudinary';
 
 export const lessonController = {
   // Create section
@@ -241,29 +241,83 @@ export const lessonController = {
       // Validate file type (video)
       const allowedTypes = ['video/mp4', 'video/webm', 'video/quicktime'];
       if (!data.mimetype || !allowedTypes.includes(data.mimetype)) {
-        return reply.status(400).send({ error: 'Invalid file type. Only MP4, WEBP, MOV allowed' });
+        return reply.status(400).send({ error: 'Invalid file type. Only MP4, WEBM, MOV allowed' });
       }
 
-      const buffer = await data.toBuffer();
-
-      // Upload to Cloudinary
-      const result = await uploadToCloudinary(
-        buffer,
+      // Use stream-based upload to avoid memory issues on Render free tier
+      const result = await uploadVideoToCloudinary(
+        data.file,
         data.filename,
         data.mimetype,
         'talentnest/lesson-videos'
       );
 
-      // Update lesson video URL
+      // Update lesson video URL and type
       const updatedLesson = await prisma.lesson.update({
         where: { id: lessonId },
-        data: { videoUrl: result.secure_url },
+        data: { videoUrl: result.secure_url, type: 'VIDEO' },
       });
 
       return reply.send({ videoUrl: result.secure_url });
     } catch (error) {
       request.log.error(error, 'Failed to upload video');
       return reply.status(500).send({ error: 'Failed to upload video' });
+    }
+  },
+
+  // Upload lesson PDF
+  async uploadLessonPdf(request: FastifyRequest, reply: FastifyReply) {
+    try {
+      const userId = (request as any).user.id;
+      const { lessonId } = request.params as { lessonId: string };
+      const data = await request.file();
+
+      if (!data) {
+        return reply.status(400).send({ error: 'No file uploaded' });
+      }
+
+      // Check if lesson exists and user is the course creator
+      const lesson = await prisma.lesson.findUnique({
+        where: { id: lessonId },
+        include: {
+          section: {
+            include: { course: true },
+          },
+        },
+      });
+
+      if (!lesson) {
+        return reply.status(404).send({ error: 'Lesson not found' });
+      }
+
+      if (lesson.section.course.creatorId !== userId) {
+        return reply.status(403).send({ error: 'You can only edit your own courses' });
+      }
+
+      // Validate file type (PDF)
+      if (data.mimetype !== 'application/pdf') {
+        return reply.status(400).send({ error: 'Invalid file type. Only PDF allowed' });
+      }
+
+      // Upload to Cloudinary as raw resource
+      const buffer = await data.toBuffer();
+      const result = await uploadToCloudinary(
+        buffer,
+        data.filename,
+        data.mimetype,
+        'talentnest/lesson-pdfs'
+      );
+
+      // Update lesson video URL (reusing videoUrl field for PDF URL) and type
+      const updatedLesson = await prisma.lesson.update({
+        where: { id: lessonId },
+        data: { videoUrl: result.secure_url, type: 'PDF' },
+      });
+
+      return reply.send({ pdfUrl: result.secure_url });
+    } catch (error) {
+      request.log.error(error, 'Failed to upload PDF');
+      return reply.status(500).send({ error: 'Failed to upload PDF' });
     }
   },
 

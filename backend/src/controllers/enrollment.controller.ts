@@ -150,9 +150,6 @@ export const enrollmentController = {
             include: {
               lessons: {
                 orderBy: { order: 'asc' },
-                include: {
-                  quiz: true,
-                },
               },
             },
           },
@@ -194,22 +191,6 @@ export const enrollmentController = {
         where: { enrollmentId: enrollment.id },
       });
 
-      // Fetch quiz attempts for this enrollment
-      const quizAttempts = await prisma.quizAttempt.findMany({
-        where: { enrollmentId: enrollment.id },
-      });
-
-      // Get all lessons with quizzes in this course
-      const lessonsWithQuizzes = course.sections.flatMap(s =>
-        s.lessons.filter(l => l.quiz)
-      );
-
-      // Check if all required quizzes are passed
-      const quizzesPassed = lessonsWithQuizzes.every(lesson => {
-        const lessonAttempts = quizAttempts.filter(a => a.quizId === lesson.quiz?.id);
-        return lessonAttempts.some(a => a.passed);
-      });
-
       // Attach progress to lessons
       const courseWithProgress = {
         ...enrollment,
@@ -225,13 +206,13 @@ export const enrollmentController = {
         },
       };
 
-      // Calculate progress based on completed lessons and passed quizzes
+      // Calculate progress based on completed lessons only
       const totalLessons = course.sections.flatMap(s => s.lessons).length;
       const completedLessons = lessonProgress.filter(p => p.completed).length;
       const lessonProgressPercent = totalLessons > 0 ? (completedLessons / totalLessons) * 100 : 0;
 
-      // Course is complete only when all lessons are done AND all quizzes are passed
-      const isCourseComplete = completedLessons === totalLessons && quizzesPassed;
+      // Course is complete when all lessons are done (100% progress)
+      const isCourseComplete = completedLessons === totalLessons;
 
       // Update enrollment status if course is complete
       if (isCourseComplete && enrollment.status !== 'COMPLETED') {
@@ -333,27 +314,40 @@ export const enrollmentController = {
 
       const progressPercentage = (completedLessons / allLessons.length) * 100;
 
-      // Update enrollment progress
+      // Auto-complete enrollment when progress reaches 100%
+      const isCourseComplete = completedLessons === allLessons.length;
+      const updateData: any = {
+        progress: progressPercentage,
+        lastAccessedAt: new Date(),
+      };
+
+      if (isCourseComplete && enrollment.status !== 'COMPLETED') {
+        updateData.status = 'COMPLETED';
+        updateData.completedAt = new Date();
+        
+        // Generate certificate automatically on course completion
+        const existingCertificate = await prisma.certificate.findUnique({
+          where: { enrollmentId: enrollment.id },
+        });
+
+        if (!existingCertificate) {
+          const certificateId = `TN-${Date.now()}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+          const verificationCode = crypto.randomBytes(16).toString('hex').toUpperCase();
+          
+          await prisma.certificate.create({
+            data: {
+              enrollmentId: enrollment.id,
+              certificateId,
+              verificationCode,
+            },
+          });
+        }
+      }
+
       await prisma.enrollment.update({
         where: { id: enrollment.id },
-        data: {
-          progress: progressPercentage,
-          lastAccessedAt: new Date(),
-          completedAt: progressPercentage === 100 ? new Date() : null,
-          status: progressPercentage === 100 ? 'COMPLETED' : 'ACTIVE',
-        },
+        data: updateData,
       });
-
-      // Check if course is completed and generate certificate
-      if (progressPercentage === 100 && !enrollment.certificate) {
-        const certificate = await prisma.certificate.create({
-          data: {
-            enrollmentId: enrollment.id,
-            certificateId: `CERT-${crypto.randomUUID().toUpperCase()}`,
-            verificationCode: crypto.randomBytes(8).toString('hex').toUpperCase(),
-          },
-        });
-      }
 
       return reply.send({
         progress,

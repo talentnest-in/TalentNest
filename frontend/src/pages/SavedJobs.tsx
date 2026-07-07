@@ -1,9 +1,12 @@
+import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { savedJobService } from '@/services/saved-job.service';
 import { SavedJobCard } from '@/components/freelancer/SavedJobCard';
 import { EmptyState } from '@/components/freelancer/EmptyState';
+import { ArrowLeft } from 'lucide-react';
 
 export function SavedJobs() {
+  const navigate = useNavigate();
   const { data, isLoading, error } = useQuery({
     queryKey: ['savedJobs'],
     queryFn: () => savedJobService.getSavedJobs(),
@@ -53,6 +56,15 @@ export function SavedJobs() {
     <div className="min-h-screen bg-background">
       <div className="max-w-4xl mx-auto p-4 lg:p-8">
         {/* Header */}
+        <div className="flex items-center gap-4 mb-8">
+          <button
+            onClick={() => navigate(-1)}
+            className="flex items-center gap-2 text-text-muted hover:text-text transition-colors"
+          >
+            <ArrowLeft className="w-5 h-5" />
+            <span className="text-sm">Back</span>
+          </button>
+        </div>
         <div className="mb-8">
           <h1 className="text-2xl font-bold text-text mb-2">Saved Jobs</h1>
           <p className="text-text-muted">

@@ -1,13 +1,15 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { applicationService } from '@/services/application.service';
 import type { ApplicationsQueryParams, ApplicationStatus } from '@/types';
 import { ApplicationCard } from '@/components/freelancer/ApplicationCard';
 import { EmptyApplicationsState } from '@/components/shared/EmptyApplicationsState';
 import { Button } from '@/components/ui/Button';
-import { Search, Filter } from 'lucide-react';
+import { ArrowLeft, Search, Filter } from 'lucide-react';
 
 export function MyApplications() {
+  const navigate = useNavigate();
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<ApplicationStatus | undefined>(undefined);
   const [page, setPage] = useState(1);
@@ -58,6 +60,15 @@ export function MyApplications() {
     <div className="min-h-screen bg-background">
       <div className="max-w-4xl mx-auto p-4 lg:p-8">
         {/* Header */}
+        <div className="flex items-center gap-4 mb-8">
+          <button
+            onClick={() => navigate(-1)}
+            className="flex items-center gap-2 text-text-muted hover:text-text transition-colors"
+          >
+            <ArrowLeft className="w-5 h-5" />
+            <span className="text-sm">Back</span>
+          </button>
+        </div>
         <div className="mb-8">
           <h1 className="text-2xl font-heading font-bold text-text mb-2">My Applications</h1>
           <p className="text-text-muted">

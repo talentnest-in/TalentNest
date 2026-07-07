@@ -3,6 +3,7 @@ import { z } from 'zod';
 import bcrypt from 'bcryptjs';
 import { prisma } from '../lib/prisma';
 import crypto from 'crypto';
+import { sendForgotPasswordEmail } from '../lib/email.service';
 
 // ── Validation Schemas ───────────────────────────────────────────────────────
 const registerSchema = z.object({
@@ -174,8 +175,14 @@ export const forgotPassword = async (
 
     const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/reset-password/${resetToken}`;
 
-    // TODO: Replace with a real email provider (e.g. Resend, SendGrid, Nodemailer)
-    request.log.info(`[Dev] Password reset link for ${email}: ${resetUrl}`);
+    // Send password reset email
+    try {
+      await sendForgotPasswordEmail(email, resetUrl);
+    } catch (emailError) {
+      request.log.error(emailError, 'Failed to send password reset email');
+      // Don't fail the request - still return success to prevent email enumeration
+      // But log the error for debugging
+    }
 
     return reply.send({ message: 'If that email exists, a reset link has been sent.' });
   } catch (error) {

@@ -5,8 +5,6 @@ export { CourseSearch } from './CourseSearch';
 export { RatingStars } from './RatingStars';
 export { LessonSidebar } from './LessonSidebar';
 export { LessonViewer } from './LessonViewer';
-export { QuizCard } from './QuizCard';
-export { QuizQuestion } from './QuizQuestion';
 export { CertificateViewer } from './CertificateViewer';
 export { CertificateCard } from './CertificateCard';
 export { ReviewCard } from './ReviewCard';

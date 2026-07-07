@@ -21,10 +21,6 @@ async function main() {
   console.log('🌱 Starting seed...');
 
   // Clean existing data
-  await prisma.quizAttempt.deleteMany();
-  await prisma.quizAnswer.deleteMany();
-  await prisma.quizQuestion.deleteMany();
-  await prisma.quiz.deleteMany();
   await prisma.lessonProgress.deleteMany();
   await prisma.certificate.deleteMany();
   await prisma.enrollment.deleteMany();
@@ -99,72 +95,98 @@ async function main() {
 
   console.log('✅ Created 5 creator profiles');
 
-  // Create Course Categories
-  const categories = await Promise.all([
-    prisma.courseCategory.create({
-      data: {
-        name: 'Web Development',
-        slug: 'web-development',
-        description: 'Learn to build modern web applications with the latest technologies',
-        icon: '💻',
-        order: 1,
-      },
-    }),
-    prisma.courseCategory.create({
-      data: {
-        name: 'Mobile Development',
-        slug: 'mobile-development',
-        description: 'Create native and cross-platform mobile applications',
-        icon: '📱',
-        order: 2,
-      },
-    }),
-    prisma.courseCategory.create({
-      data: {
-        name: 'Data Science',
-        slug: 'data-science',
-        description: 'Master data analysis, machine learning, and AI',
-        icon: '📊',
-        order: 3,
-      },
-    }),
-    prisma.courseCategory.create({
-      data: {
-        name: 'Design',
-        slug: 'design',
-        description: 'UI/UX design, graphic design, and creative skills',
-        icon: '🎨',
-        order: 4,
-      },
-    }),
-    prisma.courseCategory.create({
-      data: {
-        name: 'Business',
-        slug: 'business',
-        description: 'Entrepreneurship, marketing, and business strategy',
-        icon: '💼',
-        order: 5,
-      },
-    }),
-  ]);
+  // Create Course Categories using upsert to avoid duplicates
+  const categoryData = [
+    { name: 'Web Development', slug: 'web-development', description: 'Learn to build modern web applications with the latest technologies', icon: '💻', order: 1 },
+    { name: 'Mobile Development', slug: 'mobile-development', description: 'Create native and cross-platform mobile applications', icon: '📱', order: 2 },
+    { name: 'UI/UX Design', slug: 'ui-ux-design', description: 'Design beautiful and functional user interfaces and experiences', icon: '🎨', order: 3 },
+    { name: 'Artificial Intelligence', slug: 'artificial-intelligence', description: 'Master AI concepts, machine learning, and neural networks', icon: '🤖', order: 4 },
+    { name: 'Machine Learning', slug: 'machine-learning', description: 'Build intelligent systems with ML algorithms and data science', icon: '🧠', order: 5 },
+    { name: 'Data Science', slug: 'data-science', description: 'Analyze data, build models, and derive insights from information', icon: '📊', order: 6 },
+    { name: 'Cyber Security', slug: 'cyber-security', description: 'Protect systems, networks, and data from cyber threats', icon: '🔒', order: 7 },
+    { name: 'Cloud Computing', slug: 'cloud-computing', description: 'Deploy and manage applications on cloud platforms like AWS, Azure', icon: '☁️', order: 8 },
+    { name: 'DevOps', slug: 'devops', description: 'Streamline development and operations with CI/CD and automation', icon: '⚙️', order: 9 },
+    { name: 'Programming Languages', slug: 'programming-languages', description: 'Master various programming languages and paradigms', icon: '💻', order: 10 },
+    { name: 'Database', slug: 'database', description: 'Learn database design, SQL, NoSQL, and data management', icon: '🗄️', order: 11 },
+    { name: 'Software Testing', slug: 'software-testing', description: 'Ensure software quality through testing methodologies', icon: '✅', order: 12 },
+    { name: 'Game Development', slug: 'game-development', description: 'Create interactive games using game engines and programming', icon: '🎮', order: 13 },
+    { name: 'Digital Marketing', slug: 'digital-marketing', description: 'Grow businesses through online marketing strategies', icon: '📈', order: 14 },
+    { name: 'Business', slug: 'business', description: 'Develop business skills, entrepreneurship, and management', icon: '💼', order: 15 },
+    { name: 'Finance', slug: 'finance', description: 'Understand financial concepts, investing, and money management', icon: '💰', order: 16 },
+    { name: 'Graphic Design', slug: 'graphic-design', description: 'Create visual content for print and digital media', icon: '🖌️', order: 17 },
+    { name: 'Video Editing', slug: 'video-editing', description: 'Edit and produce professional video content', icon: '🎬', order: 18 },
+    { name: 'Photography', slug: 'photography', description: 'Capture and edit stunning photographs', icon: '📷', order: 19 },
+    { name: 'Career Development', slug: 'career-development', description: 'Advance your career with professional skills and strategies', icon: '🚀', order: 20 },
+  ];
 
-  console.log('✅ Created 5 course categories');
+  const categories = await Promise.all(
+    categoryData.map((cat) =>
+      prisma.courseCategory.upsert({
+        where: { slug: cat.slug },
+        update: {},
+        create: cat,
+      })
+    )
+  );
 
-  // Create Course Tags
-  const tags = await Promise.all([
-    prisma.courseTag.create({ data: { name: 'JavaScript', slug: 'javascript' } }),
-    prisma.courseTag.create({ data: { name: 'React', slug: 'react' } }),
-    prisma.courseTag.create({ data: { name: 'Node.js', slug: 'nodejs' } }),
-    prisma.courseTag.create({ data: { name: 'TypeScript', slug: 'typescript' } }),
-    prisma.courseTag.create({ data: { name: 'Python', slug: 'python' } }),
-    prisma.courseTag.create({ data: { name: 'Machine Learning', slug: 'machine-learning' } }),
-    prisma.courseTag.create({ data: { name: 'UI/UX', slug: 'ui-ux' } }),
-    prisma.courseTag.create({ data: { name: 'Figma', slug: 'figma' } }),
-    prisma.courseTag.create({ data: { name: 'Marketing', slug: 'marketing' } }),
-    prisma.courseTag.create({ data: { name: 'SEO', slug: 'seo' } }),
-  ]);
+  console.log(`✅ Upserted ${categories.length} course categories`);
 
-  console.log('✅ Created 10 course tags');
+  // Create Course Tags using upsert to avoid duplicates
+  const tagData = [
+    { name: 'React', slug: 'react' },
+    { name: 'Next.js', slug: 'nextjs' },
+    { name: 'Angular', slug: 'angular' },
+    { name: 'Vue.js', slug: 'vuejs' },
+    { name: 'HTML', slug: 'html' },
+    { name: 'CSS', slug: 'css' },
+    { name: 'JavaScript', slug: 'javascript' },
+    { name: 'TypeScript', slug: 'typescript' },
+    { name: 'Tailwind CSS', slug: 'tailwindcss' },
+    { name: 'Bootstrap', slug: 'bootstrap' },
+    { name: 'Node.js', slug: 'nodejs' },
+    { name: 'Express.js', slug: 'expressjs' },
+    { name: 'Fastify', slug: 'fastify' },
+    { name: 'Prisma', slug: 'prisma' },
+    { name: 'PostgreSQL', slug: 'postgresql' },
+    { name: 'MySQL', slug: 'mysql' },
+    { name: 'MongoDB', slug: 'mongodb' },
+    { name: 'Redis', slug: 'redis' },
+    { name: 'Docker', slug: 'docker' },
+    { name: 'Kubernetes', slug: 'kubernetes' },
+    { name: 'AWS', slug: 'aws' },
+    { name: 'Azure', slug: 'azure' },
+    { name: 'Git', slug: 'git' },
+    { name: 'GitHub', slug: 'github' },
+    { name: 'Python', slug: 'python' },
+    { name: 'Java', slug: 'java' },
+    { name: 'Spring Boot', slug: 'springboot' },
+    { name: 'C#', slug: 'csharp' },
+    { name: 'Flutter', slug: 'flutter' },
+    { name: 'React Native', slug: 'reactnative' },
+    { name: 'Machine Learning', slug: 'machine-learning' },
+    { name: 'Artificial Intelligence', slug: 'artificial-intelligence' },
+    { name: 'Data Science', slug: 'data-science' },
+    { name: 'Cyber Security', slug: 'cyber-security' },
+    { name: 'DevOps', slug: 'devops' },
+    { name: 'REST API', slug: 'restapi' },
+    { name: 'GraphQL', slug: 'graphql' },
+    { name: 'System Design', slug: 'system-design' },
+    { name: 'Figma', slug: 'figma' },
+    { name: 'UI Design', slug: 'ui-design' },
+    { name: 'UX Design', slug: 'ux-design' },
+  ];
+
+  const tags = await Promise.all(
+    tagData.map((tag) =>
+      prisma.courseTag.upsert({
+        where: { slug: tag.slug },
+        update: {},
+        create: tag,
+      })
+    )
+  );
+
+  console.log(`✅ Upserted ${tags.length} course tags`);
 
   // Create Courses (15 courses across creators)
   const courses = [];
@@ -456,52 +478,11 @@ async function main() {
           },
         });
         lessonCount++;
-
-        // Add quiz to every 3rd lesson
-        if (l % 3 === 2) {
-          const quiz = await prisma.quiz.create({
-            data: {
-              lessonId: lesson.id,
-              title: `Quiz: ${getLessonTitle(l)}`,
-              description: 'Test your knowledge with this quiz',
-              passPercentage: 70,
-              maxAttempts: 3,
-              timeLimit: 15,
-              shuffleQuestions: true,
-            },
-          });
-
-          // Add quiz questions
-          for (let q = 0; q < 5; q++) {
-            const question = await prisma.quizQuestion.create({
-              data: {
-                quizId: quiz.id,
-                question: `Question ${q + 1}: What is the correct answer?`,
-                explanation: `This question tests your understanding of ${getLessonTitle(l).toLowerCase()}`,
-                order: q,
-                points: 1,
-              },
-            });
-
-            // Add answers
-            const correctAnswer = Math.floor(Math.random() * 4);
-            for (let a = 0; a < 4; a++) {
-              await prisma.quizAnswer.create({
-                data: {
-                  questionId: question.id,
-                  answer: `Answer option ${a + 1}`,
-                  isCorrect: a === correctAnswer,
-                  order: a,
-                },
-              });
-            }
-          }
-        }
       }
     }
   }
 
-  console.log(`✅ Created ${lessonCount} lessons across all courses with quizzes`);
+  console.log(`✅ Created ${lessonCount} lessons across all courses`);
 
   // Create Enrollments and Reviews
   for (const student of students) {

@@ -4,7 +4,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, Check, Upload, Plus, Trash2, GripVertical, FileText, Video } from 'lucide-react';
 import { courseService, lessonService } from '@/services/academy.service';
 
-const STEPS = ['Basic Details', 'Thumbnail', 'Sections', 'Lessons', 'Quiz', 'Review'];
+const STEPS = ['Basic Details', 'Thumbnail', 'Sections', 'Lessons', 'Review'];
 
 export const AcademyCreatorCreate: React.FC = () => {
   const navigate = useNavigate();
@@ -30,33 +30,20 @@ export const AcademyCreatorCreate: React.FC = () => {
   });
 
   const [sections, setSections] = useState<Array<{ id: string; title: string; description: string; order: number }>>([]);
-  const [lessons, setLessons] = useState<Record<string, Array<{
+  
+  type Lesson = {
     id: string;
     title: string;
     description: string;
-    type: 'VIDEO' | 'ARTICLE' | 'PDF' | 'QUIZ';
+    type: 'VIDEO' | 'ARTICLE' | 'PDF' | 'EXTERNAL_LINK';
     videoUrl: string;
     content: string;
     duration: number;
     isPreview: boolean;
     attachments: string[];
-  }>>>({});
+  };
   
-  const [quizData, setQuizData] = useState({
-    title: '',
-    description: '',
-    passPercentage: 70,
-    maxAttempts: 3,
-    timeLimit: null as number | null,
-    shuffleQuestions: false,
-    questions: [] as Array<{
-      id: string;
-      question: string;
-      explanation: string;
-      points: number;
-      answers: Array<{ id: string; answer: string; isCorrect: boolean }>;
-    }>,
-  });
+  const [lessons, setLessons] = useState<Record<string, Lesson[]>>({});
 
   const { data: categories, isLoading: categoriesLoading } = useQuery({
     queryKey: ['course-categories'],
@@ -109,14 +96,14 @@ export const AcademyCreatorCreate: React.FC = () => {
         id: data.id,
         title: data.title,
         description: data.description || '',
-        type: data.type as 'VIDEO' | 'ARTICLE' | 'PDF' | 'QUIZ',
+        type: data.type as 'VIDEO' | 'ARTICLE' | 'PDF' | 'EXTERNAL_LINK',
         videoUrl: data.videoUrl || '',
         content: data.content || '',
         duration: data.duration || 0,
         isPreview: data.isPreview || false,
         attachments: data.attachments || [],
       };
-      setLessons(prev => ({
+      setLessons((prev: Record<string, Array<any>>) => ({
         ...prev,
         [sectionId]: [...(prev[sectionId] || []), newLesson],
       }));
@@ -159,24 +146,6 @@ export const AcademyCreatorCreate: React.FC = () => {
         type: 'VIDEO',
         duration: 10,
       },
-    });
-  };
-
-  const handleAddQuestion = () => {
-    setQuizData({
-      ...quizData,
-      questions: [...quizData.questions, {
-        id: `q-${Date.now()}`,
-        question: '',
-        explanation: '',
-        points: 1,
-        answers: [
-          { id: `a-${Date.now()}-1`, answer: '', isCorrect: false },
-          { id: `a-${Date.now()}-2`, answer: '', isCorrect: false },
-          { id: `a-${Date.now()}-3`, answer: '', isCorrect: false },
-          { id: `a-${Date.now()}-4`, answer: '', isCorrect: false },
-        ],
-      }],
     });
   };
 
@@ -458,7 +427,7 @@ export const AcademyCreatorCreate: React.FC = () => {
                     
                     {/* Lessons in this section */}
                     <div className="mt-3 space-y-2">
-                      {(lessons[section.id] || []).map((lesson) => (
+                      {(lessons[section.id] || []).map((lesson: any) => (
                         <div key={lesson.id} className="flex items-center gap-2 bg-white p-2 rounded border border-gray-200">
                           <GripVertical className="w-4 h-4 text-gray-400" />
                           <span className="flex-1 text-sm">{lesson.title}</span>
@@ -497,7 +466,7 @@ export const AcademyCreatorCreate: React.FC = () => {
                       <p className="text-sm text-gray-500">No lessons in this section</p>
                     ) : (
                       <div className="space-y-2">
-                        {(lessons[section.id] || []).map((lesson) => (
+                        {(lessons[section.id] || []).map((lesson: any) => (
                           <div key={lesson.id} className="bg-white p-3 rounded border border-gray-200">
                             <div className="flex items-center gap-2 mb-2">
                               {lesson.type === 'VIDEO' && <Video className="w-4 h-4 text-blue-500" />}
@@ -509,7 +478,7 @@ export const AcademyCreatorCreate: React.FC = () => {
                                 onChange={(e) => {
                                   const newLessons = { ...lessons };
                                   const sectionLessons = newLessons[section.id] || [];
-                                  const lessonIdx = sectionLessons.findIndex(l => l.id === lesson.id);
+                                  const lessonIdx = sectionLessons.findIndex((l: any) => l.id === lesson.id);
                                   if (lessonIdx >= 0) {
                                     sectionLessons[lessonIdx].title = e.target.value;
                                     newLessons[section.id] = sectionLessons;
@@ -525,7 +494,7 @@ export const AcademyCreatorCreate: React.FC = () => {
                                   onChange={(e) => {
                                     const newLessons = { ...lessons };
                                     const sectionLessons = newLessons[section.id] || [];
-                                    const lessonIdx = sectionLessons.findIndex(l => l.id === lesson.id);
+                                    const lessonIdx = sectionLessons.findIndex((l: any) => l.id === lesson.id);
                                     if (lessonIdx >= 0) {
                                       sectionLessons[lessonIdx].isPreview = e.target.checked;
                                       newLessons[section.id] = sectionLessons;
@@ -544,7 +513,7 @@ export const AcademyCreatorCreate: React.FC = () => {
                                 onChange={(e) => {
                                   const newLessons = { ...lessons };
                                   const sectionLessons = newLessons[section.id] || [];
-                                  const lessonIdx = sectionLessons.findIndex(l => l.id === lesson.id);
+                                  const lessonIdx = sectionLessons.findIndex((l: any) => l.id === lesson.id);
                                   if (lessonIdx >= 0) {
                                     sectionLessons[lessonIdx].videoUrl = e.target.value;
                                     newLessons[section.id] = sectionLessons;
@@ -560,7 +529,7 @@ export const AcademyCreatorCreate: React.FC = () => {
                                 onChange={(e) => {
                                   const newLessons = { ...lessons };
                                   const sectionLessons = newLessons[section.id] || [];
-                                  const lessonIdx = sectionLessons.findIndex(l => l.id === lesson.id);
+                                  const lessonIdx = sectionLessons.findIndex((l: any) => l.id === lesson.id);
                                   if (lessonIdx >= 0) {
                                     sectionLessons[lessonIdx].duration = Number(e.target.value);
                                     newLessons[section.id] = sectionLessons;
@@ -585,121 +554,6 @@ export const AcademyCreatorCreate: React.FC = () => {
       case 4:
         return (
           <div className="space-y-6">
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h3 className="font-semibold text-gray-900">Quiz Builder</h3>
-                <button
-                  onClick={handleAddQuestion}
-                  className="flex items-center gap-2 px-4 py-2 bg-orange-500 text-white rounded-lg text-sm font-medium hover:bg-orange-600 transition-colors"
-                >
-                  <Plus className="w-4 h-4" />
-                  Add Question
-                </button>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Quiz Title
-                  </label>
-                  <input
-                    type="text"
-                    value={quizData.title}
-                    onChange={(e) => setQuizData({ ...quizData, title: e.target.value })}
-                    placeholder="e.g., Final Quiz"
-                    className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Pass Percentage (%)
-                  </label>
-                  <input
-                    type="number"
-                    value={quizData.passPercentage}
-                    onChange={(e) => setQuizData({ ...quizData, passPercentage: Number(e.target.value) })}
-                    min="0"
-                    max="100"
-                    className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
-                  />
-                </div>
-              </div>
-
-              {quizData.questions.length === 0 ? (
-                <div className="text-center py-8 text-gray-500">
-                  No questions yet. Add your first question.
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {quizData.questions.map((question, qIndex) => (
-                    <div key={question.id} className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                      <div className="flex items-center justify-between mb-3">
-                        <span className="font-medium text-gray-900">Question {qIndex + 1}</span>
-                        <button
-                          onClick={() => {
-                            setQuizData({
-                              ...quizData,
-                              questions: quizData.questions.filter(q => q.id !== question.id),
-                            });
-                          }}
-                          className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                      <textarea
-                        value={question.question}
-                        onChange={(e) => {
-                          const newQuestions = [...quizData.questions];
-                          newQuestions[qIndex].question = e.target.value;
-                          setQuizData({ ...quizData, questions: newQuestions });
-                        }}
-                        placeholder="Enter your question"
-                        rows={2}
-                        className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 resize-none text-sm mb-3"
-                      />
-                      <div className="space-y-2">
-                        {question.answers.map((answer, aIndex) => (
-                          <div key={answer.id} className="flex items-center gap-2">
-                            <input
-                              type="radio"
-                              name={`correct-${question.id}`}
-                              checked={answer.isCorrect}
-                              onChange={() => {
-                                const newQuestions = [...quizData.questions];
-                                newQuestions[qIndex].answers = newQuestions[qIndex].answers.map((a, i) => ({
-                                  ...a,
-                                  isCorrect: i === aIndex,
-                                }));
-                                setQuizData({ ...quizData, questions: newQuestions });
-                              }}
-                              className="rounded"
-                            />
-                            <input
-                              type="text"
-                              value={answer.answer}
-                              onChange={(e) => {
-                                const newQuestions = [...quizData.questions];
-                                newQuestions[qIndex].answers[aIndex].answer = e.target.value;
-                                setQuizData({ ...quizData, questions: newQuestions });
-                              }}
-                              placeholder={`Answer ${aIndex + 1}`}
-                              className="flex-1 px-3 py-2 border border-gray-200 rounded focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm"
-                            />
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-        );
-
-      case 5:
-        return (
-          <div className="space-y-6">
             <div className="bg-gray-50 rounded-lg p-6">
               <h3 className="font-semibold text-gray-900 mb-4">Course Summary</h3>
               <div className="space-y-2">
@@ -710,7 +564,6 @@ export const AcademyCreatorCreate: React.FC = () => {
                 <p><span className="text-gray-600">Language:</span> {formData.language}</p>
                 <p><span className="text-gray-600">Sections:</span> {sections.length}</p>
                 <p><span className="text-gray-600">Total Lessons:</span> {Object.values(lessons).flat().length}</p>
-                <p><span className="text-gray-600">Quiz Questions:</span> {quizData.questions.length}</p>
               </div>
             </div>
           </div>

@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Plus, Trash2, Edit, Eye, Archive, ArchiveRestore } from 'lucide-react';
+import { ArrowLeft, Plus, Trash2, Edit, Eye, Archive, ArchiveRestore } from 'lucide-react';
 import { courseService } from '@/services/academy.service';
 import type { Course } from '@/services/academy.service';
 
 type TabType = 'PUBLISHED' | 'DRAFT' | 'ARCHIVED';
 
 export const AcademyMyCourses: React.FC = () => {
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<TabType>('PUBLISHED');
 
@@ -83,6 +84,15 @@ export const AcademyMyCourses: React.FC = () => {
       {/* Header */}
       <div className="bg-white border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="flex items-center gap-4 mb-4">
+            <button
+              onClick={() => navigate(-1)}
+              className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
+            >
+              <ArrowLeft className="w-5 h-5" />
+              <span className="text-sm">Back</span>
+            </button>
+          </div>
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold text-gray-900 mb-2">My Courses</h1>

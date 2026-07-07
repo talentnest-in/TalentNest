@@ -18,6 +18,8 @@ const createCourseSchema = {
     requirements: { type: 'array', items: { type: 'string' } },
     whatYouWillLearn: { type: 'array', items: { type: 'string' } },
     targetAudience: { type: 'array', items: { type: 'string' } },
+    tags: { type: 'array', items: { type: 'string' } },
+    thumbnail: { type: 'string' },
   },
   required: ['categoryId', 'title', 'description'],
 };
@@ -371,6 +373,50 @@ export const courseController = {
       const userId = (request as any).user.id;
       const body = request.body as any;
 
+      // Verify user exists
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+      });
+      if (!user) {
+        return reply.status(400).send({ error: 'User not found' });
+      }
+
+      // Verify creator profile exists, create if not
+      const creatorProfile = await prisma.creatorProfile.findUnique({
+        where: { userId },
+      });
+      if (!creatorProfile) {
+        await prisma.creatorProfile.create({
+          data: {
+            userId,
+            bio: '',
+            socialLinks: {},
+            followersCount: 0,
+            studentsCount: 0,
+            totalRevenue: 0,
+            averageRating: 0,
+          },
+        });
+      }
+
+      // Verify category exists
+      const category = await prisma.courseCategory.findUnique({
+        where: { id: body.categoryId },
+      });
+      if (!category) {
+        return reply.status(400).send({ error: 'Category not found' });
+      }
+
+      // Verify tags exist
+      if (body.tags && body.tags.length > 0) {
+        const tagCount = await prisma.courseTag.count({
+          where: { id: { in: body.tags } },
+        });
+        if (tagCount !== body.tags.length) {
+          return reply.status(400).send({ error: 'One or more tags not found' });
+        }
+      }
+
       // Generate slug from title
       const slug = body.title
         .toLowerCase()
@@ -386,31 +432,59 @@ export const courseController = {
         return reply.status(400).send({ error: 'Course with this title already exists' });
       }
 
-      const course = await prisma.course.create({
-        data: {
-          creatorId: userId,
-          categoryId: body.categoryId,
-          title: body.title,
-          slug,
-          subtitle: body.subtitle,
-          description: body.description,
-          price: body.price || 0,
-          discountPrice: body.discountPrice,
-          level: body.level || 'BEGINNER',
-          language: body.language || 'English',
-          requirements: body.requirements || [],
-          whatYouWillLearn: body.whatYouWillLearn || [],
-          targetAudience: body.targetAudience || [],
+      // Prepare course data
+      const courseData = {
+        creator: {
+          connect: { id: userId },
         },
+        category: {
+          connect: { id: body.categoryId },
+        },
+        title: body.title,
+        slug,
+        subtitle: body.subtitle || null,
+        description: body.description,
+        thumbnail: body.thumbnail || null,
+        price: body.price || 0,
+        discountPrice: body.discountPrice || null,
+        level: (body.level || 'BEGINNER') as 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED',
+        language: body.language || 'English',
+        requirements: body.requirements || [],
+        whatYouWillLearn: body.whatYouWillLearn || [],
+        targetAudience: body.targetAudience || [],
+        status: 'DRAFT' as 'DRAFT' | 'PENDING_REVIEW' | 'PUBLISHED' | 'REJECTED',
+        visibility: false,
+      };
+
+      const validLevels = ['BEGINNER', 'INTERMEDIATE', 'ADVANCED'];
+      if (!validLevels.includes(courseData.level)) {
+        return reply.status(400).send({ error: `Invalid level: ${courseData.level}` });
+      }
+
+      const course = await prisma.course.create({
+        data: courseData,
         include: {
           category: true,
         },
       });
 
+      // Create tag relations if tags provided
+      if (body.tags && body.tags.length > 0) {
+        await prisma.courseTagRelation.createMany({
+          data: body.tags.map((tagId: string) => ({
+            courseId: course.id,
+            tagId,
+          })),
+        });
+      }
+
       return reply.status(201).send(course);
-    } catch (error) {
+    } catch (error: any) {
       request.log.error(error, 'Failed to create course');
-      return reply.status(500).send({ error: 'Failed to create course' });
+      return reply.status(500).send({ 
+        error: 'Failed to create course',
+        details: error.message,
+      });
     }
   },
 

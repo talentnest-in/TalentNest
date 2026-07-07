@@ -489,9 +489,9 @@ enum LessonType {
   VIDEO
   ARTICLE
   PDF
+  EXTERNAL_LINK
   RESOURCE
   ASSIGNMENT
-  QUIZ
 }
 
 enum EnrollmentStatus {
@@ -603,7 +603,6 @@ model Lesson {
 
   section     CourseSection @relation(fields: [sectionId], references: [id], onDelete: Cascade)
   progress    LessonProgress[]
-  quiz        Quiz?
 
   @@index([sectionId])
   @@index([order])
@@ -622,7 +621,6 @@ model Enrollment {
   course          Course           @relation(fields: [courseId], references: [id], onDelete: Cascade)
   student         User             @relation("StudentEnrollments", fields: [studentId], references: [id], onDelete: Cascade)
   progressRecords LessonProgress[]
-  quizAttempts    QuizAttempt[]
   certificate     Certificate?
 
   @@unique([courseId, studentId])
@@ -649,76 +647,6 @@ model LessonProgress {
   @@unique([enrollmentId, lessonId])
   @@index([enrollmentId])
   @@index([lessonId])
-}
-
-model Quiz {
-  id              String   @id @default(uuid())
-  lessonId        String   @unique
-  title           String
-  description     String?  @db.Text
-  passPercentage  Int      @default(70) // percentage to pass
-  maxAttempts     Int      @default(3)
-  timeLimit       Int?     // in minutes, null means unlimited
-  shuffleQuestions Boolean @default(false)
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-
-  lesson          Lesson         @relation(fields: [lessonId], references: [id], onDelete: Cascade)
-  questions       QuizQuestion[]
-  attempts        QuizAttempt[]
-
-  @@index([lessonId])
-}
-
-model QuizQuestion {
-  id          String       @id @default(uuid())
-  quizId      String
-  question    String       @db.Text
-  explanation String?      @db.Text
-  order       Int          @default(0)
-  points      Int          @default(1)
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
-
-  quiz        Quiz         @relation(fields: [quizId], references: [id], onDelete: Cascade)
-  answers     QuizAnswer[]
-
-  @@index([quizId])
-  @@index([order])
-}
-
-model QuizAnswer {
-  id          String       @id @default(uuid())
-  questionId  String
-  answer      String       @db.Text
-  isCorrect   Boolean      @default(false)
-  order       Int          @default(0)
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
-
-  question    QuizQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
-
-  @@index([questionId])
-  @@index([order])
-}
-
-model QuizAttempt {
-  id              String   @id @default(uuid())
-  quizId          String
-  enrollmentId    String
-  score           Float
-  passed          Boolean
-  attemptNumber   Int
-  startedAt       DateTime @default(now())
-  completedAt     DateTime?
-  timeSpent       Int?     // in seconds
-
-  quiz            Quiz      @relation(fields: [quizId], references: [id], onDelete: Cascade)
-  enrollment      Enrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
-
-  @@index([quizId])
-  @@index([enrollmentId])
-  @@index([startedAt])
 }
 
 model Certificate {

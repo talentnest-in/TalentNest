@@ -1,5 +1,5 @@
 import React from 'react';
-import { ChevronDown, ChevronRight, PlayCircle, FileText, Video, CheckCircle, Circle } from 'lucide-react';
+import { ChevronDown, ChevronRight, FileText, Video, CheckCircle, Circle } from 'lucide-react';
 import type { CourseSection, LessonProgress } from '@/services/academy.service';
 
 interface LessonSidebarProps {
@@ -39,8 +39,8 @@ export const LessonSidebar: React.FC<LessonSidebarProps> = ({
         return FileText;
       case 'PDF':
         return FileText;
-      case 'QUIZ':
-        return PlayCircle;
+      case 'EXTERNAL_LINK':
+        return FileText;
       default:
         return FileText;
     }

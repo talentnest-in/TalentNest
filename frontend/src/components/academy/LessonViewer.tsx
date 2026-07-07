@@ -1,5 +1,5 @@
 import React from 'react';
-import { ChevronLeft, ChevronRight, Download } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Download, ExternalLink } from 'lucide-react';
 import type { Lesson } from '@/services/academy.service';
 
 interface LessonViewerProps {
@@ -57,20 +57,20 @@ export const LessonViewer: React.FC<LessonViewerProps> = ({
       case 'PDF':
         return (
           <div className="aspect-video bg-gray-100 rounded-lg flex items-center justify-center">
-            {lesson.attachments && lesson.attachments.length > 0 ? (
+            {lesson.videoUrl ? (
               <div className="text-center">
                 <div className="w-16 h-16 bg-gray-200 rounded-lg flex items-center justify-center mx-auto mb-4">
                   <Download className="w-8 h-8 text-gray-500" />
                 </div>
-                <p className="text-gray-600 mb-4">PDF attachment available</p>
+                <p className="text-gray-600 mb-4">PDF available</p>
                 <a
-                  href={lesson.attachments[0]}
+                  href={lesson.videoUrl}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-2 px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors"
                 >
                   <Download className="w-4 h-4" />
-                  Download PDF
+                  Open PDF
                 </a>
               </div>
             ) : (
@@ -79,16 +79,27 @@ export const LessonViewer: React.FC<LessonViewerProps> = ({
           </div>
         );
 
-      case 'QUIZ':
+      case 'EXTERNAL_LINK':
         return (
           <div className="bg-white rounded-lg border border-gray-200 p-8">
             <div className="text-center">
-              <p className="text-gray-600 mb-4">This lesson includes a quiz</p>
-              <button
-                className="px-6 py-3 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors"
-              >
-                Start Quiz
-              </button>
+              <div className="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center mx-auto mb-4">
+                <ExternalLink className="w-8 h-8 text-gray-500" />
+              </div>
+              <p className="text-gray-600 mb-4">This lesson contains an external resource</p>
+              {lesson.videoUrl ? (
+                <a
+                  href={lesson.videoUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors"
+                >
+                  <ExternalLink className="w-4 h-4" />
+                  Open Resource
+                </a>
+              ) : (
+                <p className="text-gray-500">No link available</p>
+              )}
             </div>
           </div>
         );

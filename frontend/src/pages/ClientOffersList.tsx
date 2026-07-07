@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { offerService } from '@/services/offer.service';
 import { OfferCard } from '@/components/ui/OfferCard';
 import type { OfferStatus } from '@/types';
-import { Search, Filter } from 'lucide-react';
+import { ArrowLeft, Search, Filter } from 'lucide-react';
 
 export function ClientOffersList() {
   const navigate = useNavigate();
@@ -28,8 +28,10 @@ export function ClientOffersList() {
   };
 
   const handleCancel = (id: string) => {
-    // TODO: Implement cancel offer with confirmation
-    console.log('Cancel offer:', id);
+    // Cancel offer with confirmation dialog
+    if (window.confirm('Are you sure you want to cancel this offer?')) {
+      offerService.cancelOffer(id);
+    }
   };
 
   if (isLoading) {
@@ -53,6 +55,15 @@ export function ClientOffersList() {
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
+      <div className="flex items-center gap-4 mb-8">
+        <button
+          onClick={() => navigate(-1)}
+          className="flex items-center gap-2 text-text-muted hover:text-text transition-colors"
+        >
+          <ArrowLeft className="w-5 h-5" />
+          <span className="text-sm">Back</span>
+        </button>
+      </div>
       <div className="mb-8">
         <h1 className="text-2xl font-heading font-bold text-text mb-2">My Offers</h1>
         <p className="text-sm text-text-muted">Manage offers you've sent to freelancers</p>

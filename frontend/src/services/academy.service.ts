@@ -60,51 +60,9 @@ export interface Lesson {
   videoUrl: string | null;
   attachments: string[];
   duration: number | null;
-  type: 'VIDEO' | 'ARTICLE' | 'PDF' | 'QUIZ';
+  type: 'VIDEO' | 'ARTICLE' | 'PDF' | 'EXTERNAL_LINK';
   order: number;
   isPreview: boolean;
-  quiz?: Quiz;
-}
-
-export interface Quiz {
-  id: string;
-  lessonId: string;
-  title: string;
-  description: string | null;
-  passPercentage: number;
-  maxAttempts: number;
-  timeLimit: number | null;
-  shuffleQuestions: boolean;
-  questions?: QuizQuestion[];
-}
-
-export interface QuizQuestion {
-  id: string;
-  quizId: string;
-  question: string;
-  explanation: string | null;
-  order: number;
-  points: number;
-  answers?: QuizAnswer[];
-}
-
-export interface QuizAnswer {
-  id: string;
-  questionId: string;
-  answer: string;
-  isCorrect: boolean;
-  order: number;
-}
-
-export interface QuizAttempt {
-  id: string;
-  quizId: string;
-  enrollmentId: string;
-  score: number;
-  passed: boolean;
-  attemptNumber: number;
-  startedAt: string;
-  completedAt: string;
 }
 
 export interface Enrollment {
@@ -119,6 +77,11 @@ export interface Enrollment {
   course: Course;
   progressRecords?: LessonProgress[];
   certificate?: Certificate;
+  student?: {
+    id: string;
+    name: string;
+    avatar: string | null;
+  };
 }
 
 export interface EnrollmentResponse {
@@ -454,71 +417,6 @@ export const enrollmentService = {
   // Cancel enrollment
   cancelEnrollment: async (courseId: string): Promise<void> => {
     await api.delete(`/courses/${courseId}/enrollment`);
-  },
-};
-
-// ── Quiz Service ──────────────────────────────────────────────────────────────
-
-export const quizService = {
-  // Create quiz
-  createQuiz: async (lessonId: string, data: {
-    title: string;
-    description?: string;
-    passPercentage?: number;
-    maxAttempts?: number;
-    timeLimit?: number;
-    shuffleQuestions?: boolean;
-  }): Promise<Quiz> => {
-    const res = await api.post(`/lessons/${lessonId}/quiz`, data);
-    return res.data;
-  },
-
-  // Update quiz
-  updateQuiz: async (quizId: string, data: Partial<Quiz>): Promise<Quiz> => {
-    const res = await api.put(`/quizzes/${quizId}`, data);
-    return res.data;
-  },
-
-  // Delete quiz
-  deleteQuiz: async (quizId: string): Promise<void> => {
-    await api.delete(`/quizzes/${quizId}`);
-  },
-
-  // Create question
-  createQuestion: async (quizId: string, data: {
-    question: string;
-    explanation?: string;
-    points?: number;
-  }): Promise<QuizQuestion> => {
-    const res = await api.post(`/quizzes/${quizId}/questions`, data);
-    return res.data;
-  },
-
-  // Create answer
-  createAnswer: async (questionId: string, data: {
-    answer: string;
-    isCorrect: boolean;
-  }): Promise<QuizAnswer> => {
-    const res = await api.post(`/questions/${questionId}/answers`, data);
-    return res.data;
-  },
-
-  // Get quiz for student
-  getQuiz: async (quizId: string): Promise<Quiz> => {
-    const res = await api.get(`/quizzes/${quizId}`);
-    return res.data;
-  },
-
-  // Submit quiz attempt
-  submitAttempt: async (quizId: string, answers: { questionId: string; answerId: string }[]): Promise<QuizAttempt> => {
-    const res = await api.post(`/quizzes/${quizId}/attempt`, { answers });
-    return res.data;
-  },
-
-  // Get quiz attempts
-  getAttempts: async (quizId: string): Promise<QuizAttempt[]> => {
-    const res = await api.get(`/quizzes/${quizId}/attempts`);
-    return res.data;
   },
 };
 

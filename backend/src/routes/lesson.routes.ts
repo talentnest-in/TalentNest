@@ -38,6 +38,12 @@ export async function lessonRoutes(fastify: FastifyInstance) {
     handler: lessonController.uploadLessonVideo,
   });
 
+  // Upload lesson PDF
+  fastify.post('/lessons/:lessonId/pdf', {
+    preHandler: [fastify.authenticate],
+    handler: lessonController.uploadLessonPdf,
+  });
+
   // Delete lesson
   fastify.delete('/lessons/:lessonId', {
     preHandler: [fastify.authenticate],

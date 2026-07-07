@@ -5,7 +5,7 @@ import { clientJobService } from '@/services/job.service';
 import { JobCard } from '@/components/client/JobCard';
 import { EmptyState } from '@/components/client/EmptyState';
 import { Button } from '@/components/ui/Button';
-import { Briefcase, Plus, Loader2 } from 'lucide-react';
+import { ArrowLeft, Briefcase, Plus, Loader2 } from 'lucide-react';
 
 export function ClientJobsPage() {
   const navigate = useNavigate();
@@ -29,6 +29,15 @@ export function ClientJobsPage() {
   return (
     <div className="min-h-screen bg-background">
       <div className="max-w-5xl mx-auto p-4 lg:p-8 space-y-6">
+        <div className="flex items-center gap-4">
+          <button
+            onClick={() => navigate(-1)}
+            className="flex items-center gap-2 text-text-muted hover:text-text transition-colors"
+          >
+            <ArrowLeft className="w-5 h-5" />
+            <span className="text-sm">Back</span>
+          </button>
+        </div>
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <h1 className="text-2xl font-heading font-bold text-text">Manage Jobs</h1>

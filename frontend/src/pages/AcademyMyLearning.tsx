@@ -1,11 +1,12 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Link } from 'react-router-dom';
-import { BookOpen, Award, TrendingUp, CheckCircle } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { ArrowLeft, BookOpen, Award, TrendingUp, CheckCircle } from 'lucide-react';
 import { enrollmentService, certificateService } from '@/services/academy.service';
 import type { Enrollment } from '@/services/academy.service';
 
 export const AcademyMyLearning: React.FC = () => {
+  const navigate = useNavigate();
   const { data: enrollments, isLoading: enrollmentsLoading } = useQuery<Enrollment[]>({
     queryKey: ['enrollments'],
     queryFn: () => enrollmentService.getUserEnrollments(),
@@ -36,6 +37,15 @@ export const AcademyMyLearning: React.FC = () => {
       {/* Header */}
       <div className="bg-white border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="flex items-center gap-4 mb-4">
+            <button
+              onClick={() => navigate(-1)}
+              className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
+            >
+              <ArrowLeft className="w-5 h-5" />
+              <span className="text-sm">Back</span>
+            </button>
+          </div>
           <h1 className="text-3xl font-bold text-gray-900 mb-2">My Learning</h1>
           <p className="text-gray-600">Track your progress and achievements</p>
         </div>

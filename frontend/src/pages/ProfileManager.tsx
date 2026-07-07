@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { freelancerService } from '@/services/freelancer.service';
 import { portfolioService } from '@/services/portfolio.service';
@@ -7,13 +8,14 @@ import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
 import { ProfileProgressCard } from '@/components/freelancer/ProfileProgressCard';
+import { AvatarCard } from '@/components/freelancer/AvatarCard';
 import { SkillChips } from '@/components/freelancer/SkillChips';
 import { ExperienceTimeline } from '@/components/freelancer/ExperienceTimeline';
 import { EducationCards } from '@/components/freelancer/EducationCards';
 import { PortfolioGrid } from '@/components/freelancer/PortfolioGrid';
 import { ResumeCard } from '@/components/freelancer/ResumeCard';
 import { CertificateCard } from '@/components/academy/CertificateCard';
-import { User, Briefcase, GraduationCap, FolderDot, Plus, Loader2, BookOpen, Award } from 'lucide-react';
+import { ArrowLeft, User, Briefcase, GraduationCap, FolderDot, Plus, Loader2, BookOpen, Award } from 'lucide-react';
 import type { Experience, Education, PortfolioProject } from '@/types';
 import { BACKEND_URL } from '@/lib/constants';
 
@@ -228,6 +230,7 @@ function PortfolioForm({
 
 // ─── ProfileManager Page ──────────────────────────────────────────────────────
 export function ProfileManager() {
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { data: profile, isLoading } = useQuery({
     queryKey: ['freelancerProfile'],
@@ -309,6 +312,15 @@ export function ProfileManager() {
   return (
     <div className="min-h-screen bg-background">
       <div className="max-w-6xl mx-auto p-4 lg:p-8 space-y-6">
+        <div className="flex items-center gap-4">
+          <button
+            onClick={() => navigate(-1)}
+            className="flex items-center gap-2 text-text-muted hover:text-text transition-colors"
+          >
+            <ArrowLeft className="w-5 h-5" />
+            <span className="text-sm">Back</span>
+          </button>
+        </div>
         <div>
           <h1 className="text-2xl font-heading font-bold text-text">Profile Manager</h1>
           <p className="text-text-muted mt-1">Manage your freelancer profile and portfolio.</p>
@@ -317,6 +329,7 @@ export function ProfileManager() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
           {/* Sidebar */}
           <div className="space-y-4">
+            <AvatarCard />
             <ProfileProgressCard profile={profile || null} />
             <ResumeCard
               resumeUrl={profile?.resumeUrl || null}

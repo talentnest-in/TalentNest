@@ -5,7 +5,7 @@ import { contractService } from '@/services/contract.service';
 import { ContractCard } from '@/components/ui/ContractCard';
 import { EmptyContractsState } from '@/components/ui/EmptyContractsState';
 import type { ContractStatus } from '@/types';
-import { Filter } from 'lucide-react';
+import { ArrowLeft, Filter } from 'lucide-react';
 
 export function ContractsList() {
   const navigate = useNavigate();
@@ -47,6 +47,15 @@ export function ContractsList() {
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
+      <div className="flex items-center gap-4 mb-8">
+        <button
+          onClick={() => navigate(-1)}
+          className="flex items-center gap-2 text-text-muted hover:text-text transition-colors"
+        >
+          <ArrowLeft className="w-5 h-5" />
+          <span className="text-sm">Back</span>
+        </button>
+      </div>
       <div className="mb-8">
         <h1 className="text-2xl font-heading font-bold text-text mb-2">Contracts</h1>
         <p className="text-sm text-text-muted">View and manage your active and past contracts</p>

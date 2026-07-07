@@ -1,5 +1,6 @@
 import { v2 as cloudinary } from 'cloudinary';
 import crypto from 'crypto';
+import { Readable } from 'stream';
 
 // Configure Cloudinary
 const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
@@ -25,7 +26,7 @@ if (cloudName && apiKey && apiSecret) {
 
 export { cloudinary };
 
-// Upload file to Cloudinary
+// Upload file to Cloudinary (buffer-based for small files)
 export async function uploadToCloudinary(
   file: Buffer,
   filename: string,
@@ -74,6 +75,55 @@ export async function uploadToCloudinary(
         }
       )
       .end(file);
+  });
+}
+
+// Upload video to Cloudinary (stream-based for large files to avoid memory issues)
+export async function uploadVideoToCloudinary(
+  stream: Readable,
+  filename: string,
+  mimeType: string,
+  folder: string
+): Promise<{
+  secure_url: string;
+  public_id: string;
+  resource_type: string;
+  bytes: number;
+  format: string;
+}> {
+  return new Promise((resolve, reject) => {
+    const uploadStream = cloudinary.uploader.upload_stream(
+      {
+        folder,
+        resource_type: 'video',
+        public_id: filename.split('.')[0] || crypto.randomUUID(),
+        allowed_formats: ['mp4', 'webm', 'mov', 'avi'],
+        max_file_size: 100 * 1024 * 1024, // 100MB
+        chunk_size: 6000000, // 6MB chunks for better streaming
+        eager: [{ streaming_profile: 'full_hd' }],
+      },
+      (error, result) => {
+        if (error) {
+          reject(error);
+        } else if (result) {
+          resolve({
+            secure_url: result.secure_url,
+            public_id: result.public_id,
+            resource_type: result.resource_type,
+            bytes: result.bytes,
+            format: result.format,
+          });
+        } else {
+          reject(new Error('Cloudinary video upload failed: No result returned'));
+        }
+      }
+    );
+
+    stream.pipe(uploadStream);
+
+    stream.on('error', (error) => {
+      reject(error);
+    });
   });
 }
 

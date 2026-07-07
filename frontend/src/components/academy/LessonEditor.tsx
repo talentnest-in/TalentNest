@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, Trash2, GripVertical, Video, FileText } from 'lucide-react';
+import { Plus, Trash2, GripVertical, Video, FileText, Link } from 'lucide-react';
 import type { Lesson } from '@/services/academy.service';
 
 interface LessonEditorProps {
@@ -18,6 +18,7 @@ interface LessonEditorProps {
   onLessonDelete: (lessonId: string) => void;
   onLessonReorder: (lessons: Lesson[]) => void;
   onVideoUpload?: (lessonId: string, file: File) => Promise<void>;
+  onPdfUpload?: (lessonId: string, file: File) => Promise<void>;
 }
 
 export const LessonEditor: React.FC<LessonEditorProps> = ({
@@ -27,9 +28,10 @@ export const LessonEditor: React.FC<LessonEditorProps> = ({
   onLessonDelete,
   onLessonReorder: _onLessonReorder,
   onVideoUpload,
+  onPdfUpload,
 }) => {
   const [newLessonTitle, setNewLessonTitle] = useState('');
-  const [newLessonType, setNewLessonType] = useState<'VIDEO' | 'ARTICLE' | 'PDF'>('VIDEO');
+  const [newLessonType, setNewLessonType] = useState<'VIDEO' | 'ARTICLE' | 'PDF' | 'EXTERNAL_LINK'>('VIDEO');
   const [editingLesson, setEditingLesson] = useState<string | null>(null);
 
   const handleAddLesson = () => {
@@ -49,6 +51,17 @@ export const LessonEditor: React.FC<LessonEditorProps> = ({
         await onVideoUpload(lessonId, file);
       } catch (error) {
         console.error('Failed to upload video:', error);
+      }
+    }
+  };
+
+  const handlePdfUpload = async (lessonId: string, e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file && onPdfUpload) {
+      try {
+        await onPdfUpload(lessonId, file);
+      } catch (error) {
+        console.error('Failed to upload PDF:', error);
       }
     }
   };
@@ -97,6 +110,7 @@ export const LessonEditor: React.FC<LessonEditorProps> = ({
                 {lesson.type === 'VIDEO' && <Video className="w-4 h-4 text-gray-400" />}
                 {lesson.type === 'ARTICLE' && <FileText className="w-4 h-4 text-gray-400" />}
                 {lesson.type === 'PDF' && <FileText className="w-4 h-4 text-gray-400" />}
+                {lesson.type === 'EXTERNAL_LINK' && <Link className="w-4 h-4 text-gray-400" />}
                 {lesson.isPreview && (
                   <span className="px-2 py-0.5 bg-orange-100 text-orange-700 text-xs rounded-full">
                     Preview
@@ -126,6 +140,7 @@ export const LessonEditor: React.FC<LessonEditorProps> = ({
                     <option value="VIDEO">Video</option>
                     <option value="ARTICLE">Article</option>
                     <option value="PDF">PDF</option>
+                    <option value="EXTERNAL_LINK">External Link</option>
                   </select>
                 </div>
                 <div>
@@ -171,6 +186,65 @@ export const LessonEditor: React.FC<LessonEditorProps> = ({
                 </div>
               )}
 
+              {lesson.type === 'PDF' && (
+                <div className="mt-3">
+                  <label className="block text-xs font-medium text-gray-700 mb-1">
+                    PDF URL
+                  </label>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={lesson.videoUrl || ''}
+                      onChange={(e) => onLessonUpdate(lesson.id, { videoUrl: e.target.value })}
+                      placeholder="https://..."
+                      className="flex-1 px-2 py-1.5 border border-gray-200 rounded text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+                    />
+                    {onPdfUpload && (
+                      <label className="flex items-center gap-2 px-3 py-1.5 bg-gray-100 rounded text-sm cursor-pointer hover:bg-gray-200 transition-colors">
+                        <FileText className="w-4 h-4 text-gray-600" />
+                        <span className="text-gray-700">Upload PDF</span>
+                        <input
+                          type="file"
+                          accept="application/pdf"
+                          onChange={(e) => handlePdfUpload(lesson.id, e)}
+                          className="hidden"
+                        />
+                      </label>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {lesson.type === 'ARTICLE' && (
+                <div className="mt-3">
+                  <label className="block text-xs font-medium text-gray-700 mb-1">
+                    Content
+                  </label>
+                  <textarea
+                    value={lesson.content || ''}
+                    onChange={(e) => onLessonUpdate(lesson.id, { content: e.target.value })}
+                    placeholder="Write your article content here..."
+                    rows={4}
+                    className="w-full px-2 py-1.5 border border-gray-200 rounded text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 resize-none"
+                  />
+                </div>
+              )}
+
+              {lesson.type === 'EXTERNAL_LINK' && (
+                <div className="mt-3">
+                  <label className="block text-xs font-medium text-gray-700 mb-1">
+                    External URL
+                  </label>
+                  <input
+                    type="url"
+                    value={lesson.videoUrl || ''}
+                    onChange={(e) => onLessonUpdate(lesson.id, { videoUrl: e.target.value })}
+                    placeholder="https://..."
+                    className="w-full px-2 py-1.5 border border-gray-200 rounded text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  />
+                </div>
+              )}
+
               <div className="mt-3">
                 <label className="flex items-center gap-2">
                   <input
@@ -207,6 +281,7 @@ export const LessonEditor: React.FC<LessonEditorProps> = ({
           <option value="VIDEO">Video</option>
           <option value="ARTICLE">Article</option>
           <option value="PDF">PDF</option>
+          <option value="EXTERNAL_LINK">External Link</option>
         </select>
         <button
           onClick={handleAddLesson}

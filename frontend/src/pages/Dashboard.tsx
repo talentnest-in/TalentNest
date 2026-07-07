@@ -171,7 +171,7 @@ export function Dashboard() {
           {/* Stats grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
             <StatCard icon={Users} label="Total Applications" value={totalApplications.toString()} color="bg-accent" />
-            <StatCard icon={TrendingUp} label="Pending Offers" value={pendingOffers.toString()} color="bg-warning" />
+            <StatCard icon={TrendingUp} label="Pending Offers" value={pendingOffers.toString()} color="bg-orange-500" />
             <StatCard icon={FileText} label="Active Contracts" value={activeContracts.toString()} color="bg-primary" />
             <StatCard icon={DollarSign} label="Completed Contracts" value={completedContracts.toString()} color="bg-success" />
           </div>
