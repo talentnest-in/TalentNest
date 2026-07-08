@@ -3,13 +3,15 @@ interface BrandLogoProps {
   showText?: boolean;
   showTagline?: boolean;
   className?: string;
+  onDark?: boolean; // when true, renders text in white/accent for dark backgrounds
 }
 
 export function BrandLogo({ 
   size = 'medium', 
   showText = true, 
   showTagline = true,
-  className = '' 
+  className = '',
+  onDark = false,
 }: BrandLogoProps) {
   const sizeClasses = {
     small: 'h-8',
@@ -40,11 +42,11 @@ export function BrandLogo({
       {showText && (
         <div className="flex flex-col">
           <span className={`font-logo font-bold ${textSizeClasses[size]} tracking-tight leading-none`}>
-            <span className="text-primary">Talent</span>
+            <span className={onDark ? 'text-white' : 'text-primary'}>Talent</span>
             <span className="text-accent">Nest</span>
           </span>
           {showTagline && (
-            <span className={`${taglineSizeClasses[size]} tracking-widest text-primary font-medium uppercase leading-none mt-1`}>
+            <span className={`${taglineSizeClasses[size]} tracking-widest font-medium uppercase leading-none mt-1 ${onDark ? 'text-white/60' : 'text-primary'}`}>
               The Independent Career Platform
             </span>
           )}

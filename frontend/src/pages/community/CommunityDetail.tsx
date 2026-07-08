@@ -8,20 +8,11 @@ import { PostCard } from '@/components/community/PostCard';
 import { CreatePostModal } from '@/components/community/CreatePostModal';
 import { ManageCommunityModal } from '@/components/community/ManageCommunityModal';
 import { Button } from '@/components/ui/Button';
-import { LayoutDashboard, Briefcase, Users, DollarSign, FileText, Settings, ShieldCheck, Calendar, ArrowLeft, LogOut } from 'lucide-react';
+import { ShieldCheck, Calendar, ArrowLeft, LogOut, Settings, Users } from 'lucide-react';
 import { format } from 'date-fns';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSocket } from '@/contexts/SocketContext';
 import { toast } from 'sonner';
-
-const navItems = [
-  { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
-  { icon: Briefcase, label: 'Jobs', path: '/jobs' },
-  { icon: Users, label: 'Community', path: '/community' },
-  { icon: DollarSign, label: 'Offers', path: '/offers' },
-  { icon: FileText, label: 'Contracts', path: '/contracts' },
-  { icon: Settings, label: 'Settings', path: '/settings' },
-];
 
 export function CommunityDetail() {
   const { slug } = useParams<{ slug: string }>();
@@ -117,7 +108,7 @@ export function CommunityDetail() {
 
   if (isCommunityLoading) {
     return (
-      <DashboardLayout navItems={navItems}>
+      <DashboardLayout>
         <div className="animate-pulse space-y-6 max-w-5xl mx-auto">
           <div className="h-48 bg-border rounded-2xl" />
           <div className="h-20 bg-border rounded-xl" />
@@ -128,7 +119,7 @@ export function CommunityDetail() {
 
   if (!community) {
     return (
-      <DashboardLayout navItems={navItems}>
+      <DashboardLayout>
         <div className="text-center py-20 max-w-5xl mx-auto">
           <h2 className="text-2xl font-bold text-text mb-2">Community Not Found</h2>
           <Button onClick={() => navigate('/community')}>Back to Communities</Button>
@@ -144,7 +135,7 @@ export function CommunityDetail() {
   const isAdmin = isCreator || currentMember?.role === 'ADMIN';
 
   return (
-    <DashboardLayout navItems={navItems}>
+    <DashboardLayout>
       <div className="max-w-5xl mx-auto">
         <button 
           onClick={() => navigate('/community')}

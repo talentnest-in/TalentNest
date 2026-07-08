@@ -14,6 +14,7 @@ import { certificateRoutes } from './routes/certificate.routes';
 import { reviewRoutes } from './routes/review.routes';
 import { creatorRoutes } from './routes/creator.routes';
 import { analyticsRoutes } from './routes/analytics.routes';
+import { contestRoutes } from './routes/contest.routes';
 
 // ── Startup Environment Validation ───────────────────────────────────────────
 const REQUIRED_ENV_VARS = ['DATABASE_URL', 'JWT_SECRET', 'COOKIE_SECRET'];
@@ -245,6 +246,7 @@ server.register(creatorRoutes, { prefix: '/api/v1' });
 server.register(analyticsRoutes, { prefix: '/api/v1' });
 server.register(communityRoutes, { prefix: '/api/v1/community' });
 server.register(postRoutes, { prefix: '/api/v1/posts' });
+server.register(contestRoutes, { prefix: '/api/v1/contests' });
 server.register(searchRoutes, { prefix: '/api/v1/search' });
 
 // Register Socket.IO plugin

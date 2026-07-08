@@ -5,18 +5,9 @@ import { postService } from '@/services/post.service';
 import { DashboardLayout } from '@/components/layouts/DashboardLayout';
 import { PostCard } from '@/components/community/PostCard';
 import { CommentThread } from '@/components/community/CommentThread';
-import { LayoutDashboard, Briefcase, Users, DollarSign, FileText, Settings, ArrowLeft } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import { io } from 'socket.io-client';
 import { Button } from '@/components/ui/Button';
-
-const navItems = [
-  { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
-  { icon: Briefcase, label: 'Jobs', path: '/jobs' },
-  { icon: Users, label: 'Community', path: '/community' },
-  { icon: DollarSign, label: 'Offers', path: '/offers' },
-  { icon: FileText, label: 'Contracts', path: '/contracts' },
-  { icon: Settings, label: 'Settings', path: '/settings' },
-];
 
 export function PostDetail() {
   const { id } = useParams<{ id: string }>();
@@ -63,7 +54,7 @@ export function PostDetail() {
 
   if (isLoading) {
     return (
-      <DashboardLayout navItems={navItems}>
+      <DashboardLayout>
         <div className="max-w-3xl mx-auto space-y-4">
           <div className="h-64 bg-surface rounded-2xl animate-pulse" />
         </div>
@@ -73,7 +64,7 @@ export function PostDetail() {
 
   if (!post) {
     return (
-      <DashboardLayout navItems={navItems}>
+      <DashboardLayout>
         <div className="text-center py-20 max-w-3xl mx-auto">
           <h2 className="text-2xl font-bold text-text mb-2">Post Not Found</h2>
           <Button onClick={() => navigate('/community')}>Back to Community</Button>
@@ -86,7 +77,7 @@ export function PostDetail() {
   const topLevelComments = post.comments?.filter(c => !c.parentId) || [];
 
   return (
-    <DashboardLayout navItems={navItems}>
+    <DashboardLayout>
       <div className="max-w-3xl mx-auto">
         <button 
           onClick={() => navigate(-1)}

@@ -1,7 +1,9 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
-import { Plus, CheckSquare, Clock, AlertCircle, Loader2, Trash2, Edit2 } from 'lucide-react';
+import { Plus, CheckSquare, Clock, AlertCircle, Loader2, Trash2, Edit2, DollarSign, Lock, ShieldCheck } from 'lucide-react';
 import { workspaceService, type Milestone } from '@/services/workspace.service';
+import { useAuth } from '@/contexts/AuthContext';
+import { toast } from 'sonner';
 
 interface WorkspaceMilestonesProps {
   contractId: string;
@@ -9,12 +11,14 @@ interface WorkspaceMilestonesProps {
 
 export function WorkspaceMilestones({ contractId }: WorkspaceMilestonesProps) {
   const queryClient = useQueryClient();
+  const { user } = useAuth();
   const [isCreating, setIsCreating] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     title: '',
     description: '',
     dueDate: '',
+    amount: '',
   });
 
   const { data: milestones, isLoading } = useQuery({
@@ -24,13 +28,15 @@ export function WorkspaceMilestones({ contractId }: WorkspaceMilestonesProps) {
   });
 
   const createMutation = useMutation({
-    mutationFn: (data: { title: string; description?: string; dueDate?: string }) =>
+    mutationFn: (data: { title: string; description?: string; dueDate?: string; amount: number }) =>
       workspaceService.createMilestone(contractId, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['milestones', contractId] });
       setIsCreating(false);
-      setFormData({ title: '', description: '', dueDate: '' });
+      setFormData({ title: '', description: '', dueDate: '', amount: '' });
+      toast.success('Milestone created');
     },
+    onError: (err: any) => toast.error(err.message),
   });
 
   const updateMutation = useMutation({
@@ -39,14 +45,36 @@ export function WorkspaceMilestones({ contractId }: WorkspaceMilestonesProps) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['milestones', contractId] });
       setEditingId(null);
+      toast.success('Milestone updated');
     },
+    onError: (err: any) => toast.error(err.message),
   });
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => workspaceService.deleteMilestone(contractId, id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['milestones', contractId] });
+      toast.success('Milestone deleted');
     },
+    onError: (err: any) => toast.error(err.message),
+  });
+
+  const fundMutation = useMutation({
+    mutationFn: (id: string) => workspaceService.fundMilestone(contractId, id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['milestones', contractId] });
+      toast.success('Funds deposited into escrow successfully!');
+    },
+    onError: (err: any) => toast.error(err.message),
+  });
+
+  const releaseMutation = useMutation({
+    mutationFn: (id: string) => workspaceService.releaseMilestone(contractId, id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['milestones', contractId] });
+      toast.success('Funds released to freelancer successfully!');
+    },
+    onError: (err: any) => toast.error(err.message),
   });
 
   const getStatusColor = (status: Milestone['status']) => {
@@ -86,6 +114,7 @@ export function WorkspaceMilestones({ contractId }: WorkspaceMilestonesProps) {
         title: formData.title,
         description: formData.description || undefined,
         dueDate: formData.dueDate || undefined,
+        amount: Number(formData.amount) || 0,
       });
     }
   };
@@ -97,8 +126,9 @@ export function WorkspaceMilestones({ contractId }: WorkspaceMilestonesProps) {
         id,
         data: {
           title: formData.title,
-          description: formData.description || undefined,
-          dueDate: formData.dueDate || undefined,
+          description: formData.description || null,
+          dueDate: formData.dueDate || null,
+          amount: Number(formData.amount) || 0,
         },
       });
     }
@@ -117,6 +147,7 @@ export function WorkspaceMilestones({ contractId }: WorkspaceMilestonesProps) {
       title: milestone.title,
       description: milestone.description || '',
       dueDate: milestone.dueDate ? new Date(milestone.dueDate).toISOString().split('T')[0] : '',
+      amount: milestone.amount ? String(milestone.amount) : '0',
     });
   };
 
@@ -162,12 +193,28 @@ export function WorkspaceMilestones({ contractId }: WorkspaceMilestonesProps) {
                 className="w-full px-4 py-2 border border-border rounded-lg mb-3 focus:outline-none focus:ring-2 focus:ring-accent resize-none"
                 rows={3}
               />
-              <input
-                type="date"
-                value={formData.dueDate}
-                onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
-                className="w-full px-4 py-2 border border-border rounded-lg mb-3 focus:outline-none focus:ring-2 focus:ring-accent"
-              />
+              <div className="flex gap-3 mb-3">
+                <div className="flex-1">
+                  <input
+                    type="date"
+                    value={formData.dueDate}
+                    onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
+                    className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent"
+                  />
+                </div>
+                <div className="flex-1 relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <span className="text-text-muted">$</span>
+                  </div>
+                  <input
+                    type="number"
+                    placeholder="Amount (optional)"
+                    value={formData.amount}
+                    onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
+                    className="w-full pl-8 pr-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent"
+                  />
+                </div>
+              </div>
               <div className="flex gap-2">
                 <button
                   type="submit"
@@ -180,7 +227,7 @@ export function WorkspaceMilestones({ contractId }: WorkspaceMilestonesProps) {
                   type="button"
                   onClick={() => {
                     setIsCreating(false);
-                    setFormData({ title: '', description: '', dueDate: '' });
+                    setFormData({ title: '', description: '', dueDate: '', amount: '' });
                   }}
                   className="px-4 py-2 border border-border rounded-lg hover:bg-background transition-colors"
                 >
@@ -221,12 +268,26 @@ export function WorkspaceMilestones({ contractId }: WorkspaceMilestonesProps) {
                       className="w-full px-3 py-2 border border-border rounded-lg mb-2 focus:outline-none focus:ring-2 focus:ring-accent resize-none"
                       rows={2}
                     />
-                    <input
-                      type="date"
-                      value={formData.dueDate}
-                      onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
-                      className="w-full px-3 py-2 border border-border rounded-lg mb-3 focus:outline-none focus:ring-2 focus:ring-accent"
-                    />
+                    <div className="flex gap-3 mb-3">
+                      <input
+                        type="date"
+                        value={formData.dueDate}
+                        onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
+                        className="flex-1 px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent"
+                      />
+                      <div className="flex-1 relative">
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                          <span className="text-text-muted">$</span>
+                        </div>
+                        <input
+                          type="number"
+                          placeholder="Amount"
+                          value={formData.amount}
+                          onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
+                          className="w-full pl-8 pr-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent"
+                        />
+                      </div>
+                    </div>
                     <div className="flex gap-2">
                       <button
                         type="submit"
@@ -239,7 +300,7 @@ export function WorkspaceMilestones({ contractId }: WorkspaceMilestonesProps) {
                         type="button"
                         onClick={() => {
                           setEditingId(null);
-                          setFormData({ title: '', description: '', dueDate: '' });
+                          setFormData({ title: '', description: '', dueDate: '', amount: '' });
                         }}
                         className="px-3 py-1 border border-border rounded-lg text-sm hover:bg-background transition-colors"
                       >
@@ -266,20 +327,67 @@ export function WorkspaceMilestones({ contractId }: WorkspaceMilestonesProps) {
                             Due: {new Date(milestone.dueDate).toLocaleDateString()}
                           </p>
                         )}
+                        {milestone.amount > 0 && (
+                          <div className="mt-2 flex items-center gap-2">
+                            <span className="font-semibold text-text">${milestone.amount}</span>
+                            {milestone.isPaid ? (
+                              <span className="flex items-center gap-1 text-xs font-medium text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded-full">
+                                <ShieldCheck className="w-3 h-3" /> Paid
+                              </span>
+                            ) : milestone.isFunded ? (
+                              <span className="flex items-center gap-1 text-xs font-medium text-blue-500 bg-blue-500/10 px-2 py-0.5 rounded-full">
+                                <Lock className="w-3 h-3" /> In Escrow
+                              </span>
+                            ) : (
+                              <span className="text-xs font-medium text-text-muted bg-text-muted/10 px-2 py-0.5 rounded-full">
+                                Unfunded
+                              </span>
+                            )}
+                          </div>
+                        )}
                       </div>
-                      <div className="flex items-center gap-1">
-                        <button
-                          onClick={() => startEditing(milestone)}
-                          className="p-1 hover:bg-background rounded transition-colors text-text-muted hover:text-text"
-                        >
-                          <Edit2 className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => deleteMutation.mutate(milestone.id)}
-                          className="p-1 hover:bg-background rounded transition-colors text-text-muted hover:text-error"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+                      <div className="flex flex-col items-end gap-2">
+                        <div className="flex items-center gap-1">
+                          {!milestone.isPaid && (
+                            <>
+                              <button
+                                onClick={() => startEditing(milestone)}
+                                className="p-1 hover:bg-background rounded transition-colors text-text-muted hover:text-text"
+                              >
+                                <Edit2 className="w-4 h-4" />
+                              </button>
+                              <button
+                                onClick={() => deleteMutation.mutate(milestone.id)}
+                                className="p-1 hover:bg-background rounded transition-colors text-text-muted hover:text-error"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </>
+                          )}
+                        </div>
+                        {user?.role === 'CLIENT' && milestone.amount > 0 && !milestone.isPaid && (
+                          <div className="mt-2">
+                            {!milestone.isFunded ? (
+                              <button
+                                onClick={() => fundMutation.mutate(milestone.id)}
+                                disabled={fundMutation.isPending}
+                                className="px-3 py-1.5 bg-blue-500 text-white text-xs font-medium rounded-lg hover:bg-blue-600 transition-colors flex items-center gap-1 disabled:opacity-50"
+                              >
+                                <DollarSign className="w-3.5 h-3.5" />
+                                {fundMutation.isPending ? 'Funding...' : 'Fund Escrow'}
+                              </button>
+                            ) : (
+                              <button
+                                onClick={() => releaseMutation.mutate(milestone.id)}
+                                disabled={releaseMutation.isPending}
+                                className="px-3 py-1.5 bg-emerald-500 text-white text-xs font-medium rounded-lg hover:bg-emerald-600 transition-colors flex items-center gap-1 disabled:opacity-50"
+                              >
+                                <ShieldCheck className="w-3.5 h-3.5" />
+                                {releaseMutation.isPending ? 'Releasing...' : 'Release Payment'}
+                              </button>
+                            )}
+                          </div>
+                        )}
                       </div>
                     </div>
                     <div className="flex gap-1 mt-3">

@@ -12,8 +12,6 @@ import { jobService } from '@/services/job.service';
 import {
   Briefcase,
   MessageSquare,
-  Bell,
-  Settings,
   Search,
   TrendingUp,
   Users,
@@ -140,23 +138,8 @@ export function Dashboard() {
     .filter(c => c.status === 'COMPLETED')
     .reduce((sum, c) => sum + (c.amount || 0), 0);
 
-  const navItems = [
-    { icon: TrendingUp, label: 'Dashboard', path: '/freelancer-dashboard' },
-    { icon: User, label: 'Profile', path: '/profile' },
-    { icon: Briefcase, label: 'Find Jobs', path: '/find-jobs' },
-    { icon: Users, label: 'Applications', path: '/applications' },
-    { icon: DollarSign, label: 'Offers', path: '/freelancer/offers' },
-    { icon: FileText, label: 'Contracts', path: '/contracts' },
-    { icon: BookOpen, label: 'Academy', path: '/academy' },
-    { icon: Users, label: 'Community', path: '/community' },
-    { icon: Bell, label: 'Saved Jobs', path: '/saved-jobs' },
-    { icon: MessageSquare, label: 'Messages', path: '/messages' },
-    { icon: Bell, label: 'Notifications', path: '/notifications' },
-    { icon: Settings, label: 'Settings', path: '/settings' },
-  ];
-
   return (
-    <DashboardLayout navItems={navItems}>
+    <DashboardLayout>
       <div className="space-y-8">
           {/* Welcome Message */}
           <div className="mb-8">

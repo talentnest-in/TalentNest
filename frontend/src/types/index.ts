@@ -417,4 +417,92 @@ export interface SearchResult {
   posts: Post[];
   users: User[];
   jobs: Job[];
+  contests: Contest[];
 }
+
+// ─── Sprint 10: Contest Hub ─────────────────────────────────────────────────────
+
+export type ContestDifficulty = 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED' | 'EXPERT';
+export type ContestVisibility = 'PUBLIC' | 'PRIVATE';
+export type ContestStatus = 'DRAFT' | 'PUBLISHED' | 'PAUSED' | 'CLOSED';
+export type ContestSubmissionStatus = 'PENDING' | 'SHORTLISTED' | 'REJECTED' | 'WINNER' | 'RUNNER_UP';
+
+export interface ContestAttachment {
+  id: string;
+  contestId: string;
+  url: string;
+  name: string;
+  type: string;
+  createdAt: string;
+}
+
+export interface ContestParticipant {
+  id: string;
+  contestId: string;
+  userId: string;
+  joinedAt: string;
+  user?: Pick<User, 'id' | 'name' | 'avatar' | 'role'>;
+}
+
+export interface ContestSubmission {
+  id: string;
+  contestId: string;
+  participantId: string;
+  description: string;
+  imageUrls: string[];
+  pdfUrl: string | null;
+  zipUrl: string | null;
+  githubUrl: string | null;
+  liveUrl: string | null;
+  figmaUrl: string | null;
+  videoUrl: string | null;
+  status: ContestSubmissionStatus;
+  submittedAt: string;
+  updatedAt: string;
+  participant?: Pick<User, 'id' | 'name' | 'avatar'>;
+}
+
+export interface Contest {
+  id: string;
+  title: string;
+  slug: string;
+  description: string;
+  category: string;
+  skills: string[];
+  difficulty: ContestDifficulty;
+  prizeAmount: number;
+  registrationDeadline: string;
+  submissionDeadline: string;
+  maxParticipants: number | null;
+  visibility: ContestVisibility;
+  status: ContestStatus;
+  rules: string[];
+  judgingCriteria: string[];
+  featuredImage: string | null;
+  isFeatured: boolean;
+  viewCount: number;
+  clientId: string;
+  winnerId: string | null;
+  runnerUpId: string | null;
+  createdAt: string;
+  updatedAt: string;
+  client?: Pick<User, 'id' | 'name' | 'avatar'>;
+  winner?: Pick<User, 'id' | 'name' | 'avatar'> | null;
+  runnerUp?: Pick<User, 'id' | 'name' | 'avatar'> | null;
+  attachments?: ContestAttachment[];
+  submissions?: ContestSubmission[];
+  savedBy?: { id: string }[];
+  _count?: {
+    participants: number;
+    submissions: number;
+  };
+}
+
+export interface ContestAnalytics {
+  viewCount: number;
+  participantCount: number;
+  submissionCount: number;
+  shortlistedCount: number;
+  submissionRate: number;
+}
+

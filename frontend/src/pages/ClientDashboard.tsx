@@ -10,8 +10,8 @@ import { JobCard } from '@/components/client/JobCard';
 import { CompanyCard } from '@/components/client/CompanyCard';
 import { EmptyState } from '@/components/client/EmptyState';
 import {
-  Briefcase, Building2, LayoutDashboard, Settings,
-  Plus, TrendingUp, FileText, CheckCircle, Users, DollarSign,
+  Briefcase, Building2,
+  Plus, TrendingUp, FileText, CheckCircle, DollarSign,
 } from 'lucide-react';
 
 export function ClientDashboard() {
@@ -39,19 +39,8 @@ export function ClientDashboard() {
     .filter(c => c.status === 'COMPLETED' || c.status === 'ACTIVE')
     .reduce((sum, c) => sum + (c.amount || 0), 0);
 
-  const navItems = [
-    { icon: LayoutDashboard, label: 'Dashboard', path: '/client-dashboard' },
-    { icon: Briefcase, label: 'Jobs', path: '/client/jobs' },
-    { icon: Users, label: 'Applicants', path: '/client/applicants' },
-    { icon: DollarSign, label: 'Offers', path: '/client/offers' },
-    { icon: FileText, label: 'Contracts', path: '/contracts' },
-    { icon: Users, label: 'Community', path: '/community' },
-    { icon: Building2, label: 'Company', path: '/company' },
-    { icon: Settings, label: 'Settings', path: '/settings' },
-  ];
-
   return (
-    <DashboardLayout navItems={navItems}>
+    <DashboardLayout>
       <div className="space-y-8">
           {/* Welcome Message */}
           <div className="mb-8 flex items-center justify-between">

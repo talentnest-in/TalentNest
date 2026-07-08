@@ -5,17 +5,8 @@ import { communityService } from '@/services/community.service';
 import { DashboardLayout } from '@/components/layouts/DashboardLayout';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
-import { LayoutDashboard, Briefcase, Users, DollarSign, FileText, Settings, ArrowLeft, Upload, Globe, Lock } from 'lucide-react';
+import { ArrowLeft, Upload, Globe, Lock } from 'lucide-react';
 import { toast } from 'sonner';
-
-const navItems = [
-  { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
-  { icon: Briefcase, label: 'Jobs', path: '/jobs' },
-  { icon: Users, label: 'Community', path: '/community' },
-  { icon: DollarSign, label: 'Offers', path: '/offers' },
-  { icon: FileText, label: 'Contracts', path: '/contracts' },
-  { icon: Settings, label: 'Settings', path: '/settings' },
-];
 
 export function CreateCommunity() {
   const navigate = useNavigate();
@@ -49,7 +40,7 @@ export function CreateCommunity() {
   };
 
   return (
-    <DashboardLayout navItems={navItems}>
+    <DashboardLayout>
       <div className="max-w-2xl mx-auto">
         <button 
           onClick={() => navigate(-1)}

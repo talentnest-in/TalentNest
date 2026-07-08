@@ -4,6 +4,8 @@ import {
   createMilestone,
   updateMilestone,
   deleteMilestone,
+  fundMilestone,
+  releaseMilestone,
 } from '../controllers/milestone.controller';
 
 export async function milestoneRoutes(fastify: FastifyInstance) {
@@ -29,5 +31,17 @@ export async function milestoneRoutes(fastify: FastifyInstance) {
   fastify.delete('/contracts/:contractId/milestones/:id', {
     preHandler: [fastify.authenticate],
     handler: deleteMilestone,
+  });
+
+  // Fund a milestone
+  fastify.post('/contracts/:contractId/milestones/:id/fund', {
+    preHandler: [fastify.authenticate],
+    handler: fundMilestone,
+  });
+
+  // Release milestone funds
+  fastify.post('/contracts/:contractId/milestones/:id/release', {
+    preHandler: [fastify.authenticate],
+    handler: releaseMilestone,
   });
 }

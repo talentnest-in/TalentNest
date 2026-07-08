@@ -55,6 +55,16 @@ model User {
   postComments        PostComment[]
   postReports         PostReport[]
 
+  // Contest relations
+  contestWins         Int                   @default(0)
+  contestParticipations Int                 @default(0)
+  contestsCreated     Contest[]             @relation("ClientContests")
+  contestsWon         Contest[]             @relation("ContestWinner")
+  contestsRunnerUp    Contest[]             @relation("ContestRunnerUp")
+  contestMemberships  ContestParticipant[]
+  contestSubmissions  ContestSubmission[]
+  savedContests       SavedContest[]
+
   @@unique([provider, providerId])
   @@index([email])
   @@index([role])
@@ -431,6 +441,9 @@ model Milestone {
   description String?         @db.Text
   dueDate     DateTime?
   status      MilestoneStatus @default(NOT_STARTED)
+  amount      Float           @default(0)
+  isFunded    Boolean         @default(false)
+  isPaid      Boolean         @default(false)
   order       Int             @default(0)
   createdAt   DateTime        @default(now())
   updatedAt   DateTime        @updatedAt
@@ -891,4 +904,143 @@ model PostReport {
   @@index([postId])
   @@index([reporterId])
   @@index([status])
+}
+
+// ==========================================
+// CONTEST HUB
+// ==========================================
+
+enum ContestDifficulty {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+  EXPERT
+}
+
+enum ContestVisibility {
+  PUBLIC
+  PRIVATE
+}
+
+enum ContestStatus {
+  DRAFT
+  PUBLISHED
+  PAUSED
+  CLOSED
+}
+
+enum ContestSubmissionStatus {
+  PENDING
+  SHORTLISTED
+  REJECTED
+  WINNER
+  RUNNER_UP
+}
+
+model Contest {
+  id                   String            @id @default(uuid())
+  title                String
+  slug                 String            @unique
+  description          String            @db.Text
+  category             String
+  skills               String[]
+  difficulty           ContestDifficulty
+  prizeAmount          Decimal           @db.Decimal(10, 2)
+  registrationDeadline DateTime
+  submissionDeadline   DateTime
+  maxParticipants      Int?
+  visibility           ContestVisibility @default(PUBLIC)
+  status               ContestStatus     @default(DRAFT)
+  rules                String[]
+  judgingCriteria      String[]
+  featuredImage        String?
+  isFeatured           Boolean           @default(false)
+  viewCount            Int               @default(0)
+  createdAt            DateTime          @default(now())
+  updatedAt            DateTime          @updatedAt
+
+  clientId             String
+  client               User              @relation("ClientContests", fields: [clientId], references: [id], onDelete: Cascade)
+
+  winnerId             String?
+  winner               User?             @relation("ContestWinner", fields: [winnerId], references: [id])
+
+  runnerUpId           String?
+  runnerUp             User?             @relation("ContestRunnerUp", fields: [runnerUpId], references: [id])
+
+  attachments          ContestAttachment[]
+  participants         ContestParticipant[]
+  submissions          ContestSubmission[]
+  savedBy              SavedContest[]
+
+  @@index([clientId])
+  @@index([status])
+  @@index([category])
+  @@index([createdAt])
+}
+
+model ContestAttachment {
+  id        String   @id @default(uuid())
+  contestId String
+  url       String
+  name      String
+  type      String
+  createdAt DateTime @default(now())
+
+  contest   Contest  @relation(fields: [contestId], references: [id], onDelete: Cascade)
+
+  @@index([contestId])
+}
+
+model ContestParticipant {
+  id        String   @id @default(uuid())
+  contestId String
+  userId    String
+  joinedAt  DateTime @default(now())
+
+  contest   Contest  @relation(fields: [contestId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([contestId, userId])
+  @@index([contestId])
+  @@index([userId])
+}
+
+model ContestSubmission {
+  id            String                  @id @default(uuid())
+  contestId     String
+  participantId String
+  description   String                  @db.Text
+  imageUrls     String[]
+  pdfUrl        String?
+  zipUrl        String?
+  githubUrl     String?
+  liveUrl       String?
+  figmaUrl      String?
+  videoUrl      String?
+  status        ContestSubmissionStatus @default(PENDING)
+  submittedAt   DateTime                @default(now())
+  updatedAt     DateTime                @updatedAt
+
+  contest       Contest                 @relation(fields: [contestId], references: [id], onDelete: Cascade)
+  participant   User                    @relation(fields: [participantId], references: [id], onDelete: Cascade)
+
+  @@unique([contestId, participantId])
+  @@index([contestId])
+  @@index([participantId])
+  @@index([status])
+}
+
+model SavedContest {
+  id        String   @id @default(uuid())
+  userId    String
+  contestId String
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  contest   Contest  @relation(fields: [contestId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, contestId])
+  @@index([userId])
+  @@index([contestId])
 }

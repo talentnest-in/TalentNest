@@ -59,6 +59,14 @@ const CommunityDetail = lazy(() => import('@/pages/community/CommunityDetail').t
 const CreateCommunity = lazy(() => import('@/pages/community/CreateCommunity').then(m => ({ default: m.CreateCommunity })));
 const PostDetail = lazy(() => import('@/pages/community/PostDetail').then(m => ({ default: m.PostDetail })));
 
+// Contest Hub
+const ContestMarketplace = lazy(() => import('@/pages/contest/ContestMarketplace').then(m => ({ default: m.ContestMarketplace })));
+const ContestDetail = lazy(() => import('@/pages/contest/ContestDetail').then(m => ({ default: m.ContestDetail })));
+const CreateContest = lazy(() => import('@/pages/contest/CreateContest').then(m => ({ default: m.CreateContest })));
+const ClientContestDashboard = lazy(() => import('@/pages/contest/ClientContestDashboard').then(m => ({ default: m.ClientContestDashboard })));
+const ContestSubmissions = lazy(() => import('@/pages/contest/ContestSubmissions').then(m => ({ default: m.ContestSubmissions })));
+const FreelancerContestDashboard = lazy(() => import('@/pages/contest/FreelancerContestDashboard').then(m => ({ default: m.FreelancerContestDashboard })));
+
 // Protected route components (not lazy — tiny, needed immediately)
 import { ProtectedRoute, FreelancerRoute, ClientRoute } from '@/components/auth/ProtectedRoute';
 
@@ -146,6 +154,14 @@ function App() {
               <Route path="/community/create" element={<CreateCommunity />} />
               <Route path="/community/:slug" element={<CommunityDetail />} />
               <Route path="/community/post/:id" element={<PostDetail />} />
+
+              {/* ── Contest Hub routes (shared) ── */}
+              <Route path="/contests" element={<ContestMarketplace />} />
+              <Route path="/contests/create" element={<CreateContest />} />
+              <Route path="/contests/manage" element={<ClientContestDashboard />} />
+              <Route path="/contests/my" element={<FreelancerContestDashboard />} />
+              <Route path="/contests/:id/submissions" element={<ContestSubmissions />} />
+              <Route path="/contests/:slug" element={<ContestDetail />} />
             </Route>
           </Route>
 

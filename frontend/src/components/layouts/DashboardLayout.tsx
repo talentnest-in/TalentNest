@@ -8,6 +8,8 @@ import { NotificationBell } from '@/components/notifications/NotificationBell';
 import { NotificationDropdown } from '@/components/notifications/NotificationDropdown';
 import { GlobalSearch } from '@/components/shared/GlobalSearch';
 
+import { freelancerNavItems, clientNavItems } from '@/config/navigation';
+
 interface NavItem {
   icon: React.ElementType;
   label: string;
@@ -16,16 +18,18 @@ interface NavItem {
 
 interface DashboardLayoutProps {
   children: ReactNode;
-  navItems: NavItem[];
+  navItems?: NavItem[];
 }
 
-export function DashboardLayout({ children, navItems }: DashboardLayoutProps) {
+export function DashboardLayout({ children, navItems: customNavItems }: DashboardLayoutProps) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const { unreadNotifCount, clearUnreadNotifCount } = useSocket();
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  const navItems = customNavItems || (user?.role === 'CLIENT' ? clientNavItems : freelancerNavItems);
 
   // Close mobile menu on route change
   useEffect(() => {
@@ -45,7 +49,7 @@ export function DashboardLayout({ children, navItems }: DashboardLayoutProps) {
   const SidebarContent = () => (
     <>
       <div className="px-2 mb-10 flex items-center justify-between">
-        <BrandLogo size="medium" showText showTagline={false} />
+        <BrandLogo size="medium" showText showTagline={false} onDark />
         <button 
           onClick={() => setIsMobileMenuOpen(false)}
           className="lg:hidden p-2 hover:bg-white/10 rounded-lg text-white/70 hover:text-white"

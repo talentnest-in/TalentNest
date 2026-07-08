@@ -1,7 +1,7 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useParams } from 'react-router-dom';
 import { useRef, useEffect, useState } from 'react';
-import { TrendingUp, User, Briefcase, Users, DollarSign, FileText, MessageSquare, Loader2 } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { DashboardLayout } from '@/components/layouts/DashboardLayout';
 import { ChatHeader } from '@/components/chat/ChatHeader';
 import { ChatBubble } from '@/components/chat/ChatBubble';
@@ -12,23 +12,13 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useSocket } from '@/contexts/SocketContext';
 
 export function ConversationDetail() {
-  const { conversationId } = useParams<{ conversationId: string }>();
+  const { id: conversationId } = useParams<{ id: string }>();
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { socket, onlineUsers, typingUsers, joinConversation, leaveConversation, sendMessage, sendTypingStart, sendTypingStop, markAsRead } = useSocket();
   const [isTyping, setIsTyping] = useState(false);
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
-
-  const navItems = [
-    { icon: TrendingUp, label: 'Dashboard', path: '/freelancer-dashboard' },
-    { icon: User, label: 'Profile', path: '/profile' },
-    { icon: Briefcase, label: 'Find Jobs', path: '/find-jobs' },
-    { icon: Users, label: 'Applications', path: '/applications' },
-    { icon: DollarSign, label: 'Offers', path: '/freelancer/offers' },
-    { icon: FileText, label: 'Contracts', path: '/contracts' },
-    { icon: MessageSquare, label: 'Messages', path: '/communications' },
-  ];
 
   const { data: messages, isLoading: messagesLoading } = useQuery({
     queryKey: ['messages', conversationId],
@@ -131,7 +121,7 @@ export function ConversationDetail() {
 
   if (messagesLoading) {
     return (
-      <DashboardLayout navItems={navItems}>
+      <DashboardLayout>
         <div className="flex items-center justify-center py-12">
           <Loader2 className="w-8 h-8 animate-spin text-accent" />
         </div>
@@ -140,8 +130,8 @@ export function ConversationDetail() {
   }
 
   return (
-    <DashboardLayout navItems={navItems}>
-      <div className="h-[calc(100vh-2rem)] flex flex-col">
+    <DashboardLayout>
+      <div className="h-[calc(100vh-7rem)] lg:h-[calc(100vh-9rem)] -mx-2 flex flex-col bg-surface border border-border rounded-xl overflow-hidden">
         <ChatHeader
           userName={otherUser?.name || 'Unknown User'}
           userAvatar={otherUser?.avatar}

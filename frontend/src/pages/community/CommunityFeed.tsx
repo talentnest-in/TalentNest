@@ -6,17 +6,8 @@ import { PostCard } from '@/components/community/PostCard';
 import { CommunitySidebar } from '@/components/community/CommunitySidebar';
 import { CreatePostModal } from '@/components/community/CreatePostModal';
 import { Button } from '@/components/ui/Button';
-import { Edit3, LayoutDashboard, Briefcase, Users, DollarSign, FileText, Settings } from 'lucide-react';
+import { Edit3, Users } from 'lucide-react';
 import { useSocket } from '@/contexts/SocketContext';
-
-const navItems = [
-  { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
-  { icon: Briefcase, label: 'Jobs', path: '/jobs' },
-  { icon: Users, label: 'Community', path: '/community' },
-  { icon: DollarSign, label: 'Offers', path: '/offers' },
-  { icon: FileText, label: 'Contracts', path: '/contracts' },
-  { icon: Settings, label: 'Settings', path: '/settings' },
-];
 
 export function CommunityFeed() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -58,7 +49,7 @@ export function CommunityFeed() {
   }, [socket, refetch]);
 
   return (
-    <DashboardLayout navItems={navItems}>
+    <DashboardLayout>
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 max-w-7xl mx-auto">
         
         {/* Main Feed */}

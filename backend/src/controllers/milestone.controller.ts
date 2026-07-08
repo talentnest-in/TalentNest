@@ -8,6 +8,7 @@ const createMilestoneSchema = z.object({
   description: z.string().optional(),
   dueDate: z.string().optional(),
   status: z.enum(['NOT_STARTED', 'IN_PROGRESS', 'COMPLETED', 'BLOCKED']).optional(),
+  amount: z.number().min(0).optional().default(0),
   order: z.number().optional(),
 });
 
@@ -73,6 +74,7 @@ export const createMilestone = async (
         title: data.title,
         description: data.description || null,
         dueDate: data.dueDate ? new Date(data.dueDate) : null,
+        amount: data.amount,
         ...(data.status && { status: data.status }),
         ...(data.order !== undefined && { order: data.order }),
       },
@@ -129,6 +131,7 @@ export const updateMilestone = async (
         ...(data.title && { title: data.title }),
         ...(data.description !== undefined && { description: data.description || null }),
         ...(data.dueDate !== undefined && { dueDate: data.dueDate ? new Date(data.dueDate) : null }),
+        ...(data.amount !== undefined && { amount: data.amount }),
         ...(data.status && { status: data.status }),
         ...(data.order !== undefined && { order: data.order }),
       },
@@ -185,3 +188,93 @@ export const deleteMilestone = async (
     return reply.status(500).send({ error: 'Failed to delete milestone' });
   }
 };
+
+// ── Fund Milestone ─────────────────────────────────────────────────────────
+export const fundMilestone = async (
+  request: FastifyRequest<{ Params: { contractId: string; id: string } }>,
+  reply: FastifyReply
+) => {
+  try {
+    const { contractId, id } = request.params;
+    const userId = request.user.id;
+
+    const contract = await prisma.contract.findUnique({
+      where: { id: contractId },
+    });
+
+    if (!contract || contract.clientId !== userId) {
+      return reply.status(403).send({ error: 'Only the client can fund a milestone' });
+    }
+
+    const milestone = await prisma.milestone.findUnique({
+      where: { id },
+    });
+
+    if (!milestone || milestone.contractId !== contractId) {
+      return reply.status(404).send({ error: 'Milestone not found' });
+    }
+
+    if (milestone.isFunded) {
+      return reply.status(400).send({ error: 'Milestone is already funded' });
+    }
+
+    const updated = await prisma.milestone.update({
+      where: { id },
+      data: { isFunded: true },
+    });
+
+    return reply.send(updated);
+  } catch (error) {
+    request.log.error(error, 'fundMilestone failed');
+    return reply.status(500).send({ error: 'Failed to fund milestone' });
+  }
+};
+
+// ── Release Milestone ──────────────────────────────────────────────────────
+export const releaseMilestone = async (
+  request: FastifyRequest<{ Params: { contractId: string; id: string } }>,
+  reply: FastifyReply
+) => {
+  try {
+    const { contractId, id } = request.params;
+    const userId = request.user.id;
+
+    const contract = await prisma.contract.findUnique({
+      where: { id: contractId },
+    });
+
+    if (!contract || contract.clientId !== userId) {
+      return reply.status(403).send({ error: 'Only the client can release funds' });
+    }
+
+    const milestone = await prisma.milestone.findUnique({
+      where: { id },
+    });
+
+    if (!milestone || milestone.contractId !== contractId) {
+      return reply.status(404).send({ error: 'Milestone not found' });
+    }
+
+    if (!milestone.isFunded) {
+      return reply.status(400).send({ error: 'Milestone must be funded before releasing' });
+    }
+
+    if (milestone.isPaid) {
+      return reply.status(400).send({ error: 'Milestone is already paid' });
+    }
+
+    const updated = await prisma.milestone.update({
+      where: { id },
+      data: { 
+        isPaid: true,
+        status: 'COMPLETED'
+      },
+    });
+
+    return reply.send(updated);
+  } catch (error) {
+    request.log.error(error, 'releaseMilestone failed');
+    return reply.status(500).send({ error: 'Failed to release milestone' });
+  }
+};
+

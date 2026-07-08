@@ -8,6 +8,9 @@ export interface Milestone {
   description: string | null;
   dueDate: string | null;
   status: 'NOT_STARTED' | 'IN_PROGRESS' | 'COMPLETED' | 'BLOCKED';
+  amount: number;
+  isFunded: boolean;
+  isPaid: boolean;
   order: number;
   createdAt: string;
   updatedAt: string;
@@ -39,6 +42,7 @@ export const workspaceService = {
     description?: string;
     dueDate?: string;
     status?: 'NOT_STARTED' | 'IN_PROGRESS' | 'COMPLETED' | 'BLOCKED';
+    amount?: number;
     order?: number;
   }): Promise<Milestone> {
     const response = await api.post(`/api/v1/contracts/${contractId}/milestones`, data);
@@ -50,6 +54,7 @@ export const workspaceService = {
     description: string | null;
     dueDate: string | null;
     status: 'NOT_STARTED' | 'IN_PROGRESS' | 'COMPLETED' | 'BLOCKED';
+    amount: number;
     order: number;
   }>): Promise<Milestone> {
     const response = await api.patch(`/api/v1/contracts/${contractId}/milestones/${id}`, data);
@@ -58,6 +63,16 @@ export const workspaceService = {
 
   async deleteMilestone(contractId: string, id: string): Promise<{ success: boolean }> {
     const response = await api.delete(`/api/v1/contracts/${contractId}/milestones/${id}`);
+    return response.data;
+  },
+
+  async fundMilestone(contractId: string, id: string): Promise<Milestone> {
+    const response = await api.post(`/api/v1/contracts/${contractId}/milestones/${id}/fund`);
+    return response.data;
+  },
+
+  async releaseMilestone(contractId: string, id: string): Promise<Milestone> {
+    const response = await api.post(`/api/v1/contracts/${contractId}/milestones/${id}/release`);
     return response.data;
   },
 
