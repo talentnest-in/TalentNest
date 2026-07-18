@@ -1,6 +1,7 @@
 import 'dotenv/config';
 import Fastify, { FastifyRequest, FastifyReply } from 'fastify';
 import cors from '@fastify/cors';
+import compress from '@fastify/compress';
 import rateLimit from '@fastify/rate-limit';
 import jwt from '@fastify/jwt';
 import cookie from '@fastify/cookie';
