@@ -1,11 +1,31 @@
 import { Queue, Worker, ConnectionOptions, Job } from 'bullmq';
 import { getRedisService } from './redis';
 
-const DEFAULT_CONNECTION: ConnectionOptions = {
-  host: process.env.REDIS_HOST || 'localhost',
-  port: parseInt(process.env.REDIS_PORT || '6379'),
-  password: process.env.REDIS_PASSWORD || undefined,
-};
+function parseRedisConnection(): ConnectionOptions {
+  const redisUrl = process.env.REDIS_URL;
+  if (redisUrl) {
+    try {
+      const parsed = new URL(redisUrl);
+      const isTls = parsed.protocol === 'rediss:';
+      return {
+        host: parsed.hostname,
+        port: parseInt(parsed.port || '6379'),
+        password: parsed.password ? decodeURIComponent(parsed.password) : undefined,
+        username: parsed.username ? decodeURIComponent(parsed.username) : undefined,
+        tls: isTls ? {} : undefined,
+      };
+    } catch {
+      console.warn('[Queue] Failed to parse REDIS_URL, falling back to host/port config');
+    }
+  }
+  return {
+    host: process.env.REDIS_HOST || 'localhost',
+    port: parseInt(process.env.REDIS_PORT || '6379'),
+    password: process.env.REDIS_PASSWORD || undefined,
+  };
+}
+
+const DEFAULT_CONNECTION: ConnectionOptions = parseRedisConnection();
 
 interface QueueDefinition {
   name: string;
@@ -22,15 +42,7 @@ class QueueManager {
   }
 
   getConnection(): ConnectionOptions {
-    const redisSvc = getRedisService();
-    if (redisSvc.isConnected && redisSvc.client) {
-      return {
-        host: process.env.REDIS_HOST || 'localhost',
-        port: parseInt(process.env.REDIS_PORT || '6379'),
-        password: process.env.REDIS_PASSWORD || undefined,
-      };
-    }
-    return this.connection;
+    return parseRedisConnection();
   }
 
   defineQueue(name: string, opts?: { defaultJobOptions?: any }): Queue {
