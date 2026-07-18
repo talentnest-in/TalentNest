@@ -88,10 +88,10 @@ export class AdvancedRateLimiter {
       const multi = redis.client.multi();
       multi.incr(windowKey);
       multi.ttl(windowKey);
-      const results = await multi.exec() as Array<[Error | null, number]>;
+      const results = (await multi.exec()) as unknown as number[];
 
-      const count = results?.[0]?.[1] ?? 0;
-      let currentTtl = results?.[1]?.[1] ?? ttl;
+      const count = results?.[0] ?? 0;
+      let currentTtl = results?.[1] ?? ttl;
 
       if (count === 1) {
         await redis.client.expire(windowKey, Math.max(ttl, 1));

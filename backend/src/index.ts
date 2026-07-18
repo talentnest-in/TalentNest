@@ -2,6 +2,9 @@ import 'dotenv/config';
 import Fastify, { FastifyRequest, FastifyReply } from 'fastify';
 import cors from '@fastify/cors';
 import compress from '@fastify/compress';
+import multipart from '@fastify/multipart';
+import fastifyStatic from '@fastify/static';
+import path from 'path';
 import rateLimit from '@fastify/rate-limit';
 import jwt from '@fastify/jwt';
 import cookie from '@fastify/cookie';
@@ -226,10 +229,6 @@ server.register(cookie, {
   hook: 'onRequest',
 });
 
-import compress from '@fastify/compress';
-import multipart from '@fastify/multipart';
-import fastifyStatic from '@fastify/static';
-import path from 'path';
 
 server.register(multipart, {
   limits: {
