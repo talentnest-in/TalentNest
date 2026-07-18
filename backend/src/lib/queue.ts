@@ -27,6 +27,11 @@ function parseRedisConnection(): ConnectionOptions {
 
 const DEFAULT_CONNECTION: ConnectionOptions = parseRedisConnection();
 
+/** Returns true only when a Redis URL or host is explicitly configured */
+function isRedisConfigured(): boolean {
+  return !!(process.env.REDIS_URL || process.env.REDIS_HOST);
+}
+
 interface QueueDefinition {
   name: string;
   queue: Queue;
@@ -45,7 +50,8 @@ class QueueManager {
     return parseRedisConnection();
   }
 
-  defineQueue(name: string, opts?: { defaultJobOptions?: any }): Queue {
+  defineQueue(name: string, opts?: { defaultJobOptions?: any }): Queue | null {
+    if (!isRedisConfigured()) return null;
     if (this.queues.has(name)) {
       return this.queues.get(name)!;
     }
@@ -67,7 +73,11 @@ class QueueManager {
     name: string,
     processor: (job: Job<T>) => Promise<void>,
     opts?: { concurrency?: number; limiter?: { max: number; duration: number } }
-  ): Worker {
+  ): Worker | null {
+    if (!isRedisConfigured()) {
+      console.warn(`[Worker:${name}] Skipped — no Redis configured (set REDIS_URL)`);
+      return null;
+    }
     if (this.workers.has(name)) {
       return this.workers.get(name)!;
     }
@@ -103,7 +113,11 @@ class QueueManager {
     });
 
     worker.on('error', (err) => {
-      console.error(`[Worker:${name}] Error:`, err.message);
+      // Only log unique error messages to avoid spamming logs
+      const msg = err.message || String(err);
+      if (!msg.includes('ECONNREFUSED')) {
+        console.error(`[Worker:${name}] Error:`, msg);
+      }
     });
 
     this.workers.set(name, worker);
