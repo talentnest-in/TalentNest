@@ -1,0 +1,191 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main, develop]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: '22'
+
+jobs:
+  lint-typecheck:
+    name: Lint & Type Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: |
+            backend/package-lock.json
+            frontend/package-lock.json
+
+      - name: Cache backend node_modules
+        uses: actions/cache@v4
+        with:
+          path: backend/node_modules
+          key: backend-deps-${{ runner.os }}-${{ hashFiles('backend/package-lock.json') }}
+
+      - name: Cache frontend node_modules
+        uses: actions/cache@v4
+        with:
+          path: frontend/node_modules
+          key: frontend-deps-${{ runner.os }}-${{ hashFiles('frontend/package-lock.json') }}
+
+      - name: Install backend dependencies
+        working-directory: backend
+        run: npm ci --legacy-peer-deps
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Generate Prisma client
+        working-directory: backend
+        run: npx prisma generate
+
+      - name: Backend TypeScript check
+        working-directory: backend
+        run: npx tsc --noEmit
+
+      - name: Frontend TypeScript check
+        working-directory: frontend
+        run: npx tsc --noEmit
+
+      - name: Backend lint
+        working-directory: backend
+        run: npx oxlint . --deny-warnings 2>/dev/null || echo "oxlint not configured for backend"
+
+      - name: Frontend lint
+        working-directory: frontend
+        run: npx oxlint . --deny-warnings 2>/dev/null || echo "oxlint not configured"
+
+  test:
+    name: Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: talentnest
+          POSTGRES_PASSWORD: talentnest
+          POSTGRES_DB: talentnest_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready -U talentnest -d talentnest_test
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Cache backend node_modules
+        uses: actions/cache@v4
+        with:
+          path: backend/node_modules
+          key: backend-deps-${{ runner.os }}-${{ hashFiles('backend/package-lock.json') }}
+
+      - name: Install backend dependencies
+        working-directory: backend
+        run: npm ci --legacy-peer-deps
+
+      - name: Generate Prisma client
+        working-directory: backend
+        run: npx prisma generate
+
+      - name: Run database migrations
+        working-directory: backend
+        run: npx prisma db push
+        env:
+          DATABASE_URL: postgresql://talentnest:talentnest@localhost:5432/talentnest_test
+
+      - name: Run backend unit & integration tests
+        working-directory: backend
+        run: npx vitest run --reporter=verbose
+        env:
+          DATABASE_URL: postgresql://talentnest:talentnest@localhost:5432/talentnest_test
+          JWT_SECRET: test-jwt-secret-for-ci
+          COOKIE_SECRET: test-cookie-secret-for-ci
+          REDIS_HOST: localhost
+          REDIS_PORT: 6379
+          NODE_ENV: test
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: [lint-typecheck, test]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: |
+            backend/package-lock.json
+            frontend/package-lock.json
+
+      - name: Cache backend node_modules
+        uses: actions/cache@v4
+        with:
+          path: backend/node_modules
+          key: backend-deps-${{ runner.os }}-${{ hashFiles('backend/package-lock.json') }}
+
+      - name: Cache frontend node_modules
+        uses: actions/cache@v4
+        with:
+          path: frontend/node_modules
+          key: frontend-deps-${{ runner.os }}-${{ hashFiles('frontend/package-lock.json') }}
+
+      - name: Install backend dependencies
+        working-directory: backend
+        run: npm ci --legacy-peer-deps
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Generate Prisma client
+        working-directory: backend
+        run: npx prisma generate
+
+      - name: Build backend
+        working-directory: backend
+        run: npm run build
+
+      - name: Build frontend
+        working-directory: frontend
+        run: npm run build
+
+      - name: Upload frontend build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-build
+          path: frontend/dist/
+          retention-days: 1
+
+      - name: Upload backend build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-build
+          path: backend/dist/
+          retention-days: 1

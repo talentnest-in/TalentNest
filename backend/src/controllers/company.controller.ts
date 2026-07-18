@@ -1,73 +1,39 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
-import { prisma } from '../lib/prisma';
 import { uploadFile } from '../lib/upload';
-import { deleteFromCloudinary } from '../lib/cloudinary';
-import { z } from 'zod';
+import { getMyCompany, createOrUpdateCompany, uploadCompanyLogo } from '../services/company.service';
+import { AppError } from '../lib/errors';
 
-const companySchema = z.object({
-  name: z.string().min(1, 'Company name is required'),
-  industry: z.string().nullable().catch(null),
-  size: z.string().nullable().catch(null),
-  description: z.string().nullable().catch(null),
-  website: z.string().nullable().catch(null),
-  location: z.string().nullable().catch(null),
-});
-
-async function getOrCreateClientProfile(userId: string) {
-  return prisma.clientProfile.upsert({
-    where: { userId },
-    create: { userId },
-    update: {},
-  });
-}
-
-export const getMyCompany = async (request: FastifyRequest, reply: FastifyReply) => {
-  const profile = await prisma.clientProfile.findUnique({
-    where: { userId: request.user.id },
-    include: { company: true },
-  });
-  return reply.send({ company: profile?.company ?? null });
-};
-
-export const createOrUpdateCompany = async (request: FastifyRequest, reply: FastifyReply) => {
-  const data = companySchema.parse(request.body);
-  const profile = await getOrCreateClientProfile(request.user.id);
-
-  const company = await prisma.company.upsert({
-    where: { clientProfileId: profile.id },
-    create: { ...data, clientProfileId: profile.id },
-    update: data,
-  });
-  return reply.send({ company });
-};
-
-export const uploadCompanyLogo = async (request: FastifyRequest, reply: FastifyReply) => {
-  const file = await request.file();
-  if (!file) return reply.status(400).send({ message: 'No file uploaded' });
-
-  const uploadResult = await uploadFile(file, 'logo');
-  const profile = await getOrCreateClientProfile(request.user.id);
-
-  // Delete old logo from Cloudinary if exists
-  const existingCompany = await prisma.company.findUnique({
-    where: { clientProfileId: profile.id },
-  });
-  if (existingCompany?.logoUrl) {
-    try {
-      const urlParts = existingCompany.logoUrl.split('/');
-      const filename = urlParts[urlParts.length - 1];
-      if (filename) {
-        const publicId = `talentnest/company-logos/${filename.split('.')[0]}`;
-        await deleteFromCloudinary(publicId);
-      }
-    } catch (err) {
-      request.log.warn('Failed to delete old logo from Cloudinary');
-    }
+export const getMyCompanyController = async (request: FastifyRequest, reply: FastifyReply) => {
+  try {
+    const company = await getMyCompany(request.user.id);
+    return reply.send({ company });
+  } catch (error) {
+    if (error instanceof AppError) return reply.status(error.statusCode).send({ message: error.message });
+    throw error;
   }
-
-  const company = await prisma.company.update({
-    where: { clientProfileId: profile.id },
-    data: { logoUrl: uploadResult.secure_url },
-  });
-  return reply.send({ logoUrl: company.logoUrl });
 };
+
+export const createOrUpdateCompanyController = async (request: FastifyRequest, reply: FastifyReply) => {
+  try {
+    const result = await createOrUpdateCompany(request.user.id, request.body);
+    return reply.send(result);
+  } catch (error) {
+    if (error instanceof AppError) return reply.status(error.statusCode).send({ message: error.message });
+    throw error;
+  }
+};
+
+export const uploadCompanyLogoController = async (request: FastifyRequest, reply: FastifyReply) => {
+  try {
+    const file = await request.file();
+    if (!file) return reply.status(400).send({ message: 'No file uploaded' });
+    const uploadResult = await uploadFile({ file, type: 'logo' });
+    const result = await uploadCompanyLogo(request.user.id, uploadResult.secure_url);
+    return reply.send({ logoUrl: result });
+  } catch (error) {
+    if (error instanceof AppError) return reply.status(error.statusCode).send({ message: error.message });
+    throw error;
+  }
+};
+
+export { getMyCompanyController as getMyCompany, createOrUpdateCompanyController as createOrUpdateCompany, uploadCompanyLogoController as uploadCompanyLogo };

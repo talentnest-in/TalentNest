@@ -8,7 +8,7 @@ const Signup = lazy(() => import('@/pages/Signup').then(m => ({ default: m.Signu
 const ForgotPassword = lazy(() => import('@/pages/ForgotPassword').then(m => ({ default: m.ForgotPassword })));
 const ResetPassword = lazy(() => import('@/pages/ResetPassword').then(m => ({ default: m.ResetPassword })));
 const OAuthCallback = lazy(() => import('@/pages/OAuthCallback').then(m => ({ default: m.OAuthCallback })));
-const OnboardingRoleSelection = lazy(() => import('@/pages/OnboardingRoleSelection').then(m => ({ default: m.OnboardingRoleSelection })));
+const OnboardingWizard = lazy(() => import('@/pages/OnboardingWizard').then(m => ({ default: m.OnboardingWizard })));
 
 // Freelancer
 const Dashboard = lazy(() => import('@/pages/Dashboard').then(m => ({ default: m.Dashboard })));
@@ -67,8 +67,25 @@ const ClientContestDashboard = lazy(() => import('@/pages/contest/ClientContestD
 const ContestSubmissions = lazy(() => import('@/pages/contest/ContestSubmissions').then(m => ({ default: m.ContestSubmissions })));
 const FreelancerContestDashboard = lazy(() => import('@/pages/contest/FreelancerContestDashboard').then(m => ({ default: m.FreelancerContestDashboard })));
 
+// Gamification
+const AchievementsPage = lazy(() => import('@/pages/AchievementsPage').then(m => ({ default: m.AchievementsPage })));
+const LeaderboardPage = lazy(() => import('@/pages/LeaderboardPage').then(m => ({ default: m.LeaderboardPage })));
+const MissionsPage = lazy(() => import('@/pages/MissionsPage').then(m => ({ default: m.MissionsPage })));
+const ExpHistoryPage = lazy(() => import('@/pages/ExpHistoryPage').then(m => ({ default: m.ExpHistoryPage })));
+
+// Admin
+const AdminDashboard = lazy(() => import('@/pages/admin/AdminDashboard').then(m => ({ default: m.AdminDashboard })));
+const AdminModeration = lazy(() => import('@/pages/admin/AdminModeration').then(m => ({ default: m.AdminModeration })));
+const AdminUsers = lazy(() => import('@/pages/admin/AdminUsers').then(m => ({ default: m.AdminUsers })));
+const AdminAnalytics = lazy(() => import('@/pages/admin/AdminAnalytics').then(m => ({ default: m.AdminAnalytics })));
+const AdminSettings = lazy(() => import('@/pages/admin/AdminSettings').then(m => ({ default: m.AdminSettings })));
+const AdminFinance = lazy(() => import('@/pages/admin/AdminFinance').then(m => ({ default: m.AdminFinance })));
+const AdminCommunication = lazy(() => import('@/pages/admin/AdminCommunication').then(m => ({ default: m.AdminCommunication })));
+const AdminGamification = lazy(() => import('@/pages/admin/AdminGamification').then(m => ({ default: m.AdminGamification })));
+import { AdminLayout } from '@/components/layout/AdminLayout';
+
 // Protected route components (not lazy — tiny, needed immediately)
-import { ProtectedRoute, FreelancerRoute, ClientRoute } from '@/components/auth/ProtectedRoute';
+import { ProtectedRoute, FreelancerRoute, ClientRoute, AdminRoute } from '@/components/auth/ProtectedRoute';
 
 // ── Page Loader fallback ─────────────────────────────────────────────────────
 function PageLoader() {
@@ -98,7 +115,7 @@ function App() {
 
           {/* Protected routes (any authenticated user) */}
           <Route element={<ProtectedRoute />}>
-            <Route path="/onboarding/select-role" element={<OnboardingRoleSelection />} />
+            <Route path="/onboarding" element={<OnboardingWizard />} />
 
             {/* ── Freelancer-only routes ── */}
             <Route element={<FreelancerRoute />}>
@@ -125,6 +142,20 @@ function App() {
               <Route path="/client/applicants/:id" element={<ApplicantDetails />} />
               <Route path="/client/offers" element={<ClientOffersList />} />
               <Route path="/client/offers/:id" element={<OfferDetails />} />
+            </Route>
+
+            {/* ── Admin-only routes ── */}
+            <Route element={<AdminRoute />}>
+              <Route element={<AdminLayout />}>
+                <Route path="/admin" element={<AdminDashboard />} />
+                <Route path="/admin/analytics" element={<AdminAnalytics />} />
+                <Route path="/admin/users" element={<AdminUsers />} />
+                <Route path="/admin/moderation" element={<AdminModeration />} />
+                <Route path="/admin/settings" element={<AdminSettings />} />
+                <Route path="/admin/finance" element={<AdminFinance />} />
+                <Route path="/admin/communication" element={<AdminCommunication />} />
+                <Route path="/admin/gamification" element={<AdminGamification />} />
+              </Route>
             </Route>
 
             {/* ── Shared routes (both client and freelancer) ── */}
@@ -162,6 +193,12 @@ function App() {
               <Route path="/contests/my" element={<FreelancerContestDashboard />} />
               <Route path="/contests/:id/submissions" element={<ContestSubmissions />} />
               <Route path="/contests/:slug" element={<ContestDetail />} />
+
+              {/* ── Gamification routes (shared) ── */}
+              <Route path="/achievements" element={<AchievementsPage />} />
+              <Route path="/leaderboard" element={<LeaderboardPage />} />
+              <Route path="/missions" element={<MissionsPage />} />
+              <Route path="/exp-history" element={<ExpHistoryPage />} />
             </Route>
           </Route>
 

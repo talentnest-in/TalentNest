@@ -1,5 +1,4 @@
-import axios from 'axios';
-import { BACKEND_URL } from '@/lib/constants';
+import { api } from '@/lib/api';
 
 export interface Milestone {
   id: string;
@@ -25,15 +24,10 @@ export interface Note {
   updatedAt: string;
 }
 
-const api = axios.create({
-  baseURL: BACKEND_URL,
-  withCredentials: true,
-});
-
 export const workspaceService = {
   // Milestones
   async getMilestones(contractId: string): Promise<Milestone[]> {
-    const response = await api.get(`/api/v1/contracts/${contractId}/milestones`);
+    const response = await api.get(`/contracts/${contractId}/milestones`);
     return response.data;
   },
 
@@ -45,7 +39,7 @@ export const workspaceService = {
     amount?: number;
     order?: number;
   }): Promise<Milestone> {
-    const response = await api.post(`/api/v1/contracts/${contractId}/milestones`, data);
+    const response = await api.post(`/contracts/${contractId}/milestones`, data);
     return response.data;
   },
 
@@ -57,28 +51,28 @@ export const workspaceService = {
     amount: number;
     order: number;
   }>): Promise<Milestone> {
-    const response = await api.patch(`/api/v1/contracts/${contractId}/milestones/${id}`, data);
+    const response = await api.patch(`/contracts/${contractId}/milestones/${id}`, data);
     return response.data;
   },
 
   async deleteMilestone(contractId: string, id: string): Promise<{ success: boolean }> {
-    const response = await api.delete(`/api/v1/contracts/${contractId}/milestones/${id}`);
+    const response = await api.delete(`/contracts/${contractId}/milestones/${id}`);
     return response.data;
   },
 
   async fundMilestone(contractId: string, id: string): Promise<Milestone> {
-    const response = await api.post(`/api/v1/contracts/${contractId}/milestones/${id}/fund`);
+    const response = await api.post(`/contracts/${contractId}/milestones/${id}/fund`);
     return response.data;
   },
 
   async releaseMilestone(contractId: string, id: string): Promise<Milestone> {
-    const response = await api.post(`/api/v1/contracts/${contractId}/milestones/${id}/release`);
+    const response = await api.post(`/contracts/${contractId}/milestones/${id}/release`);
     return response.data;
   },
 
   // Notes
   async getNotes(contractId: string): Promise<Note[]> {
-    const response = await api.get(`/api/v1/contracts/${contractId}/notes`);
+    const response = await api.get(`/contracts/${contractId}/notes`);
     return response.data;
   },
 
@@ -86,7 +80,7 @@ export const workspaceService = {
     title: string;
     content: string;
   }): Promise<Note> {
-    const response = await api.post(`/api/v1/contracts/${contractId}/notes`, data);
+    const response = await api.post(`/contracts/${contractId}/notes`, data);
     return response.data;
   },
 
@@ -94,12 +88,12 @@ export const workspaceService = {
     title: string;
     content: string;
   }>): Promise<Note> {
-    const response = await api.patch(`/api/v1/contracts/${contractId}/notes/${id}`, data);
+    const response = await api.patch(`/contracts/${contractId}/notes/${id}`, data);
     return response.data;
   },
 
   async deleteNote(contractId: string, id: string): Promise<{ success: boolean }> {
-    const response = await api.delete(`/api/v1/contracts/${contractId}/notes/${id}`);
+    const response = await api.delete(`/contracts/${contractId}/notes/${id}`);
     return response.data;
   },
 };

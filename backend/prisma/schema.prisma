@@ -24,8 +24,18 @@ model User {
   onboardingCompleted  Boolean   @default(false)
   resetPasswordToken   String?
   resetPasswordExpires DateTime?
+  isSuspended          Boolean   @default(false)
+  suspensionReason     String?
   createdAt            DateTime  @default(now())
   updatedAt            DateTime  @updatedAt
+
+  // Gamification fields
+  exp                  Int       @default(0)
+  level                Int       @default(1)
+  currentStreak        Int       @default(0)
+  longestStreak        Int       @default(0)
+  lastLoginDate        DateTime?
+  totalExpEarned       Int       @default(0)
 
   freelancerProfile    FreelancerProfile?
   clientProfile        ClientProfile?
@@ -65,10 +75,20 @@ model User {
   contestSubmissions  ContestSubmission[]
   savedContests       SavedContest[]
 
+  // Gamification relations
+  experienceLogs      ExperienceLog[]
+  userAchievements    UserAchievement[]
+  userBadges          UserBadge[]
+  missionProgresses   MissionProgress[]
+  leaderboardEntries  Leaderboard[]
+  payoutRequests      PayoutRequest[]
+
   @@unique([provider, providerId])
   @@index([email])
   @@index([role])
   @@index([createdAt])
+  @@index([level])
+  @@index([exp])
 }
 
 model FreelancerProfile {
@@ -96,6 +116,8 @@ model Skill {
   name                String
   freelancerProfileId String
   profile             FreelancerProfile @relation(fields: [freelancerProfileId], references: [id], onDelete: Cascade)
+
+  @@index([freelancerProfileId])
 }
 
 model Experience {
@@ -108,6 +130,8 @@ model Experience {
   description         String?           @db.Text
   freelancerProfileId String
   profile             FreelancerProfile @relation(fields: [freelancerProfileId], references: [id], onDelete: Cascade)
+
+  @@index([freelancerProfileId])
 }
 
 model Education {
@@ -119,6 +143,8 @@ model Education {
   endDate             DateTime?
   freelancerProfileId String
   profile             FreelancerProfile @relation(fields: [freelancerProfileId], references: [id], onDelete: Cascade)
+
+  @@index([freelancerProfileId])
 }
 
 model PortfolioProject {
@@ -131,6 +157,8 @@ model PortfolioProject {
   profile             FreelancerProfile @relation(fields: [freelancerProfileId], references: [id], onDelete: Cascade)
   createdAt           DateTime          @default(now())
   updatedAt           DateTime          @updatedAt
+
+  @@index([freelancerProfileId])
 }
 
 // ─── Sprint 3: Client & Job Management ───────────────────────────────────────
@@ -200,6 +228,8 @@ model Job {
   @@index([status])
   @@index([createdAt])
   @@index([clientProfileId])
+  @@index([status, createdAt])
+  @@index([type, status])
 }
 
 model JobSkill {
@@ -207,6 +237,8 @@ model JobSkill {
   jobId String
   name  String
   job   Job    @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  @@index([jobId])
 }
 
 // ─── Sprint 4: Job Marketplace & Saved Jobs ───────────────────────────────────────
@@ -255,6 +287,8 @@ model JobApplication {
   @@index([freelancerProfileId])
   @@index([status])
   @@index([createdAt])
+  @@index([jobId, status])
+  @@index([freelancerProfileId, status])
 }
 
 // ─── Sprint 6: Offers & Contracts ─────────────────────────────────────────────────────
@@ -332,6 +366,7 @@ model Contract {
 
   @@index([freelancerId])
   @@index([clientId])
+  @@index([jobId])
   @@index([status])
   @@index([createdAt])
 }
@@ -423,6 +458,8 @@ model Notification {
   @@index([userId])
   @@index([isRead])
   @@index([createdAt])
+  @@index([userId, isRead, createdAt])
+  @@index([type])
 }
 
 // ─── Sprint 7.4: Project Workspace ───────────────────────────────────────────────
@@ -581,6 +618,8 @@ model Course {
   @@index([status])
   @@index([slug])
   @@index([createdAt])
+  @@index([status, createdAt])
+  @@index([level, price, status])
 }
 
 model CourseTagRelation {
@@ -650,6 +689,9 @@ model Enrollment {
   @@index([courseId])
   @@index([status])
   @@index([enrolledAt])
+  @@index([studentId, status])
+  @@index([courseId, status])
+  @@index([lastAccessedAt])
 }
 
 model LessonProgress {
@@ -963,10 +1005,10 @@ model Contest {
   client               User              @relation("ClientContests", fields: [clientId], references: [id], onDelete: Cascade)
 
   winnerId             String?
-  winner               User?             @relation("ContestWinner", fields: [winnerId], references: [id])
+  winner               User?             @relation("ContestWinner", fields: [winnerId], references: [id], onDelete: SetNull)
 
   runnerUpId           String?
-  runnerUp             User?             @relation("ContestRunnerUp", fields: [runnerUpId], references: [id])
+  runnerUp             User?             @relation("ContestRunnerUp", fields: [runnerUpId], references: [id], onDelete: SetNull)
 
   attachments          ContestAttachment[]
   participants         ContestParticipant[]
@@ -1043,4 +1085,211 @@ model SavedContest {
   @@unique([userId, contestId])
   @@index([userId])
   @@index([contestId])
+}
+
+// ─── Sprint 11: Gamification & Achievements System ─────────────────────────────
+
+enum AchievementCategory {
+  FREELANCING
+  LEARNING
+  COMMUNITY
+  CONTEST
+  CREATOR
+  CAREER
+}
+
+enum BadgeTier {
+  BRONZE
+  SILVER
+  GOLD
+  PLATINUM
+  LEGEND
+}
+
+enum MissionType {
+  DAILY
+  WEEKLY
+  MONTHLY
+}
+
+enum LeaderboardPeriod {
+  WEEKLY
+  MONTHLY
+  ALL_TIME
+}
+
+enum LeaderboardCategory {
+  FREELANCER
+  CREATOR
+  COMMUNITY
+  LEARNER
+  CONTEST
+}
+
+model ExperienceLog {
+  id          String   @id @default(uuid())
+  userId      String
+  amount      Int
+  action      String
+  description String
+  createdAt   DateTime @default(now())
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([createdAt])
+  @@index([action])
+}
+
+model Achievement {
+  id          String             @id @default(uuid())
+  key         String             @unique
+  title       String
+  description String
+  category    AchievementCategory
+  icon        String
+  expReward   Int
+  condition   Json
+  createdAt   DateTime           @default(now())
+
+  userAchievements UserAchievement[]
+
+  @@index([category])
+  @@index([key])
+}
+
+model UserAchievement {
+  id             String      @id @default(uuid())
+  userId         String
+  achievementId  String
+  unlockedAt     DateTime    @default(now())
+
+  user           User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  achievement    Achievement @relation(fields: [achievementId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, achievementId])
+  @@index([userId])
+  @@index([achievementId])
+  @@index([unlockedAt])
+}
+
+model Badge {
+  id          String   @id @default(uuid())
+  key         String   @unique
+  title       String
+  description String
+  icon        String
+  tier        BadgeTier
+  category    String
+  createdAt   DateTime @default(now())
+
+  userBadges  UserBadge[]
+
+  @@index([tier])
+  @@index([category])
+  @@index([key])
+}
+
+model UserBadge {
+  id        String   @id @default(uuid())
+  userId    String
+  badgeId   String
+  earnedAt  DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  badge     Badge    @relation(fields: [badgeId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, badgeId])
+  @@index([userId])
+  @@index([badgeId])
+  @@index([earnedAt])
+}
+
+model Mission {
+  id          String      @id @default(uuid())
+  key         String      @unique
+  title       String
+  description String
+  type        MissionType
+  action      String
+  targetCount Int
+  expReward   Int
+  badgeReward String?
+  isActive    Boolean     @default(true)
+  resetAt     DateTime?
+  createdAt   DateTime    @default(now())
+
+  missionProgresses MissionProgress[]
+
+  @@index([type])
+  @@index([isActive])
+  @@index([key])
+}
+
+model MissionProgress {
+  id          String   @id @default(uuid())
+  userId      String
+  missionId   String
+  currentCount Int      @default(0)
+  completed   Boolean  @default(false)
+  completedAt DateTime?
+  claimedAt   DateTime?
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  mission     Mission  @relation(fields: [missionId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, missionId])
+  @@index([userId])
+  @@index([missionId])
+  @@index([completed])
+}
+
+model Leaderboard {
+  id        String             @id @default(uuid())
+  userId    String
+  period    LeaderboardPeriod
+  category  LeaderboardCategory
+  exp       Int
+  rank      Int
+  updatedAt DateTime           @updatedAt
+
+  user      User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, period, category])
+  @@index([period])
+  @@index([category])
+  @@index([rank])
+  @@index([exp])
+}
+
+model PlatformSetting {
+  id          String   @id @default(uuid())
+  key         String   @unique
+  value       String   @db.Text
+  type        String   @default("string") // 'string', 'number', 'boolean', 'json'
+  description String?
+  updatedBy   String?
+  updatedAt   DateTime @updatedAt
+  
+  @@index([key])
+}
+
+enum PayoutRequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model PayoutRequest {
+  id        String              @id @default(uuid())
+  userId    String
+  amount    Float
+  status    PayoutRequestStatus @default(PENDING)
+  createdAt DateTime            @default(now())
+  updatedAt DateTime            @updatedAt
+
+  user      User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([status])
 }

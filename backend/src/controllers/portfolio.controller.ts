@@ -1,99 +1,56 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
-import { prisma } from '../lib/prisma';
 import { uploadFile } from '../lib/upload';
-import { deleteFromCloudinary } from '../lib/cloudinary';
-import { z } from 'zod';
+import { getProjects as svcGetProjects, addProject as svcAddProject, updateProject as svcUpdateProject, deleteProject as svcDeleteProject } from '../services/portfolio.service';
+import { AppError } from '../lib/errors';
 
-const projectSchema = z.object({
-  title: z.string().min(1, 'Title is required'),
-  description: z.string().min(1, 'Description is required'),
-  projectUrl: z.string().nullable().catch(null),
-  imageUrl: z.string().nullable().catch(null),
-});
-
-export const getProjects = async (
-  request: FastifyRequest<{ Querystring: { page?: string; limit?: string } }>,
-  reply: FastifyReply
-) => {
-  const { page = '1', limit = '10' } = request.query;
-  const skip = (parseInt(page) - 1) * parseInt(limit);
-  const take = parseInt(limit);
-
-  const profile = await prisma.freelancerProfile.findUnique({
-    where: { userId: request.user.id },
-  });
-  if (!profile) return reply.send({ projects: [], pagination: { page: 1, limit: 10, total: 0, pages: 0 } });
-
-  const [projects, total] = await Promise.all([
-    prisma.portfolioProject.findMany({
-      where: { freelancerProfileId: profile.id },
-      orderBy: { createdAt: 'desc' },
-      skip,
-      take,
-    }),
-    prisma.portfolioProject.count({
-      where: { freelancerProfileId: profile.id },
-    }),
-  ]);
-  
-  return reply.send({
-    projects,
-    pagination: {
-      page: parseInt(page),
-      limit: parseInt(limit),
-      total,
-      pages: Math.ceil(total / parseInt(limit)),
-    },
-  });
+export const getProjects = async (request: FastifyRequest<{ Querystring: { page?: string; limit?: string } }>, reply: FastifyReply) => {
+  try {
+    const { page, limit } = request.query;
+    const result = await svcGetProjects(request.user.id, page, limit);
+    return reply.send(result);
+  } catch (error) {
+    if (error instanceof AppError) return reply.status(error.statusCode).send({ message: error.message });
+    throw error;
+  }
 };
 
 export const addProject = async (request: FastifyRequest, reply: FastifyReply) => {
-  const data = projectSchema.parse(request.body);
-  const profile = await prisma.freelancerProfile.upsert({
-    where: { userId: request.user.id },
-    create: { userId: request.user.id },
-    update: {},
-  });
-
-  const project = await prisma.portfolioProject.create({
-    data: { ...data, freelancerProfileId: profile.id },
-  });
-  return reply.send({ project });
+  try {
+    const result = await svcAddProject(request.user.id, request.body);
+    return reply.send(result);
+  } catch (error) {
+    if (error instanceof AppError) return reply.status(error.statusCode).send({ message: error.message });
+    throw error;
+  }
 };
 
 export const updateProject = async (request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) => {
-  const { id } = request.params;
-  const data = projectSchema.parse(request.body);
-  const project = await prisma.portfolioProject.update({ where: { id }, data });
-  return reply.send({ project });
+  try {
+    const result = await svcUpdateProject(request.user.id, request.params.id, request.body);
+    return reply.send(result);
+  } catch (error) {
+    if (error instanceof AppError) return reply.status(error.statusCode).send({ message: error.message });
+    throw error;
+  }
 };
 
 export const deleteProject = async (request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) => {
-  const { id } = request.params;
-  
-  const project = await prisma.portfolioProject.findUnique({ where: { id } });
-  if (project?.imageUrl) {
-    try {
-      // Extract public_id from Cloudinary URL if it's a Cloudinary URL
-      const urlParts = project.imageUrl.split('/');
-      const filename = urlParts[urlParts.length - 1];
-      if (filename) {
-        const publicId = `talentnest/portfolio/${filename.split('.')[0] || filename}`;
-        await deleteFromCloudinary(publicId);
-      }
-    } catch (err) {
-      request.log.warn('Failed to delete from Cloudinary');
-    }
+  try {
+    const result = await svcDeleteProject(request.user.id, request.params.id);
+    return reply.send(result);
+  } catch (error) {
+    if (error instanceof AppError) return reply.status(error.statusCode).send({ message: error.message });
+    throw error;
   }
-  
-  await prisma.portfolioProject.delete({ where: { id } });
-  return reply.send({ success: true });
 };
 
 export const uploadProjectImage = async (request: FastifyRequest, reply: FastifyReply) => {
-  const file = await request.file();
-  if (!file) return reply.status(400).send({ message: 'No file uploaded' });
-
-  const uploadResult = await uploadFile(file, 'portfolio');
-  return reply.send({ imageUrl: uploadResult.secure_url });
+  try {
+    const file = await request.file();
+    if (!file) return reply.status(400).send({ message: 'No file uploaded' });
+    const uploadResult = await uploadFile({ file, type: 'portfolio' });
+    return reply.send({ imageUrl: uploadResult.secure_url });
+  } catch (error) {
+    throw error;
+  }
 };

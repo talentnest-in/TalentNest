@@ -17,6 +17,11 @@ const pool = new Pool({
   connectionTimeoutMillis: 5000,
 });
 
+// Handle pool errors to prevent unhandled rejections
+pool.on('error', (err) => {
+  console.error('Unexpected database pool error:', err);
+});
+
 const adapter = new PrismaPg(pool);
 export const prisma = global.prisma ?? new PrismaClient({ adapter });
 

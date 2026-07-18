@@ -120,44 +120,49 @@ function getVerificationTemplate(verificationUrl: string): string {
   `;
 }
 
-// ── Send Forgot Password Email ─────────────────────────────────────────────────
+import { queueManager, QUEUES } from './queue';
+
+// ── Queue Forgot Password Email ────────────────────────────────────────────────
 export async function sendForgotPasswordEmail(email: string, resetUrl: string): Promise<boolean> {
   try {
-    const transporter = createTransport();
-    
-    const mailOptions = {
-      from: fromEmail,
+    await queueManager.addJob(QUEUES.EMAIL, {
+      type: 'password_reset',
       to: email,
-      subject: 'Reset Your Password - TalentNest',
-      html: getForgotPasswordTemplate(resetUrl),
-    };
-
-    const info = await transporter.sendMail(mailOptions);
-    console.log(`Password reset email sent to ${email}: ${info.messageId}`);
+      data: { resetUrl },
+    }, { attempts: 3, backoff: { type: 'exponential', delay: 2000 } });
     return true;
   } catch (error) {
-    console.error('Failed to send password reset email:', error);
-    throw error;
+    console.error('Failed to queue password reset email:', error);
+    return false;
   }
 }
 
-// ── Send Verification Email ─────────────────────────────────────────────────────
+// ── Queue Verification Email ─────────────────────────────────────────────────────
 export async function sendVerificationEmail(email: string, verificationUrl: string): Promise<boolean> {
   try {
-    const transporter = createTransport();
-    
-    const mailOptions = {
-      from: fromEmail,
+    await queueManager.addJob(QUEUES.EMAIL, {
+      type: 'email_verification',
       to: email,
-      subject: 'Verify Your Email - TalentNest',
-      html: getVerificationTemplate(verificationUrl),
-    };
-
-    const info = await transporter.sendMail(mailOptions);
-    console.log(`Verification email sent to ${email}: ${info.messageId}`);
+      data: { verificationUrl },
+    }, { attempts: 3, backoff: { type: 'exponential', delay: 2000 } });
     return true;
   } catch (error) {
-    console.error('Failed to send verification email:', error);
-    throw error;
+    console.error('Failed to queue verification email:', error);
+    return false;
+  }
+}
+
+// ── Queue Welcome Email ─────────────────────────────────────────────────────────
+export async function sendWelcomeEmail(email: string, name: string): Promise<boolean> {
+  try {
+    await queueManager.addJob(QUEUES.EMAIL, {
+      type: 'welcome',
+      to: email,
+      data: { name },
+    }, { attempts: 3, backoff: { type: 'exponential', delay: 2000 } });
+    return true;
+  } catch (error) {
+    console.error('Failed to queue welcome email:', error);
+    return false;
   }
 }

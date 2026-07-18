@@ -1,0 +1,16 @@
+{
+  "exceptions": {
+    "crypto-js": {
+      "active": true,
+      "notes": "False positive — CVE only affects client-side use with unpatched browser"
+    },
+    "minimist": {
+      "active": false,
+      "notes": "Developmental dependency — will be removed when upgraded"
+    },
+    "node-fetch": {
+      "active": false,
+      "notes": "Used indirectly — awaiting upstream fix"
+    }
+  }
+}

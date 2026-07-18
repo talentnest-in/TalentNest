@@ -1,0 +1,106 @@
+services:
+  nginx:
+    build:
+      context: .
+      dockerfile: nginx/Dockerfile
+      args:
+        VITE_API_URL: ${VITE_API_URL:-/api/v1}
+        VITE_BACKEND_URL: ${VITE_BACKEND_URL:-http://localhost}
+    container_name: talentnest-proxy
+    ports:
+      - "${NGINX_PORT:-80}:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+    networks:
+      - talentnest
+
+  backend:
+    build:
+      context: ./backend
+    container_name: talentnest-api
+    env_file:
+      - .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+    networks:
+      - talentnest
+
+  redis:
+    image: redis:7-alpine
+    container_name: talentnest-redis
+    command: ["redis-server", "--requirepass", "${REDIS_PASSWORD:-talentnest}", "--appendonly", "yes"]
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-talentnest}", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+    restart: unless-stopped
+    networks:
+      - talentnest
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: talentnest-db
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: ${DB_USER:-talentnest}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-talentnest}
+      POSTGRES_DB: ${DB_NAME:-talentnest}
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-talentnest} -d ${DB_NAME:-talentnest}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+    networks:
+      - talentnest
+
+  certbot:
+    image: certbot/certbot:latest
+    container_name: talentnest-certbot
+    volumes:
+      - certbot-www:/var/www/certbot
+      - certbot-etc:/etc/letsencrypt
+    profiles:
+      - certbot
+    networks:
+      - talentnest
+    entrypoint: ["/bin/sh", "-c"]
+    command: ["trap exit TERM; while :; do sleep 86400; done"]
+
+volumes:
+  pgdata:
+  redis-data:
+  certbot-www:
+  certbot-etc:
+
+networks:
+  talentnest:
+    driver: bridge

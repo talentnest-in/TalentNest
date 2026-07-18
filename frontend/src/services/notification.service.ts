@@ -1,5 +1,4 @@
-import axios from 'axios';
-import { BACKEND_URL } from '@/lib/constants';
+import { api } from '@/lib/api';
 
 export interface Notification {
   id: string;
@@ -23,29 +22,24 @@ export interface NotificationsResponse {
   unreadCount: number;
 }
 
-const api = axios.create({
-  baseURL: BACKEND_URL,
-  withCredentials: true,
-});
-
 export const notificationService = {
   async getNotifications(page = 1, limit = 20): Promise<NotificationsResponse> {
-    const response = await api.get('/api/v1/notifications', { params: { page, limit } });
+    const response = await api.get('/notifications', { params: { page, limit } });
     return response.data;
   },
 
   async markAsRead(notificationId: string): Promise<Notification> {
-    const response = await api.patch(`/api/v1/notifications/${notificationId}/read`);
+    const response = await api.patch(`/notifications/${notificationId}/read`);
     return response.data;
   },
 
   async markAllAsRead(): Promise<{ success: boolean }> {
-    const response = await api.patch('/api/v1/notifications/read-all');
+    const response = await api.patch('/notifications/read-all');
     return response.data;
   },
 
   async deleteNotification(notificationId: string): Promise<{ success: boolean }> {
-    const response = await api.delete(`/api/v1/notifications/${notificationId}`);
+    const response = await api.delete(`/notifications/${notificationId}`);
     return response.data;
   },
 };

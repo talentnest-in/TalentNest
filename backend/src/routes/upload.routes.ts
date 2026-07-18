@@ -1,7 +1,8 @@
 import { FastifyInstance } from 'fastify';
-import { uploadToCloudinary } from '../lib/cloudinary';
+import { uploadFile as uploadToCloudinary } from '../lib/cloudinary';
 import path from 'path';
 import crypto from 'crypto';
+import rateLimit from '@fastify/rate-limit';
 
 // Allowed file types and MIME types
 const ALLOWED_MIME_TYPES = [
@@ -19,6 +20,14 @@ const ALLOWED_MIME_TYPES = [
 const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20MB
 
 export async function uploadRoutes(fastify: FastifyInstance) {
+  // Rate limiting for uploads
+  fastify.register(rateLimit, {
+    global: false,
+    max: 10,
+    timeWindow: '1 minute',
+    keyGenerator: (request) => request.user?.id || request.ip,
+  });
+
   // Upload file for chat
   fastify.post('/upload', {
     preHandler: [fastify.authenticate],
@@ -37,11 +46,8 @@ export async function uploadRoutes(fastify: FastifyInstance) {
           });
         }
 
-        // Read buffer first — bytesRead is only populated after this
-        const buffer = await data.toBuffer();
-
-        // Validate file size AFTER reading buffer
-        if (buffer.length > MAX_FILE_SIZE) {
+        // Validate file size using file.bytes or the field constraint
+        if (data.file.bytesRead > MAX_FILE_SIZE) {
           return reply.status(400).send({ error: 'File size exceeds 20MB limit' });
         }
 
@@ -50,8 +56,8 @@ export async function uploadRoutes(fastify: FastifyInstance) {
         const randomName = crypto.randomBytes(16).toString('hex');
         const filename = `${randomName}${fileExtension}`;
         
-        // Upload to Cloudinary
-        const result = await uploadToCloudinary(buffer, filename, data.mimetype, 'talentnest/chat-attachments');
+        // Upload to Cloudinary using streaming (avoids loading entire file into memory)
+        const result = await uploadToCloudinary(data.file, filename, data.mimetype, 'chat_attachment');
 
         return reply.send({
           fileName: data.filename,
@@ -62,7 +68,6 @@ export async function uploadRoutes(fastify: FastifyInstance) {
         });
       } catch (error) {
         request.log.error(error, 'File upload failed');
-        console.error('Upload error details:', error);
         return reply.status(500).send({ error: 'Failed to upload file', details: error instanceof Error ? error.message : String(error) });
       }
     },

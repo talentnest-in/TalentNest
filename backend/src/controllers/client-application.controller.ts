@@ -1,306 +1,50 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
-import { prisma } from '../lib/prisma';
 import { z } from 'zod';
-
-// ── Validation Schemas ─────────────────────────────────────────────────────────────
+import { getAllClientApplicants as svcGetAllClientApplicants, getJobApplicants as svcGetJobApplicants, getApplicantDetails as svcGetApplicantDetails, updateApplicationStatus as svcUpdateApplicationStatus } from '../services/client-application.service';
+import { AppError } from '../lib/errors';
 
 const updateStatusSchema = z.object({
   status: z.enum(['PENDING', 'REVIEWING', 'SHORTLISTED', 'REJECTED', 'HIRED']),
 });
 
-type UpdateStatusInput = z.infer<typeof updateStatusSchema>;
-
-// ── Get All Applicants for Client ─────────────────────────────────────────────────────
-
-export const getAllClientApplicants = async (
-  request: FastifyRequest<{ Querystring: { page?: string; limit?: string; search?: string; status?: string } }>,
-  reply: FastifyReply
-) => {
-  const userId = request.user.id;
-  const page = parseInt(request.query.page || '1') || 1;
-  const limit = parseInt(request.query.limit || '12') || 12;
-  const search = request.query.search || '';
-  const status = request.query.status;
-  const skip = (page - 1) * limit;
-
-  // Get client profile
-  const clientProfile = await prisma.clientProfile.findUnique({
-    where: { userId },
-  });
-
-  if (!clientProfile) {
-    return reply.status(404).send({ message: 'Client profile not found' });
+export const getAllClientApplicants = async (request: FastifyRequest<{ Querystring: { page?: string; limit?: string; search?: string; status?: string } }>, reply: FastifyReply) => {
+  try {
+    const result = await svcGetAllClientApplicants(request.user.id, request.query);
+    return reply.send(result);
+  } catch (error) {
+    if (error instanceof AppError) return reply.status(error.statusCode).send({ message: error.message });
+    throw error;
   }
-
-  const where: any = {
-    job: {
-      clientProfileId: clientProfile.id,
-    },
-  };
-
-  if (status) {
-    where.status = status;
-  }
-
-  if (search) {
-    where.profile = {
-      OR: [
-        { user: { name: { contains: search, mode: 'insensitive' } } },
-      ],
-    };
-  }
-
-  const [applications, total] = await Promise.all([
-    prisma.jobApplication.findMany({
-      where,
-      include: {
-        profile: {
-          include: {
-            user: true,
-            skills: true,
-            experiences: true,
-            educations: true,
-            projects: true,
-          },
-        },
-        job: {
-          include: {
-            clientProfile: {
-              include: {
-                company: true,
-              },
-            },
-            skills: true,
-          },
-        },
-      },
-      orderBy: { createdAt: 'desc' },
-      skip,
-      take: limit,
-    }),
-    prisma.jobApplication.count({ where }),
-  ]);
-
-  return reply.send({
-    applications,
-    pagination: {
-      page,
-      limit,
-      total,
-      pages: Math.ceil(total / limit),
-    },
-  });
 };
 
-// ── Get Applicants for Job ───────────────────────────────────────────────────────────
-
-export const getJobApplicants = async (
-  request: FastifyRequest<{ Params: { jobId: string }; Querystring: { page?: string; limit?: string; search?: string; status?: string } }>,
-  reply: FastifyReply
-) => {
-  const jobId = request.params.jobId;
-  const userId = request.user.id;
-  const page = parseInt(request.query.page || '1') || 1;
-  const limit = parseInt(request.query.limit || '12') || 12;
-  const search = request.query.search || '';
-  const status = request.query.status;
-  const skip = (page - 1) * limit;
-
-  // Verify job belongs to this client
-  const job = await prisma.job.findUnique({
-    where: { id: jobId },
-    include: { clientProfile: true },
-  });
-
-  if (!job) {
-    return reply.status(404).send({ message: 'Job not found' });
+export const getJobApplicants = async (request: FastifyRequest<{ Params: { jobId: string }; Querystring: { page?: string; limit?: string; search?: string; status?: string } }>, reply: FastifyReply) => {
+  try {
+    const result = await svcGetJobApplicants(request.user.id, request.params.jobId, request.query);
+    return reply.send(result);
+  } catch (error) {
+    if (error instanceof AppError) return reply.status(error.statusCode).send({ message: error.message });
+    throw error;
   }
-
-  if (job.clientProfile.userId !== userId) {
-    return reply.status(403).send({ message: 'Access denied' });
-  }
-
-  const where: any = {
-    jobId,
-  };
-
-  if (status) {
-    where.status = status;
-  }
-
-  if (search) {
-    where.profile = {
-      OR: [
-        { user: { name: { contains: search, mode: 'insensitive' } } },
-      ],
-    };
-  }
-
-  const [applications, total] = await Promise.all([
-    prisma.jobApplication.findMany({
-      where,
-      include: {
-        profile: {
-          include: {
-            user: true,
-            skills: true,
-            experiences: true,
-            educations: true,
-            projects: true,
-          },
-        },
-        job: {
-          include: {
-            clientProfile: {
-              include: {
-                company: true,
-              },
-            },
-            skills: true,
-          },
-        },
-      },
-      orderBy: { createdAt: 'desc' },
-      skip,
-      take: limit,
-    }),
-    prisma.jobApplication.count({ where }),
-  ]);
-
-  return reply.send({
-    applications,
-    pagination: {
-      page,
-      limit,
-      total,
-      pages: Math.ceil(total / limit),
-    },
-  });
 };
 
-// ── Get Applicant Details ───────────────────────────────────────────────────────────
-
-export const getApplicantDetails = async (
-  request: FastifyRequest<{ Params: { id: string } }>,
-  reply: FastifyReply
-) => {
-  const applicationId = request.params.id;
-  const userId = request.user.id;
-
-  const application = await prisma.jobApplication.findUnique({
-    where: { id: applicationId },
-    include: {
-      profile: {
-        include: {
-          user: true,
-          skills: true,
-          experiences: {
-            orderBy: { startDate: 'desc' },
-          },
-          educations: {
-            orderBy: { startDate: 'desc' },
-          },
-          projects: {
-            orderBy: { createdAt: 'desc' },
-          },
-        },
-      },
-      job: {
-        include: {
-          clientProfile: {
-            include: {
-              company: true,
-            },
-          },
-          skills: true,
-        },
-      },
-    },
-  });
-
-  if (!application) {
-    return reply.status(404).send({ message: 'Application not found' });
+export const getApplicantDetails = async (request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) => {
+  try {
+    const result = await svcGetApplicantDetails(request.user.id, request.params.id);
+    return reply.send(result);
+  } catch (error) {
+    if (error instanceof AppError) return reply.status(error.statusCode).send({ message: error.message });
+    throw error;
   }
-
-  // Verify job belongs to this client
-  if (application.job.clientProfile.userId !== userId) {
-    return reply.status(403).send({ message: 'Access denied' });
-  }
-
-  return reply.send({ application });
 };
 
-// ── Update Application Status ───────────────────────────────────────────────────────
-
-export const updateApplicationStatus = async (
-  request: FastifyRequest<{ Params: { id: string }; Body: UpdateStatusInput }>,
-  reply: FastifyReply
-) => {
-  const applicationId = request.params.id;
-  const userId = request.user.id;
-
-  const application = await prisma.jobApplication.findUnique({
-    where: { id: applicationId },
-    include: {
-      job: {
-        include: { clientProfile: true },
-      },
-    },
-  });
-
-  if (!application) {
-    return reply.status(404).send({ message: 'Application not found' });
+export const updateApplicationStatus = async (request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) => {
+  try {
+    const body = updateStatusSchema.parse(request.body);
+    const result = await svcUpdateApplicationStatus(request.user.id, request.params.id, body);
+    return reply.send(result);
+  } catch (error) {
+    if (error instanceof z.ZodError) throw error;
+    if (error instanceof AppError) return reply.status(error.statusCode).send({ message: error.message });
+    throw error;
   }
-
-  // Verify job belongs to this client
-  if (application.job.clientProfile.userId !== userId) {
-    return reply.status(403).send({ message: 'Access denied' });
-  }
-
-  // Validate request body
-  const body = updateStatusSchema.parse(request.body);
-
-  // Validate status transitions
-  const currentStatus = application.status;
-  const newStatus = body.status;
-
-  // Cannot update if already WITHDRAWN, REJECTED, or HIRED
-  if (currentStatus === 'WITHDRAWN' || currentStatus === 'REJECTED' || currentStatus === 'HIRED') {
-    return reply.status(400).send({ message: 'Cannot update application in current status' });
-  }
-
-  // Validate allowed transitions
-  const allowedTransitions: Record<string, string[]> = {
-    PENDING: ['REVIEWING', 'REJECTED'],
-    REVIEWING: ['SHORTLISTED', 'REJECTED'],
-    SHORTLISTED: ['HIRED', 'REJECTED'],
-  };
-
-  if (!allowedTransitions[currentStatus]?.includes(newStatus)) {
-    return reply.status(400).send({ message: 'Invalid status transition' });
-  }
-
-  // Update status
-  const updated = await prisma.jobApplication.update({
-    where: { id: applicationId },
-    data: { status: newStatus },
-    include: {
-      profile: {
-        include: {
-          user: true,
-        },
-      },
-      job: {
-        include: {
-          clientProfile: {
-            include: {
-              company: true,
-            },
-          },
-        },
-      },
-    },
-  });
-
-  return reply.send({ application: updated });
 };

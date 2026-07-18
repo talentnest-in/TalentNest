@@ -1,5 +1,4 @@
-import axios from 'axios';
-import { BACKEND_URL } from '@/lib/constants';
+import { api } from '@/lib/api';
 
 export interface Conversation {
   id: string;
@@ -59,19 +58,14 @@ export interface Message {
   attachments: MessageAttachment[];
 }
 
-const api = axios.create({
-  baseURL: BACKEND_URL,
-  withCredentials: true,
-});
-
 export const chatService = {
-  async getConversations(): Promise<Conversation[]> {
-    const response = await api.get('/api/v1/chat/conversations');
-    return response.data;
+  async getConversations(page = 1, limit = 20): Promise<Conversation[]> {
+    const response = await api.get('/chat/conversations', { params: { page, limit } });
+    return response.data.conversations || response.data;
   },
 
-  async getMessages(conversationId: string): Promise<Message[]> {
-    const response = await api.get(`/api/v1/chat/conversations/${conversationId}/messages`);
+  async getMessages(conversationId: string, cursor?: string, limit?: string): Promise<Message[]> {
+    const response = await api.get(`/chat/conversations/${conversationId}/messages`, { params: { cursor, limit } });
     return response.data;
   },
 
@@ -80,7 +74,7 @@ export const chatService = {
     content?: string,
     attachments?: MessageAttachment[]
   ): Promise<Message> {
-    const response = await api.post(`/api/v1/chat/conversations/${conversationId}/messages`, {
+    const response = await api.post(`/chat/conversations/${conversationId}/messages`, {
       content,
       type: attachments && attachments.length > 0 ? 'ATTACHMENT' : 'TEXT',
       attachments,
@@ -106,11 +100,11 @@ export const chatService = {
   },
 
   async markAsRead(conversationId: string): Promise<void> {
-    await api.patch(`/api/v1/chat/conversations/${conversationId}/read`);
+    await api.patch(`/chat/conversations/${conversationId}/read`);
   },
 
   async getOrCreateConversation(contractId: string): Promise<Conversation> {
-    const response = await api.get(`/api/v1/chat/contracts/${contractId}/conversation`);
+    const response = await api.get(`/chat/contracts/${contractId}/conversation`);
     return response.data;
   },
 };

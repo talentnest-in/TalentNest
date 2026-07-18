@@ -3,10 +3,12 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { BrandLogo } from '@/components/ui/BrandLogo';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSocket } from '@/contexts/SocketContext';
-import { LogOut, Menu, X } from 'lucide-react';
+import { LogOut, Menu, X, Trophy } from 'lucide-react';
 import { NotificationBell } from '@/components/notifications/NotificationBell';
 import { NotificationDropdown } from '@/components/notifications/NotificationDropdown';
 import { GlobalSearch } from '@/components/shared/GlobalSearch';
+import { useQuery } from '@tanstack/react-query';
+import { api } from '@/lib/api';
 
 import { freelancerNavItems, clientNavItems } from '@/config/navigation';
 
@@ -30,6 +32,13 @@ export function DashboardLayout({ children, navItems: customNavItems }: Dashboar
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const navItems = customNavItems || (user?.role === 'CLIENT' ? clientNavItems : freelancerNavItems);
+
+  // Fetch user gamification stats
+  const { data: stats } = useQuery({
+    queryKey: ['gamification-stats'],
+    queryFn: () => api.get('/gamification/stats').then(res => res.data),
+    enabled: !!user,
+  });
 
   // Close mobile menu on route change
   useEffect(() => {
@@ -88,6 +97,13 @@ export function DashboardLayout({ children, navItems: customNavItems }: Dashboar
             <p className="text-xs text-white/50 truncate">{user?.email}</p>
           </div>
           <div className="flex items-center gap-1">
+            {/* Level Badge */}
+            {stats && (
+              <div className="flex items-center gap-1 px-2 py-1 bg-accent/20 rounded-full mr-1">
+                <Trophy className="h-3 w-3 text-accent" />
+                <span className="text-xs font-semibold text-accent">Lvl {stats.level}</span>
+              </div>
+            )}
             <div className="relative hidden lg:block">
               <NotificationBell
                 unreadCount={unreadNotifCount}

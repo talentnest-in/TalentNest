@@ -1,396 +1,129 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
-import { prisma } from '../lib/prisma';
-import { uploadVideoToCloudinary, uploadToCloudinary } from '../lib/cloudinary';
+import { uploadToCloudinary, uploadVideoToCloudinary } from '../lib/cloudinary';
+import { createSection as svcCreateSection, updateSection as svcUpdateSection, deleteSection as svcDeleteSection, createLesson as svcCreateLesson, updateLesson as svcUpdateLesson, deleteLesson as svcDeleteLesson, reorderLessons as svcReorderLessons } from '../services/lesson.service';
+import { AppError } from '../lib/errors';
 
 export const lessonController = {
-  // Create section
   async createSection(request: FastifyRequest, reply: FastifyReply) {
     try {
       const userId = (request as any).user.id;
       const { courseId } = request.params as { courseId: string };
-      const body = request.body as any;
-
-      // Check if course exists and user is the creator
-      const course = await prisma.course.findUnique({
-        where: { id: courseId },
-      });
-
-      if (!course) {
-        return reply.status(404).send({ error: 'Course not found' });
-      }
-
-      if (course.creatorId !== userId) {
-        return reply.status(403).send({ error: 'You can only edit your own courses' });
-      }
-
-      // Get max order for this course
-      const maxOrder = await prisma.courseSection.findFirst({
-        where: { courseId },
-        orderBy: { order: 'desc' },
-      });
-
-      const section = await prisma.courseSection.create({
-        data: {
-          courseId,
-          title: body.title,
-          description: body.description,
-          order: (maxOrder?.order || 0) + 1,
-        },
-      });
-
-      return reply.status(201).send(section);
+      const result = await svcCreateSection(userId, courseId, request.body as any);
+      return reply.status(201).send(result);
     } catch (error) {
-      request.log.error(error, 'Failed to create section');
-      return reply.status(500).send({ error: 'Failed to create section' });
+      if (error instanceof AppError) return reply.status(error.statusCode).send({ message: error.message });
+      request.log.error(error, 'createSection failed');
+      return reply.status(500).send({ message: 'Failed to create section' });
     }
   },
 
-  // Update section
   async updateSection(request: FastifyRequest, reply: FastifyReply) {
     try {
       const userId = (request as any).user.id;
       const { sectionId } = request.params as { sectionId: string };
-      const body = request.body as any;
-
-      // Check if section exists and user is the course creator
-      const section = await prisma.courseSection.findUnique({
-        where: { id: sectionId },
-        include: { course: true },
-      });
-
-      if (!section) {
-        return reply.status(404).send({ error: 'Section not found' });
-      }
-
-      if (section.course.creatorId !== userId) {
-        return reply.status(403).send({ error: 'You can only edit your own courses' });
-      }
-
-      const updatedSection = await prisma.courseSection.update({
-        where: { id: sectionId },
-        data: {
-          ...(body.title && { title: body.title }),
-          ...(body.description !== undefined && { description: body.description }),
-          ...(body.order !== undefined && { order: body.order }),
-        },
-      });
-
-      return reply.send(updatedSection);
+      const result = await svcUpdateSection(userId, sectionId, request.body as any);
+      return reply.send(result);
     } catch (error) {
-      request.log.error(error, 'Failed to update section');
-      return reply.status(500).send({ error: 'Failed to update section' });
+      if (error instanceof AppError) return reply.status(error.statusCode).send({ message: error.message });
+      request.log.error(error, 'updateSection failed');
+      return reply.status(500).send({ message: 'Failed to update section' });
     }
   },
 
-  // Delete section
   async deleteSection(request: FastifyRequest, reply: FastifyReply) {
     try {
       const userId = (request as any).user.id;
       const { sectionId } = request.params as { sectionId: string };
-
-      // Check if section exists and user is the course creator
-      const section = await prisma.courseSection.findUnique({
-        where: { id: sectionId },
-        include: { course: true },
-      });
-
-      if (!section) {
-        return reply.status(404).send({ error: 'Section not found' });
-      }
-
-      if (section.course.creatorId !== userId) {
-        return reply.status(403).send({ error: 'You can only edit your own courses' });
-      }
-
-      await prisma.courseSection.delete({
-        where: { id: sectionId },
-      });
-
-      return reply.status(204).send();
+      await svcDeleteSection(userId, sectionId);
+      return reply.send({ success: true });
     } catch (error) {
-      request.log.error(error, 'Failed to delete section');
-      return reply.status(500).send({ error: 'Failed to delete section' });
+      if (error instanceof AppError) return reply.status(error.statusCode).send({ message: error.message });
+      request.log.error(error, 'deleteSection failed');
+      return reply.status(500).send({ message: 'Failed to delete section' });
     }
   },
 
-  // Create lesson
   async createLesson(request: FastifyRequest, reply: FastifyReply) {
     try {
       const userId = (request as any).user.id;
       const { sectionId } = request.params as { sectionId: string };
-      const body = request.body as any;
-
-      // Check if section exists and user is the course creator
-      const section = await prisma.courseSection.findUnique({
-        where: { id: sectionId },
-        include: { course: true },
-      });
-
-      if (!section) {
-        return reply.status(404).send({ error: 'Section not found' });
-      }
-
-      if (section.course.creatorId !== userId) {
-        return reply.status(403).send({ error: 'You can only edit your own courses' });
-      }
-
-      // Get max order for this section
-      const maxOrder = await prisma.lesson.findFirst({
-        where: { sectionId },
-        orderBy: { order: 'desc' },
-      });
-
-      const lesson = await prisma.lesson.create({
-        data: {
-          sectionId,
-          title: body.title,
-          description: body.description,
-          content: body.content,
-          videoUrl: body.videoUrl,
-          attachments: body.attachments || [],
-          duration: body.duration,
-          type: body.type || 'VIDEO',
-          order: (maxOrder?.order || 0) + 1,
-          isPreview: body.isPreview || false,
-        },
-      });
-
-      return reply.status(201).send(lesson);
+      const result = await svcCreateLesson(userId, sectionId, request.body as any);
+      return reply.status(201).send(result);
     } catch (error) {
-      request.log.error(error, 'Failed to create lesson');
-      return reply.status(500).send({ error: 'Failed to create lesson' });
+      if (error instanceof AppError) return reply.status(error.statusCode).send({ message: error.message });
+      request.log.error(error, 'createLesson failed');
+      return reply.status(500).send({ message: 'Failed to create lesson' });
     }
   },
 
-  // Update lesson
   async updateLesson(request: FastifyRequest, reply: FastifyReply) {
     try {
       const userId = (request as any).user.id;
       const { lessonId } = request.params as { lessonId: string };
-      const body = request.body as any;
-
-      // Check if lesson exists and user is the course creator
-      const lesson = await prisma.lesson.findUnique({
-        where: { id: lessonId },
-        include: {
-          section: {
-            include: { course: true },
-          },
-        },
-      });
-
-      if (!lesson) {
-        return reply.status(404).send({ error: 'Lesson not found' });
-      }
-
-      if (lesson.section.course.creatorId !== userId) {
-        return reply.status(403).send({ error: 'You can only edit your own courses' });
-      }
-
-      const updatedLesson = await prisma.lesson.update({
-        where: { id: lessonId },
-        data: {
-          ...(body.title && { title: body.title }),
-          ...(body.description !== undefined && { description: body.description }),
-          ...(body.content !== undefined && { content: body.content }),
-          ...(body.videoUrl !== undefined && { videoUrl: body.videoUrl }),
-          ...(body.attachments !== undefined && { attachments: body.attachments }),
-          ...(body.duration !== undefined && { duration: body.duration }),
-          ...(body.type && { type: body.type }),
-          ...(body.order !== undefined && { order: body.order }),
-          ...(body.isPreview !== undefined && { isPreview: body.isPreview }),
-        },
-      });
-
-      return reply.send(updatedLesson);
+      const result = await svcUpdateLesson(userId, lessonId, request.body as any);
+      return reply.send(result);
     } catch (error) {
-      request.log.error(error, 'Failed to update lesson');
-      return reply.status(500).send({ error: 'Failed to update lesson' });
+      if (error instanceof AppError) return reply.status(error.statusCode).send({ message: error.message });
+      request.log.error(error, 'updateLesson failed');
+      return reply.status(500).send({ message: 'Failed to update lesson' });
     }
   },
 
-  // Upload lesson video
-  async uploadLessonVideo(request: FastifyRequest, reply: FastifyReply) {
-    try {
-      const userId = (request as any).user.id;
-      const { lessonId } = request.params as { lessonId: string };
-      const data = await request.file();
-
-      if (!data) {
-        return reply.status(400).send({ error: 'No file uploaded' });
-      }
-
-      // Check if lesson exists and user is the course creator
-      const lesson = await prisma.lesson.findUnique({
-        where: { id: lessonId },
-        include: {
-          section: {
-            include: { course: true },
-          },
-        },
-      });
-
-      if (!lesson) {
-        return reply.status(404).send({ error: 'Lesson not found' });
-      }
-
-      if (lesson.section.course.creatorId !== userId) {
-        return reply.status(403).send({ error: 'You can only edit your own courses' });
-      }
-
-      // Validate file type (video)
-      const allowedTypes = ['video/mp4', 'video/webm', 'video/quicktime'];
-      if (!data.mimetype || !allowedTypes.includes(data.mimetype)) {
-        return reply.status(400).send({ error: 'Invalid file type. Only MP4, WEBM, MOV allowed' });
-      }
-
-      // Use stream-based upload to avoid memory issues on Render free tier
-      const result = await uploadVideoToCloudinary(
-        data.file,
-        data.filename,
-        data.mimetype,
-        'talentnest/lesson-videos'
-      );
-
-      // Update lesson video URL and type
-      const updatedLesson = await prisma.lesson.update({
-        where: { id: lessonId },
-        data: { videoUrl: result.secure_url, type: 'VIDEO' },
-      });
-
-      return reply.send({ videoUrl: result.secure_url });
-    } catch (error) {
-      request.log.error(error, 'Failed to upload video');
-      return reply.status(500).send({ error: 'Failed to upload video' });
-    }
-  },
-
-  // Upload lesson PDF
-  async uploadLessonPdf(request: FastifyRequest, reply: FastifyReply) {
-    try {
-      const userId = (request as any).user.id;
-      const { lessonId } = request.params as { lessonId: string };
-      const data = await request.file();
-
-      if (!data) {
-        return reply.status(400).send({ error: 'No file uploaded' });
-      }
-
-      // Check if lesson exists and user is the course creator
-      const lesson = await prisma.lesson.findUnique({
-        where: { id: lessonId },
-        include: {
-          section: {
-            include: { course: true },
-          },
-        },
-      });
-
-      if (!lesson) {
-        return reply.status(404).send({ error: 'Lesson not found' });
-      }
-
-      if (lesson.section.course.creatorId !== userId) {
-        return reply.status(403).send({ error: 'You can only edit your own courses' });
-      }
-
-      // Validate file type (PDF)
-      if (data.mimetype !== 'application/pdf') {
-        return reply.status(400).send({ error: 'Invalid file type. Only PDF allowed' });
-      }
-
-      // Upload to Cloudinary as raw resource
-      const buffer = await data.toBuffer();
-      const result = await uploadToCloudinary(
-        buffer,
-        data.filename,
-        data.mimetype,
-        'talentnest/lesson-pdfs'
-      );
-
-      // Update lesson video URL (reusing videoUrl field for PDF URL) and type
-      const updatedLesson = await prisma.lesson.update({
-        where: { id: lessonId },
-        data: { videoUrl: result.secure_url, type: 'PDF' },
-      });
-
-      return reply.send({ pdfUrl: result.secure_url });
-    } catch (error) {
-      request.log.error(error, 'Failed to upload PDF');
-      return reply.status(500).send({ error: 'Failed to upload PDF' });
-    }
-  },
-
-  // Delete lesson
   async deleteLesson(request: FastifyRequest, reply: FastifyReply) {
     try {
       const userId = (request as any).user.id;
       const { lessonId } = request.params as { lessonId: string };
-
-      // Check if lesson exists and user is the course creator
-      const lesson = await prisma.lesson.findUnique({
-        where: { id: lessonId },
-        include: {
-          section: {
-            include: { course: true },
-          },
-        },
-      });
-
-      if (!lesson) {
-        return reply.status(404).send({ error: 'Lesson not found' });
-      }
-
-      if (lesson.section.course.creatorId !== userId) {
-        return reply.status(403).send({ error: 'You can only edit your own courses' });
-      }
-
-      await prisma.lesson.delete({
-        where: { id: lessonId },
-      });
-
-      return reply.status(204).send();
+      await svcDeleteLesson(userId, lessonId);
+      return reply.send({ success: true });
     } catch (error) {
-      request.log.error(error, 'Failed to delete lesson');
-      return reply.status(500).send({ error: 'Failed to delete lesson' });
+      if (error instanceof AppError) return reply.status(error.statusCode).send({ message: error.message });
+      request.log.error(error, 'deleteLesson failed');
+      return reply.status(500).send({ message: 'Failed to delete lesson' });
     }
   },
 
-  // Reorder lessons
   async reorderLessons(request: FastifyRequest, reply: FastifyReply) {
     try {
       const userId = (request as any).user.id;
       const { sectionId } = request.params as { sectionId: string };
-      const { lessons } = request.body as { lessons: { id: string; order: number }[] };
-
-      // Check if section exists and user is the course creator
-      const section = await prisma.courseSection.findUnique({
-        where: { id: sectionId },
-        include: { course: true },
-      });
-
-      if (!section) {
-        return reply.status(404).send({ error: 'Section not found' });
-      }
-
-      if (section.course.creatorId !== userId) {
-        return reply.status(403).send({ error: 'You can only edit your own courses' });
-      }
-
-      // Update order for each lesson
-      await Promise.all(
-        lessons.map(({ id, order }) =>
-          prisma.lesson.update({
-            where: { id },
-            data: { order },
-          })
-        )
-      );
-
-      return reply.send({ success: true });
+      const result = await svcReorderLessons(userId, sectionId, request.body as any);
+      return reply.send(result);
     } catch (error) {
-      request.log.error(error, 'Failed to reorder lessons');
-      return reply.status(500).send({ error: 'Failed to reorder lessons' });
+      if (error instanceof AppError) return reply.status(error.statusCode).send({ message: error.message });
+      request.log.error(error, 'reorderLessons failed');
+      return reply.status(500).send({ message: 'Failed to reorder lessons' });
+    }
+  },
+
+  async uploadLessonVideo(request: FastifyRequest, reply: FastifyReply) {
+    try {
+      const userId = (request as any).user.id;
+      const { lessonId } = request.params as { lessonId: string };
+      const file = await request.file();
+      if (!file) return reply.status(400).send({ message: 'No file uploaded' });
+      const result = await uploadVideoToCloudinary(file.file, file.filename, file.mimetype, 'lesson_video');
+      const updated = await svcUpdateLesson(userId, lessonId, { videoUrl: result.secure_url });
+      return reply.send(updated);
+    } catch (error) {
+      if (error instanceof AppError) return reply.status(error.statusCode).send({ message: error.message });
+      request.log.error(error, 'uploadLessonVideo failed');
+      return reply.status(500).send({ message: 'Failed to upload video' });
+    }
+  },
+
+  async uploadLessonPdf(request: FastifyRequest, reply: FastifyReply) {
+    try {
+      const userId = (request as any).user.id;
+      const { lessonId } = request.params as { lessonId: string };
+      const file = await request.file();
+      if (!file) return reply.status(400).send({ message: 'No file uploaded' });
+      const result = await uploadToCloudinary(await file.toBuffer(), file.filename, file.mimetype, 'lesson_pdf');
+      const lesson = await svcUpdateLesson(userId, lessonId, { attachments: [result.secure_url] });
+      return reply.send(lesson);
+    } catch (error) {
+      if (error instanceof AppError) return reply.status(error.statusCode).send({ message: error.message });
+      request.log.error(error, 'uploadLessonPdf failed');
+      return reply.status(500).send({ message: 'Failed to upload PDF' });
     }
   },
 };

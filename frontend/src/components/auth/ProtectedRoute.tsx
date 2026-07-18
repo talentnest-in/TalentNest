@@ -27,11 +27,11 @@ export function ProtectedRoute() {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  const isOnboardingRoute = location.pathname === '/onboarding/select-role';
-  const needsOnboarding = !user.onboardingCompleted || user.role === null;
+  const isOnboardingRoute = location.pathname.startsWith('/onboarding');
+  const needsOnboarding = !user.onboardingCompleted;
 
   if (needsOnboarding && !isOnboardingRoute) {
-    return <Navigate to="/onboarding/select-role" replace />;
+    return <Navigate to="/onboarding" replace />;
   }
 
   if (!needsOnboarding && isOnboardingRoute) {
@@ -61,6 +61,19 @@ export function ClientRoute() {
   if (isLoading) return null;
 
   if (!user || user.role !== 'CLIENT') {
+    return <Navigate to={getDashboardPath(user?.role)} replace />;
+  }
+
+  return <Outlet />;
+}
+
+/** Guard that allows only ADMIN role — redirects others to their dashboard */
+export function AdminRoute() {
+  const { user, isLoading } = useAuth();
+
+  if (isLoading) return null;
+
+  if (!user || user.role !== 'ADMIN') {
     return <Navigate to={getDashboardPath(user?.role)} replace />;
   }
 

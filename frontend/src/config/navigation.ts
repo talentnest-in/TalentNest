@@ -1,6 +1,7 @@
 import {
   TrendingUp, User, Briefcase, Users, DollarSign, FileText, BookOpen,
-  MessageSquare, Settings, LayoutDashboard, Building2, Trophy
+  MessageSquare, Settings, LayoutDashboard, Building2, Trophy,
+  Award, Target, Calendar
 } from 'lucide-react';
 
 export const freelancerNavItems = [
@@ -13,6 +14,9 @@ export const freelancerNavItems = [
   { icon: BookOpen, label: 'Academy', path: '/academy' },
   { icon: Users, label: 'Community', path: '/community' },
   { icon: Trophy, label: 'Contests', path: '/contests' },
+  { icon: Award, label: 'Achievements', path: '/achievements' },
+  { icon: Target, label: 'Missions', path: '/missions' },
+  { icon: Calendar, label: 'Leaderboard', path: '/leaderboard' },
   { icon: MessageSquare, label: 'Messages', path: '/communications' },
   { icon: Settings, label: 'Settings', path: '/settings' },
 ];
@@ -25,6 +29,9 @@ export const clientNavItems = [
   { icon: FileText, label: 'Contracts', path: '/contracts' },
   { icon: Users, label: 'Community', path: '/community' },
   { icon: Trophy, label: 'Contests', path: '/contests' },
+  { icon: Award, label: 'Achievements', path: '/achievements' },
+  { icon: Target, label: 'Missions', path: '/missions' },
+  { icon: Calendar, label: 'Leaderboard', path: '/leaderboard' },
   { icon: Building2, label: 'Company', path: '/company' },
   { icon: MessageSquare, label: 'Messages', path: '/communications' },
   { icon: Settings, label: 'Settings', path: '/settings' },

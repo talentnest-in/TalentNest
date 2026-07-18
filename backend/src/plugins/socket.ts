@@ -1,8 +1,11 @@
 import { Server as HTTPServer } from 'http';
 import { Server as SocketIOServer } from 'socket.io';
+import { createAdapter } from '@socket.io/redis-adapter';
 import jwt from 'jsonwebtoken';
 import { prisma } from '../lib/prisma';
 import { FastifyInstance } from 'fastify';
+import { setSocketIO } from '../services/gamification.service';
+import { getRedisService } from '../lib/redis';
 
 interface SocketData {
   userId: string;
@@ -47,6 +50,25 @@ export default async function socketPlugin(fastify: FastifyInstance) {
 
   ioInstance = io;
 
+  // Set up Redis adapter via shared RedisService
+  const redisSvc = getRedisService();
+  if (redisSvc.isConnected && redisSvc.client) {
+    try {
+      const pubClient = redisSvc.client;
+      const subClient = pubClient.duplicate();
+      await subClient.connect();
+      io.adapter(createAdapter(pubClient, subClient));
+      fastify.log.info('Socket.IO Redis adapter connected');
+    } catch (err) {
+      fastify.log.warn({ err: String(err) }, 'Failed to connect Redis adapter, falling back to in-memory');
+    }
+  } else {
+    fastify.log.info('Redis not available — Socket.IO using in-memory adapter (single instance only)');
+  }
+
+  // Set Socket.IO instance for gamification service
+  setSocketIO(io);
+
   // JWT Authentication middleware
   io.use(async (socket, next) => {
     try {
@@ -57,7 +79,11 @@ export default async function socketPlugin(fastify: FastifyInstance) {
         return next(new Error('Authentication error: No token provided'));
       }
 
-      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key') as { id: string };
+      const secret = process.env.JWT_SECRET;
+      if (!secret) {
+        return next(new Error('Authentication error: JWT secret not configured'));
+      }
+      const decoded = jwt.verify(token, secret) as { id: string };
       
       const user = await prisma.user.findUnique({
         where: { id: decoded.id },

@@ -38,10 +38,9 @@ export function Login() {
     mutationFn: authService.login,
     onSuccess: (data) => {
       login(data.token, data.user);
-      const needsOnboarding = !data.user.onboardingCompleted || data.user.role === null;
       
-      if (needsOnboarding) {
-        navigate('/onboarding/select-role', { replace: true });
+      if (!data.user.onboardingCompleted) {
+        navigate('/onboarding', { replace: true });
       } else if (data.user.role === 'CLIENT') {
         navigate('/client-dashboard', { replace: true });
       } else if (data.user.role === 'ADMIN') {

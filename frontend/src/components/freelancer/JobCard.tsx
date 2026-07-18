@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { Link } from 'react-router-dom';
 import { MapPin, DollarSign, Clock, Building2 } from 'lucide-react';
 import type { JobWithDetails } from '@/types';
@@ -9,7 +10,7 @@ interface JobCardProps {
   showSaveButton?: boolean;
 }
 
-export function JobCard({ job, showSaveButton = true }: JobCardProps) {
+export const JobCard = memo(function JobCard({ job, showSaveButton = true }: JobCardProps) {
   const company = job.clientProfile.company;
   const companyLogo = company?.logoUrl || job.clientProfile.logoUrl;
   const companyName = company?.name || 'Company';
@@ -94,4 +95,4 @@ export function JobCard({ job, showSaveButton = true }: JobCardProps) {
       </div>
     </div>
   );
-}
+});

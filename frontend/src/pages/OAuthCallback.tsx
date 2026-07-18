@@ -15,6 +15,9 @@ export function OAuthCallback() {
     const token = params.get('token');
     const err = params.get('error');
 
+    // Remove token from URL to prevent exposure in browser history
+    window.history.replaceState({}, '', '/oauth/callback');
+
     if (err) {
       setError(err);
       setTimeout(() => navigate('/login'), 3000);
@@ -34,9 +37,8 @@ export function OAuthCallback() {
     authService.getMe()
       .then((user) => {
         login(token, user);
-        const needsOnboarding = !user.onboardingCompleted || user.role === null;
-        if (needsOnboarding) {
-          navigate('/onboarding/select-role', { replace: true });
+        if (!user.onboardingCompleted) {
+          navigate('/onboarding', { replace: true });
         } else if (user.role === 'CLIENT') {
           navigate('/client-dashboard', { replace: true });
         } else if (user.role === 'ADMIN') {
