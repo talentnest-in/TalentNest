@@ -186,7 +186,13 @@ server.addHook('preHandler', async (request, reply) => {
 // Connect Redis before registering Redis-dependent plugins (graceful fallback)
 server.register(async function redisInit(instance) {
   const redisSvc = getRedisService();
-  await redisSvc.connect();
+
+  // Race Redis connection against a 3s timeout so we never block Fastify startup
+  await Promise.race([
+    redisSvc.connect(),
+    new Promise<void>((resolve) => setTimeout(resolve, 3000)),
+  ]).catch(() => {/* ignore */});
+
   if (redisSvc.isConnected) {
     instance.log.info('Redis connected');
 
@@ -201,18 +207,13 @@ server.register(async function redisInit(instance) {
     instance.log.warn('Redis unavailable — running without cache/Redis rate limiting');
   }
 
-  // Register rate limit (Redis-backed if available)
+  // Register rate limit (in-memory only — node-redis is not compatible with @fastify/rate-limit which expects ioredis)
   const rateLimitOpts: any = {
     max: 100,
     timeWindow: '1 minute',
     skipOnError: true,
   };
-  if (redisSvc.isConnected && redisSvc.client) {
-    // rateLimitOpts.redis = redisSvc.client; // @fastify/rate-limit expects ioredis but we are using node-redis v4. Disabling this to use in-memory store instead and avoid 'defineCommand is not a function' crash.
-    instance.log.info('Rate limiting using Redis storage is disabled due to client mismatch. Using in-memory.');
-  } else {
-    instance.log.info('Rate limiting using in-memory storage (single instance only)');
-  }
+  instance.log.info('Rate limiting using in-memory storage');
   instance.register(rateLimit, rateLimitOpts);
 });
 
