@@ -30,10 +30,10 @@ export class UserRateLimiter {
       const multi = redis.client.multi();
       multi.incr(windowKey);
       multi.ttl(windowKey);
-      const results = await multi.exec();
+      const results = (await multi.exec()) as unknown as Array<[Error | null, number]>;
 
-      const incrResult = (results as Array<[Error | null, number]>)?.[0];
-      const ttlResult = (results as Array<[Error | null, number]>)?.[1];
+      const incrResult = results?.[0];
+      const ttlResult = results?.[1];
       const count = incrResult?.[1] ?? 0;
       let currentTtl = ttlResult?.[1] ?? ttl;
 
