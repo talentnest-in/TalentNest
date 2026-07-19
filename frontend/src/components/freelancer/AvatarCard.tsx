@@ -9,6 +9,7 @@ export function AvatarCard() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [isUploading, setIsUploading] = useState(false);
+  const [avatarError, setAvatarError] = useState(false);
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -54,11 +55,12 @@ export function AvatarCard() {
       <div className="flex items-center gap-4">
         {/* Avatar Preview */}
         <div className="w-20 h-20 rounded-full bg-background border border-border flex items-center justify-center overflow-hidden flex-shrink-0">
-          {user?.avatar ? (
+          {user?.avatar && !avatarError ? (
             <img
               src={user.avatar}
               alt={user.name || 'User'}
               className="w-full h-full object-cover"
+              onError={() => setAvatarError(true)}
             />
           ) : (
             <span className="text-2xl font-semibold text-text-muted">

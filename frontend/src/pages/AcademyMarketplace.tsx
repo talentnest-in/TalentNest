@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { ArrowLeft, Sparkles } from 'lucide-react';
 import { CourseGrid, CourseFilters, CourseSearch } from '@/components/academy';
 import { courseService, reviewService, creatorService } from '@/services/academy.service';
+import { safeArray } from '@/lib/safeArray';
 import type { CoursesQueryParams } from '@/services/academy.service';
 
 export const AcademyMarketplace: React.FC = () => {
@@ -34,7 +35,7 @@ export const AcademyMarketplace: React.FC = () => {
     queryFn: reviewService.getWishlist,
   });
 
-  const wishlistedCourses = new Set(wishlist?.map((w) => w.courseId) || []);
+  const wishlistedCourses = new Set(safeArray(wishlist).map((w) => w.courseId));
 
   const queryParams: CoursesQueryParams = {
     search: search || undefined,

@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { analyticsService, courseService } from '@/services/academy.service';
 import { AnalyticsCards } from '@/components/academy/AnalyticsCards';
+import { safeArray } from '@/lib/safeArray';
 import type { Course, CourseAnalytics } from '@/services/academy.service';
 
 export const AcademyCreatorAnalytics: React.FC = () => {
@@ -20,7 +21,7 @@ export const AcademyCreatorAnalytics: React.FC = () => {
     enabled: !!selectedCourseId,
   });
 
-  const publishedCourses = courses?.filter((c) => c.status === 'PUBLISHED') || [];
+  const publishedCourses = safeArray(courses).filter((c) => c.status === 'PUBLISHED');
 
   return (
     <div className="min-h-screen bg-gray-50">

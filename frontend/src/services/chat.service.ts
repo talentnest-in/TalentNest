@@ -61,12 +61,15 @@ export interface Message {
 export const chatService = {
   async getConversations(page = 1, limit = 20): Promise<Conversation[]> {
     const response = await api.get('/chat/conversations', { params: { page, limit } });
-    return response.data.conversations || response.data;
+    const data = response.data?.data ?? response.data;
+    const items = data?.conversations ?? data;
+    return Array.isArray(items) ? items : [];
   },
 
   async getMessages(conversationId: string, cursor?: string, limit?: string): Promise<Message[]> {
     const response = await api.get(`/chat/conversations/${conversationId}/messages`, { params: { cursor, limit } });
-    return response.data;
+    const data = response.data?.data ?? response.data;
+    return Array.isArray(data) ? data : [];
   },
 
   async sendMessage(
@@ -79,7 +82,7 @@ export const chatService = {
       type: attachments && attachments.length > 0 ? 'ATTACHMENT' : 'TEXT',
       attachments,
     });
-    return response.data;
+    return response.data?.data ?? response.data;
   },
 
   async uploadFile(file: File): Promise<{
@@ -96,7 +99,7 @@ export const chatService = {
         'Content-Type': 'multipart/form-data',
       },
     });
-    return response.data;
+    return response.data?.data ?? response.data;
   },
 
   async markAsRead(conversationId: string): Promise<void> {
@@ -105,6 +108,6 @@ export const chatService = {
 
   async getOrCreateConversation(contractId: string): Promise<Conversation> {
     const response = await api.get(`/chat/contracts/${contractId}/conversation`);
-    return response.data;
+    return response.data?.data ?? response.data;
   },
 };

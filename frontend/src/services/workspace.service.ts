@@ -25,10 +25,10 @@ export interface Note {
 }
 
 export const workspaceService = {
-  // Milestones
   async getMilestones(contractId: string): Promise<Milestone[]> {
     const response = await api.get(`/contracts/${contractId}/milestones`);
-    return response.data;
+    const data = response.data?.data ?? response.data;
+    return Array.isArray(data) ? data : [];
   },
 
   async createMilestone(contractId: string, data: {
@@ -40,7 +40,7 @@ export const workspaceService = {
     order?: number;
   }): Promise<Milestone> {
     const response = await api.post(`/contracts/${contractId}/milestones`, data);
-    return response.data;
+    return response.data?.data ?? response.data;
   },
 
   async updateMilestone(contractId: string, id: string, data: Partial<{
@@ -52,28 +52,28 @@ export const workspaceService = {
     order: number;
   }>): Promise<Milestone> {
     const response = await api.patch(`/contracts/${contractId}/milestones/${id}`, data);
-    return response.data;
+    return response.data?.data ?? response.data;
   },
 
   async deleteMilestone(contractId: string, id: string): Promise<{ success: boolean }> {
     const response = await api.delete(`/contracts/${contractId}/milestones/${id}`);
-    return response.data;
+    return response.data?.data ?? response.data;
   },
 
   async fundMilestone(contractId: string, id: string): Promise<Milestone> {
     const response = await api.post(`/contracts/${contractId}/milestones/${id}/fund`);
-    return response.data;
+    return response.data?.data ?? response.data;
   },
 
   async releaseMilestone(contractId: string, id: string): Promise<Milestone> {
     const response = await api.post(`/contracts/${contractId}/milestones/${id}/release`);
-    return response.data;
+    return response.data?.data ?? response.data;
   },
 
-  // Notes
   async getNotes(contractId: string): Promise<Note[]> {
     const response = await api.get(`/contracts/${contractId}/notes`);
-    return response.data;
+    const data = response.data?.data ?? response.data;
+    return Array.isArray(data) ? data : [];
   },
 
   async createNote(contractId: string, data: {
@@ -81,7 +81,7 @@ export const workspaceService = {
     content: string;
   }): Promise<Note> {
     const response = await api.post(`/contracts/${contractId}/notes`, data);
-    return response.data;
+    return response.data?.data ?? response.data;
   },
 
   async updateNote(contractId: string, id: string, data: Partial<{
@@ -89,11 +89,11 @@ export const workspaceService = {
     content: string;
   }>): Promise<Note> {
     const response = await api.patch(`/contracts/${contractId}/notes/${id}`, data);
-    return response.data;
+    return response.data?.data ?? response.data;
   },
 
   async deleteNote(contractId: string, id: string): Promise<{ success: boolean }> {
     const response = await api.delete(`/contracts/${contractId}/notes/${id}`);
-    return response.data;
+    return response.data?.data ?? response.data;
   },
 };

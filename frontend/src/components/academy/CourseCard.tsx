@@ -12,16 +12,19 @@ interface CourseCardProps {
 export const CourseCard: React.FC<CourseCardProps> = ({ course, onWishlistToggle, isWishlisted }) => {
   const displayPrice = course.discountPrice || course.price;
   const originalPrice = course.discountPrice ? course.price : null;
+  const [thumbError, setThumbError] = React.useState(false);
+  const [creatorAvatarError, setCreatorAvatarError] = React.useState(false);
 
   return (
     <div className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow duration-200">
       {/* Thumbnail */}
       <div className="relative h-48 bg-gray-100">
-        {course.thumbnail ? (
+        {course.thumbnail && !thumbError ? (
           <img
             src={course.thumbnail}
             alt={course.title}
             className="w-full h-full object-cover"
+            onError={() => setThumbError(true)}
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100">
@@ -64,11 +67,12 @@ export const CourseCard: React.FC<CourseCardProps> = ({ course, onWishlistToggle
 
         {/* Creator */}
         <div className="flex items-center gap-2 mb-3">
-          {course.creator?.avatar ? (
+          {course.creator?.avatar && !creatorAvatarError ? (
             <img
               src={course.creator.avatar}
               alt={course.creator?.name || 'Creator'}
               className="w-6 h-6 rounded-full object-cover"
+              onError={() => setCreatorAvatarError(true)}
             />
           ) : (
             <div className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center">

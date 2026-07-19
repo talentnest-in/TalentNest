@@ -2,6 +2,7 @@ import 'dotenv/config';
 import { PrismaClient } from '@prisma/client';
 import { Pool } from 'pg';
 import { PrismaPg } from '@prisma/adapter-pg';
+import { logError } from './logger';
 
 declare global {
   var prisma: PrismaClient | undefined;
@@ -19,7 +20,7 @@ const pool = new Pool({
 
 // Handle pool errors to prevent unhandled rejections
 pool.on('error', (err) => {
-  console.error('Unexpected database pool error:', err);
+  logError('[Prisma]', err, { context: 'pool_error' });
 });
 
 const adapter = new PrismaPg(pool);

@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Settings, Plus, Trash2, ShieldAlert } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/Button';
+import { safeArray } from '@/lib/safeArray';
 import { api } from '@/lib/api';
 
 type SettingType = 'string' | 'number' | 'boolean' | 'json';
@@ -75,7 +76,7 @@ export function AdminSettings() {
           <div className="py-12 text-center text-text-muted">Loading settings...</div>
         ) : (
           <div className="divide-y divide-border/30">
-            {settings?.map((setting) => (
+            {safeArray(settings).map((setting) => (
               <div key={setting.key} className="p-6 hover:bg-background/50 transition-colors">
                 {editingKey === setting.key ? (
                   <div className="space-y-4">

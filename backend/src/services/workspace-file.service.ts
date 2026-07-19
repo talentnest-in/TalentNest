@@ -3,6 +3,8 @@ import { prisma } from '../lib/prisma';
 import { deleteFromCloudinary } from '../lib/cloudinary';
 import { NotFoundError, ForbiddenError, BadRequestError } from '../lib/errors';
 
+const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 const createFileSchema = z.object({
   fileName: z.string().min(1),
   fileUrl: z.string().url(),
@@ -12,6 +14,10 @@ const createFileSchema = z.object({
 });
 
 export async function getContractFiles(contractId: string, userId: string) {
+  if (!uuidRegex.test(contractId)) {
+    throw new BadRequestError('Invalid contract ID format');
+  }
+
   const contract = await prisma.contract.findUnique({ where: { id: contractId } });
   if (!contract) throw new NotFoundError('Contract');
   if (contract.clientId !== userId && contract.freelancerId !== userId) {
@@ -30,6 +36,10 @@ export async function getContractFiles(contractId: string, userId: string) {
 }
 
 export async function createFile(contractId: string, userId: string, body: unknown) {
+  if (!uuidRegex.test(contractId)) {
+    throw new BadRequestError('Invalid contract ID format');
+  }
+
   const data = createFileSchema.parse(body);
 
   const contract = await prisma.contract.findUnique({
@@ -45,7 +55,7 @@ export async function createFile(contractId: string, userId: string, body: unkno
   const file = await prisma.workspaceFile.create({
     data: {
       contractId,
-      conversationId: contract.conversation?.id || null,
+      conversationId: contract.conversation?.id ?? null,
       uploaderId: userId,
       fileName: data.fileName,
       fileUrl: data.fileUrl,
@@ -62,6 +72,10 @@ export async function createFile(contractId: string, userId: string, body: unkno
 }
 
 export async function deleteFile(contractId: string, id: string, userId: string) {
+  if (!uuidRegex.test(contractId)) {
+    throw new BadRequestError('Invalid contract ID format');
+  }
+
   const contract = await prisma.contract.findUnique({ where: { id: contractId } });
   if (!contract) throw new NotFoundError('Contract');
   if (contract.clientId !== userId && contract.freelancerId !== userId) {

@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { communityService } from '@/services/community.service';
 import { Button } from '@/components/ui/Button';
+import { safeArray } from '@/lib/safeArray';
 import { Users, Plus, Hash } from 'lucide-react';
 export function CommunitySidebar() {
   const { data, isLoading } = useQuery({
@@ -31,7 +32,7 @@ export function CommunitySidebar() {
           </div>
         ) : (
           <div className="space-y-4">
-            {data?.data.map(community => (
+            {safeArray(data?.data).map(community => (
               <Link 
                 key={community.id} 
                 to={`/community/${community.slug}`}

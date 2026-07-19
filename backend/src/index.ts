@@ -15,7 +15,7 @@ import { getCacheService } from './lib/cache';
 import { warmCache } from './lib/cache-warmer';
 import { initTracer, shutdownTracer } from './lib/tracer';
 import { httpRequestDuration, httpRequestTotal, activeConnections, metricsHandler } from './lib/metrics';
-import { logger, createRequestId } from './lib/logger';
+import { logger, createRequestId, logError, logInfo, logWarn } from './lib/logger';
 import { userRateLimiter } from './lib/rate-limiter';
 import { registerSecurityHeaders } from './lib/helmet-security';
 import { initSentry, sentryRequestHandler, sentryErrorHandler as sentryErrHandler } from './lib/sentry';
@@ -38,10 +38,21 @@ import { contestRoutes } from './routes/contest.routes';
 
 // ── Startup Environment Validation ───────────────────────────────────────────
 const REQUIRED_ENV_VARS = ['DATABASE_URL', 'JWT_SECRET', 'COOKIE_SECRET'];
+const MISSING_ENV_VARS: string[] = [];
 for (const key of REQUIRED_ENV_VARS) {
   if (!process.env[key]) {
-    console.error(`[FATAL] Missing required environment variable: ${key}`);
-    process.exit(1);
+    MISSING_ENV_VARS.push(key);
+  }
+}
+if (MISSING_ENV_VARS.length > 0) {
+  logError('[Startup]', new Error('Missing required environment variables'), { missing: MISSING_ENV_VARS });
+  process.exit(1);
+}
+
+const RECOMMENDED_ENV_VARS = ['REDIS_URL', 'CLOUDINARY_CLOUD_NAME', 'CLOUDINARY_API_KEY', 'CLOUDINARY_API_SECRET', 'SMTP_HOST', 'SMTP_USER', 'SMTP_PASS'];
+for (const key of RECOMMENDED_ENV_VARS) {
+  if (!process.env[key]) {
+    logWarn('[Startup]', `Recommended environment variable missing: ${key} — related features will be degraded`);
   }
 }
 
@@ -292,13 +303,13 @@ server.decorate('authenticate', async (request: FastifyRequest, reply: FastifyRe
         request.user = decoded as any;
         return;
       } catch (cookieErr) {
-        // Token in cookie is also invalid — fall through to 401
-        console.error('Cookie token verification failed:', cookieErr);
+        logError('[Auth]', cookieErr, { context: 'cookie_verification_failed' });
       }
     }
-    console.error('Authentication failed - No valid token found');
-    console.error('Request cookies:', Object.keys(request.cookies));
-    console.error('Request auth header:', request.headers.authorization);
+    logWarn('[Auth]', 'Authentication failed - No valid token found', {
+      cookies: Object.keys(request.cookies),
+      hasAuthHeader: !!request.headers.authorization,
+    });
     return reply.status(401).send({ statusCode: 401, error: 'Unauthorized', message: 'Authentication required' });
   }
 

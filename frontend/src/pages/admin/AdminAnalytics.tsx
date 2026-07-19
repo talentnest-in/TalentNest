@@ -33,8 +33,8 @@ export function AdminAnalytics() {
     { name: 'Total Contests', value: stats?.totalContests ?? '—', icon: TrendingUp, color: 'text-accent', bg: 'bg-accent/10' },
   ];
 
-  // Show last 14 days for cleaner chart
-  const chartData = analytics?.slice(-14).map((d: any) => ({
+  const rawAnalytics = Array.isArray(analytics) ? analytics : [];
+  const chartData = rawAnalytics.slice(-14).map((d: any) => ({
     ...d,
     date: formatDate(d.date),
   }));

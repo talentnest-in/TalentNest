@@ -28,45 +28,46 @@ export interface OffersResponse {
 }
 
 export const offerService = {
-  // Create offer (Client)
   createOffer: async (data: CreateOfferInput) => {
     const response = await api.post('/offers', data);
-    return response.data;
+    return response.data?.data ?? response.data;
   },
 
-  // Get client's offers
   getClientOffers: async (params?: OffersQueryParams) => {
     const response = await api.get('/offers/client', { params });
-    return response.data as OffersResponse;
+    const data = response.data?.data ?? response.data;
+    return {
+      offers: Array.isArray(data?.offers) ? data.offers : [],
+      pagination: data?.pagination ?? { page: 1, limit: 10, total: 0, pages: 0 },
+    } as OffersResponse;
   },
 
-  // Get offer details
   getOfferDetails: async (id: string) => {
     const response = await api.get(`/offers/${id}`);
-    return response.data;
+    return response.data?.data ?? response.data;
   },
 
-  // Cancel offer (Client)
   cancelOffer: async (id: string) => {
     const response = await api.patch(`/offers/client/${id}/cancel`);
-    return response.data;
+    return response.data?.data ?? response.data;
   },
 
-  // Get freelancer's offers
   getFreelancerOffers: async (params?: OffersQueryParams) => {
     const response = await api.get('/offers/freelancer', { params });
-    return response.data as OffersResponse;
+    const data = response.data?.data ?? response.data;
+    return {
+      offers: Array.isArray(data?.offers) ? data.offers : [],
+      pagination: data?.pagination ?? { page: 1, limit: 10, total: 0, pages: 0 },
+    } as OffersResponse;
   },
 
-  // Accept offer (Freelancer)
   acceptOffer: async (id: string) => {
     const response = await api.patch(`/offers/${id}/accept`);
-    return response.data;
+    return response.data?.data ?? response.data;
   },
 
-  // Decline offer (Freelancer)
   declineOffer: async (id: string) => {
     const response = await api.patch(`/offers/${id}/decline`);
-    return response.data;
+    return response.data?.data ?? response.data;
   },
 };

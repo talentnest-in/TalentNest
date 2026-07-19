@@ -460,6 +460,7 @@ model Notification {
   @@index([createdAt])
   @@index([userId, isRead, createdAt])
   @@index([type])
+  @@index([userId, type, createdAt])
 }
 
 // ─── Sprint 7.4: Project Workspace ───────────────────────────────────────────────
@@ -490,6 +491,7 @@ model Milestone {
   @@index([contractId])
   @@index([status])
   @@index([order])
+  @@index([contractId, status])
 }
 
 model Note {
@@ -692,6 +694,7 @@ model Enrollment {
   @@index([studentId, status])
   @@index([courseId, status])
   @@index([lastAccessedAt])
+  @@index([studentId, status, lastAccessedAt])
 }
 
 model LessonProgress {
@@ -897,6 +900,10 @@ model Post {
   @@index([authorId])
   @@index([communityId])
   @@index([createdAt])
+  @@index([isHidden])
+  @@index([communityId, createdAt])
+  @@index([isHidden, communityId, createdAt])
+  @@index([authorId, createdAt])
 }
 
 model PostLike {
@@ -1019,6 +1026,8 @@ model Contest {
   @@index([status])
   @@index([category])
   @@index([createdAt])
+  @@index([status, submissionDeadline])
+  @@index([category, status, createdAt])
 }
 
 model ContestAttachment {

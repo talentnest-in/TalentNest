@@ -12,46 +12,52 @@ export interface JobInput {
   skills: string[];
 }
 
-// ── Freelancer Marketplace ──────────────────────────────────────────────────
-// Fetches all OPEN jobs across all clients for freelancers to browse
 export const jobService = {
   getOpenJobs: async (params?: JobsQueryParams): Promise<JobsResponse> => {
     const res = await api.get('/jobs', { params });
-    return res.data;
+    const data = res.data?.data ?? res.data;
+    return data;
   },
 
   getJob: async (id: string): Promise<Job> => {
     const res = await api.get(`/jobs/${id}`);
-    return res.data.job;
+    const data = res.data?.data ?? res.data;
+    return data?.job ?? data;
   },
 
   getRecommendedJobs: async (limit = 6): Promise<{ jobs: Job[]; matched: boolean }> => {
     const res = await api.get('/jobs/recommended', { params: { limit } });
-    return res.data;
+    const data = res.data?.data ?? res.data;
+    return {
+      jobs: Array.isArray(data?.jobs) ? data.jobs : [],
+      matched: data?.matched ?? false,
+    };
   },
 };
 
-// ── Client Job Management ───────────────────────────────────────────────────
-// Only for authenticated Clients managing their own job postings
 export const clientJobService = {
   getMyJobs: async (params?: { status?: string; search?: string }): Promise<Job[]> => {
     const res = await api.get('/client/jobs', { params });
-    return res.data.jobs;
+    const data = res.data?.data ?? res.data;
+    return Array.isArray(data?.jobs) ? data.jobs : [];
   },
 
   getJob: async (id: string): Promise<Job> => {
     const res = await api.get(`/client/jobs/${id}`);
-    return res.data.job;
+    const data = res.data?.data ?? res.data;
+    return data?.job ?? data;
   },
 
-  createJob: async (data: JobInput): Promise<Job> => {
-    const res = await api.post('/client/jobs', data);
-    return res.data.job;
+  createJob: async (params: JobInput): Promise<Job> => {
+    const res = await api.post('/client/jobs', params);
+    const data = res.data?.data ?? res.data;
+    return data?.job ?? data;
   },
 
-  updateJob: async (id: string, data: JobInput): Promise<Job> => {
-    const res = await api.put(`/client/jobs/${id}`, data);
-    return res.data.job;
+  updateJob: async (id: string, params: JobInput): Promise<Job> => {
+    const res = await api.put(`/client/jobs/${id}`, params);
+    const data = res.data?.data ?? res.data;
+    return data?.job ?? data;
   },
 
   deleteJob: async (id: string): Promise<void> => {

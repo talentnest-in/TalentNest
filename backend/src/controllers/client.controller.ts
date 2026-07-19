@@ -13,10 +13,11 @@ const profileSchema = z.object({
 export const getClientProfile = async (request: FastifyRequest, reply: FastifyReply) => {
   try {
     const profile = await svcGetClientProfile(request.user.id);
-    return reply.send({ profile });
+    return reply.send({ profile: profile ?? null });
   } catch (error) {
     if (error instanceof AppError) return reply.status(error.statusCode).send({ message: error.message });
-    throw error;
+    request.log.error(error, 'getClientProfile failed');
+    return reply.status(500).send({ message: 'Internal Server Error' });
   }
 };
 
@@ -28,7 +29,8 @@ export const updateClientProfile = async (request: FastifyRequest, reply: Fastif
   } catch (error) {
     if (error instanceof z.ZodError) throw error;
     if (error instanceof AppError) return reply.status(error.statusCode).send({ message: error.message });
-    throw error;
+    request.log.error(error, 'updateClientProfile failed');
+    return reply.status(500).send({ message: 'Internal Server Error' });
   }
 };
 
@@ -41,7 +43,8 @@ export const uploadClientLogo = async (request: FastifyRequest, reply: FastifyRe
     return reply.send({ logoUrl: result });
   } catch (error) {
     if (error instanceof AppError) return reply.status(error.statusCode).send({ message: error.message });
-    throw error;
+    request.log.error(error, 'uploadClientLogo failed');
+    return reply.status(500).send({ message: 'Internal Server Error' });
   }
 };
 
@@ -51,6 +54,7 @@ export const getClientDashboard = async (request: FastifyRequest, reply: Fastify
     return reply.send(result);
   } catch (error) {
     if (error instanceof AppError) return reply.status(error.statusCode).send({ message: error.message });
-    throw error;
+    request.log.error(error, 'getClientDashboard failed');
+    return reply.status(500).send({ message: 'Internal Server Error' });
   }
 };

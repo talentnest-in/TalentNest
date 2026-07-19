@@ -17,21 +17,22 @@ export interface ContractsResponse {
 }
 
 export const contractService = {
-  // Get contracts (shared for client and freelancer)
   getContracts: async (params?: ContractsQueryParams) => {
     const response = await api.get('/contracts', { params });
-    return response.data as ContractsResponse;
+    const data = response.data?.data ?? response.data;
+    return {
+      contracts: Array.isArray(data?.contracts) ? data.contracts : [],
+      pagination: data?.pagination ?? { page: 1, limit: 10, total: 0, pages: 0 },
+    } as ContractsResponse;
   },
 
-  // Get contract details
   getContractDetails: async (id: string) => {
     const response = await api.get(`/contracts/${id}`);
-    return response.data;
+    return response.data?.data ?? response.data;
   },
 
-  // Update contract status
   updateContractStatus: async (id: string, status: string) => {
     const response = await api.patch(`/contracts/${id}/status`, { status });
-    return response.data;
+    return response.data?.data ?? response.data;
   },
 };

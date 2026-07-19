@@ -11,6 +11,6 @@ export const uploadService = {
       },
     });
 
-    return response.data;
+    return response.data?.data ?? response.data;
   },
 };

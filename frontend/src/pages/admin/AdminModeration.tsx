@@ -14,19 +14,19 @@ export function AdminModeration() {
 
   const { data: reportedPosts, isLoading: loadingPosts } = useQuery({
     queryKey: ['admin-reported-posts'],
-    queryFn: async () => (await api.get('/admin/reports/posts')).data,
+    queryFn: async () => (await api.get('/admin/reports/posts')).data?.reports || [],
     enabled: activeTab === 'POSTS',
   });
 
   const { data: pendingCourses, isLoading: loadingCourses } = useQuery({
     queryKey: ['admin-pending-courses'],
-    queryFn: async () => (await api.get('/admin/courses/pending')).data,
+    queryFn: async () => (await api.get('/admin/courses/pending')).data?.courses || [],
     enabled: activeTab === 'COURSES',
   });
 
   const { data: contests, isLoading: loadingContests } = useQuery({
     queryKey: ['admin-contests'],
-    queryFn: async () => (await api.get('/admin/contests')).data,
+    queryFn: async () => (await api.get('/admin/contests')).data?.contests || [],
     enabled: activeTab === 'CONTESTS',
   });
 

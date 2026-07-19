@@ -2,6 +2,7 @@ import { Job } from 'bullmq';
 import { queueManager, QUEUES } from '../lib/queue';
 import { prisma } from '../lib/prisma';
 import { getCacheService } from '../lib/cache';
+import { logError, logInfo } from '../lib/logger';
 
 interface GenerateRecommendationsData {
   userId: string;
@@ -88,7 +89,7 @@ export async function recommendationProcessor(job: Job<GenerateRecommendationsDa
       await cache.set(`recommendations:${userId}`, '[]', 3600);
     }
   } catch (error) {
-    console.error('[RecommendationWorker] Failed:', error);
+    logError('[RecommendationWorker]', error, { context: 'generate_recommendations', userId });
     throw error;
   }
 }
@@ -96,5 +97,5 @@ export async function recommendationProcessor(job: Job<GenerateRecommendationsDa
 export function registerRecommendationWorker(): void {
   queueManager.defineQueue(QUEUES.RECOMMENDATION);
   queueManager.defineWorker(QUEUES.RECOMMENDATION, recommendationProcessor, { concurrency: 2 });
-  console.log('[Queue] Recommendation worker registered');
+  logInfo('[Queue]', 'Recommendation worker registered');
 }

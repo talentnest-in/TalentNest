@@ -43,6 +43,7 @@ export function CommunityDetail() {
     queryFn: ({ pageParam = 1 }) => postService.getCommunityPosts(community!.id, { page: pageParam, limit: 10 }),
     initialPageParam: 1,
     getNextPageParam: (lastPage) => {
+      if (!lastPage?.meta) return undefined;
       if (lastPage.meta.page < lastPage.meta.totalPages) {
         return lastPage.meta.page + 1;
       }
@@ -51,7 +52,7 @@ export function CommunityDetail() {
     enabled: !!community?.id,
   });
 
-  const posts = postsData?.pages.flatMap(page => page.data) || [];
+  const posts = postsData?.pages?.filter(Boolean).flatMap(page => page.data?.filter(Boolean) ?? []) ?? [];
 
   useEffect(() => {
     if (!socket) return;
@@ -131,7 +132,7 @@ export function CommunityDetail() {
   const isCreator = community.creatorId === user?.id;
   const isMember = community.isMember ?? false;
   
-  const currentMember = membersData?.data.find(m => m.user?.id === user?.id);
+  const currentMember = Array.isArray(membersData?.data) ? membersData.data.find(m => m?.user?.id === user?.id) : undefined;
   const isAdmin = isCreator || currentMember?.role === 'ADMIN';
 
   return (
@@ -269,7 +270,7 @@ export function CommunityDetail() {
                   </div>
                 ) : (
                   <>
-                    {posts.map(post => (
+                    {(posts ?? []).filter(Boolean).map(post => (
                       <PostCard key={post.id} post={post} isAdmin={isAdmin} />
                     ))}
                     
@@ -293,35 +294,42 @@ export function CommunityDetail() {
               <div className="bg-surface border border-border rounded-2xl overflow-hidden">
                 {isMembersLoading ? (
                   <div className="p-6 text-center text-text-muted">Loading members...</div>
+                ) : !Array.isArray(membersData?.data) ? (
+                  <div className="p-6 text-center text-text-muted">No members data available.</div>
+                ) : membersData.data.length === 0 ? (
+                  <div className="p-6 text-center text-text-muted">No members yet.</div>
                 ) : (
                   <div className="divide-y divide-border">
-                    {membersData?.data.map(member => (
-                      <div key={member.id} className="p-4 flex items-center justify-between hover:bg-background/50 transition-colors">
-                        <div className="flex items-center gap-3">
-                          {member.user?.avatar ? (
-                            <img src={member.user.avatar} alt="" className="w-10 h-10 rounded-full object-cover" />
-                          ) : (
-                            <div className="w-10 h-10 rounded-full bg-primary/20 text-primary flex items-center justify-center font-bold">
-                              {member.user?.name?.charAt(0) || 'U'}
+                    {membersData.data.map(member => {
+                      if (!member?.user?.id) return null;
+                      return (
+                        <div key={member.id} className="p-4 flex items-center justify-between hover:bg-background/50 transition-colors">
+                          <div className="flex items-center gap-3">
+                            {member.user?.avatar ? (
+                              <img src={member.user.avatar} alt="" className="w-10 h-10 rounded-full object-cover" />
+                            ) : (
+                              <div className="w-10 h-10 rounded-full bg-primary/20 text-primary flex items-center justify-center font-bold">
+                                {member.user?.name?.charAt(0) || 'U'}
+                              </div>
+                            )}
+                            <div>
+                              <p className="font-medium text-text">{member.user?.name || 'Unknown User'} {community.creatorId === member.userId && <span className="text-xs ml-1 bg-primary/10 text-primary px-2 py-0.5 rounded-full">Creator</span>}</p>
+                              <p className="text-xs text-text-muted capitalize">{member.role?.toLowerCase() || 'member'}</p>
                             </div>
-                          )}
-                          <div>
-                            <p className="font-medium text-text">{member.user?.name} {community.creatorId === member.userId && <span className="text-xs ml-1 bg-primary/10 text-primary px-2 py-0.5 rounded-full">Creator</span>}</p>
-                            <p className="text-xs text-text-muted capitalize">{member.role.toLowerCase()}</p>
                           </div>
+                          {isCreator && member.userId !== user?.id && (
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => promoteMutation.mutate({ userId: member.userId, role: member.role === 'ADMIN' ? 'MEMBER' : 'ADMIN' })}
+                              disabled={promoteMutation.isPending}
+                            >
+                              {member.role === 'ADMIN' ? 'Remove Admin' : 'Make Admin'}
+                            </Button>
+                          )}
                         </div>
-                        {isCreator && member.userId !== user?.id && (
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            onClick={() => promoteMutation.mutate({ userId: member.userId, role: member.role === 'ADMIN' ? 'MEMBER' : 'ADMIN' })}
-                            disabled={promoteMutation.isPending}
-                          >
-                            {member.role === 'ADMIN' ? 'Remove Admin' : 'Make Admin'}
-                          </Button>
-                        )}
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
               </div>

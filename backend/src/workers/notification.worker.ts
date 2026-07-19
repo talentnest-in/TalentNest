@@ -1,6 +1,7 @@
 import { Job } from 'bullmq';
 import { queueManager, QUEUES } from '../lib/queue';
 import { prisma } from '../lib/prisma';
+import { logError, logInfo } from '../lib/logger';
 
 interface NotificationJobData {
   userId: string;
@@ -35,7 +36,7 @@ export async function notificationProcessor(job: Job<NotificationJobData>): Prom
       });
     }
   } catch (error) {
-    console.error('[NotificationWorker] Failed to create notification:', error);
+    logError('[NotificationWorker]', error, { context: 'create_notification' });
     throw error;
   }
 }
@@ -43,5 +44,5 @@ export async function notificationProcessor(job: Job<NotificationJobData>): Prom
 export function registerNotificationWorker(): void {
   queueManager.defineQueue(QUEUES.NOTIFICATION);
   queueManager.defineWorker(QUEUES.NOTIFICATION, notificationProcessor, { concurrency: 10 });
-  console.log('[Queue] Notification worker registered');
+  logInfo('[Queue]', 'Notification worker registered');
 }

@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { useState } from 'react';
 import type { Community } from '@/types';
 import { Users, Globe, Lock } from 'lucide-react';
 
@@ -7,18 +8,21 @@ interface CommunityCardProps {
 }
 
 export function CommunityCard({ community }: CommunityCardProps) {
+  const [bannerError, setBannerError] = useState(false);
+  const [logoError, setLogoError] = useState(false);
+
   return (
     <Link to={`/community/${community.slug}`} className="block">
       <div className="bg-surface border border-border rounded-2xl overflow-hidden hover:border-primary/50 transition-colors">
         <div className="h-24 bg-primary/10 relative">
-          {community.banner ? (
-            <img src={community.banner} alt={community.name} className="w-full h-full object-cover" />
+          {community.banner && !bannerError ? (
+            <img src={community.banner} alt={community.name} className="w-full h-full object-cover" onError={() => setBannerError(true)} />
           ) : (
             <div className="w-full h-full bg-gradient-to-r from-primary/20 to-accent/20" />
           )}
           <div className="absolute -bottom-6 left-4">
-            {community.logo ? (
-              <img src={community.logo} alt={community.name} className="w-12 h-12 rounded-xl border-2 border-surface object-cover bg-white" />
+            {community.logo && !logoError ? (
+              <img src={community.logo} alt={community.name} className="w-12 h-12 rounded-xl border-2 border-surface object-cover bg-white" onError={() => setLogoError(true)} />
             ) : (
               <div className="w-12 h-12 rounded-xl border-2 border-surface bg-primary flex items-center justify-center text-white font-bold">
                 {community.name.charAt(0)}

@@ -4,12 +4,14 @@ import type { FreelancerProfile, Skill, Experience, Education } from '@/types';
 export const freelancerService = {
   getProfile: async (): Promise<FreelancerProfile> => {
     const response = await api.get('/freelancers/me');
-    return response.data.profile;
+    const data = response.data?.data ?? response.data;
+    return data?.profile ?? data;
   },
 
   upsertProfile: async (data: Partial<FreelancerProfile>): Promise<FreelancerProfile> => {
     const response = await api.put('/freelancers/me', data);
-    return response.data.profile;
+    const result = response.data?.data ?? response.data;
+    return result?.profile ?? result;
   },
 
   uploadResume: async (file: File): Promise<string> => {
@@ -18,7 +20,8 @@ export const freelancerService = {
     const response = await api.post('/freelancers/upload-resume', formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
-    return response.data.resumeUrl;
+    const data = response.data?.data ?? response.data;
+    return data?.resumeUrl || '';
   },
 
   uploadAvatar: async (file: File): Promise<string> => {
@@ -27,12 +30,14 @@ export const freelancerService = {
     const response = await api.post('/freelancers/upload-avatar', formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
-    return response.data.avatar;
+    const data = response.data?.data ?? response.data;
+    return data?.avatar || '';
   },
 
   addSkill: async (name: string): Promise<Skill> => {
     const response = await api.post('/freelancers/skills', { name });
-    return response.data.skill;
+    const data = response.data?.data ?? response.data;
+    return data?.skill ?? data;
   },
 
   deleteSkill: async (id: string): Promise<void> => {
@@ -41,12 +46,14 @@ export const freelancerService = {
 
   addExperience: async (data: Omit<Experience, 'id'>): Promise<Experience> => {
     const response = await api.post('/freelancers/experience', data);
-    return response.data.experience;
+    const result = response.data?.data ?? response.data;
+    return result?.experience ?? result;
   },
 
   updateExperience: async (id: string, data: Omit<Experience, 'id'>): Promise<Experience> => {
     const response = await api.put(`/freelancers/experience/${id}`, data);
-    return response.data.experience;
+    const result = response.data?.data ?? response.data;
+    return result?.experience ?? result;
   },
 
   deleteExperience: async (id: string): Promise<void> => {
@@ -55,12 +62,14 @@ export const freelancerService = {
 
   addEducation: async (data: Omit<Education, 'id'>): Promise<Education> => {
     const response = await api.post('/freelancers/education', data);
-    return response.data.education;
+    const result = response.data?.data ?? response.data;
+    return result?.education ?? result;
   },
 
   updateEducation: async (id: string, data: Omit<Education, 'id'>): Promise<Education> => {
     const response = await api.put(`/freelancers/education/${id}`, data);
-    return response.data.education;
+    const result = response.data?.data ?? response.data;
+    return result?.education ?? result;
   },
 
   deleteEducation: async (id: string): Promise<void> => {

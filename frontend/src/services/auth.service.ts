@@ -35,7 +35,7 @@ export const authService = {
 
   getMe: async () => {
     const res = await api.get<{ user: AuthResponse['user'] }>('/auth/me');
-    return res.data.user;
+    return res.data?.user;
   },
 
   forgotPassword: async (email: string): Promise<{ message: string }> => {

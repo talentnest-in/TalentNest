@@ -1,6 +1,7 @@
 import { Job } from 'bullmq';
 import { queueManager, QUEUES } from '../lib/queue';
 import nodemailer from 'nodemailer';
+import { logWarn, logInfo } from '../lib/logger';
 
 const smtpHost = process.env.SMTP_HOST;
 const smtpPort = process.env.SMTP_PORT ? parseInt(process.env.SMTP_PORT) : 587;
@@ -53,12 +54,12 @@ export async function emailProcessor(job: Job): Promise<void> {
       break;
     }
     default:
-      console.warn(`[EmailWorker] Unknown email type: ${type}`);
+      logWarn('[EmailWorker]', `Unknown email type: ${type}`);
   }
 }
 
 export function registerEmailWorker(): void {
   queueManager.defineQueue(QUEUES.EMAIL);
   queueManager.defineWorker(QUEUES.EMAIL, emailProcessor, { concurrency: 3 });
-  console.log('[Queue] Email worker registered');
+  logInfo('[Queue]', 'Email worker registered');
 }

@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom';
+import { useState } from 'react';
 import { MessageSquare, User } from 'lucide-react';
 import type { Conversation } from '@/services/chat.service';
 
@@ -10,6 +11,7 @@ interface ConversationCardProps {
 
 export function ConversationCard({ conversation, currentUserId, isActive }: ConversationCardProps) {
   const navigate = useNavigate();
+  const [avatarError, setAvatarError] = useState(false);
 
   const otherUser = currentUserId === conversation.clientId ? conversation.freelancer : conversation.client;
   const lastMessage = conversation.messages[0];
@@ -45,11 +47,12 @@ export function ConversationCard({ conversation, currentUserId, isActive }: Conv
     >
       <div className="flex items-start gap-3">
         <div className="w-12 h-12 rounded-full bg-background border border-border flex items-center justify-center shrink-0">
-          {otherUser?.avatar ? (
+          {otherUser?.avatar && !avatarError ? (
             <img
               src={otherUser.avatar}
               alt={otherUser.name || 'User'}
               className="w-full h-full rounded-full object-cover"
+              onError={() => setAvatarError(true)}
             />
           ) : (
             <User className="w-6 h-6 text-text-muted" />

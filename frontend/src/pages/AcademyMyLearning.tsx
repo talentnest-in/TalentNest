@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, BookOpen, Award, TrendingUp, CheckCircle } from 'lucide-react';
 import { enrollmentService, certificateService } from '@/services/academy.service';
+import { safeArray } from '@/lib/safeArray';
 import type { Enrollment } from '@/services/academy.service';
 
 export const AcademyMyLearning: React.FC = () => {
@@ -17,12 +18,12 @@ export const AcademyMyLearning: React.FC = () => {
     queryFn: () => certificateService.getUserCertificates(),
   });
 
-  const inProgressCourses = enrollments?.filter((e) => e.status === 'ACTIVE') || [];
-  const completedCourses = enrollments?.filter((e) => e.status === 'COMPLETED') || [];
+  const inProgressCourses = safeArray(enrollments).filter((e) => e.status === 'ACTIVE');
+  const completedCourses = safeArray(enrollments).filter((e) => e.status === 'COMPLETED');
 
-  const totalProgress = enrollments?.reduce((sum, e) => sum + e.progress, 0) || 0;
-  const averageProgress = enrollments?.length ? totalProgress / enrollments.length : 0;
-  const totalCertificates = certificates?.length || 0;
+  const totalProgress = safeArray(enrollments).reduce((sum, e) => sum + e.progress, 0);
+  const averageProgress = safeArray(enrollments).length ? totalProgress / safeArray(enrollments).length : 0;
+  const totalCertificates = safeArray(certificates).length;
 
   if (enrollmentsLoading || certificatesLoading) {
     return (
@@ -60,7 +61,7 @@ export const AcademyMyLearning: React.FC = () => {
                 <BookOpen className="w-6 h-6 text-blue-600" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-gray-900">{enrollments?.length || 0}</p>
+                <p className="text-2xl font-bold text-gray-900">{safeArray(enrollments).length}</p>
                 <p className="text-sm text-gray-600">Enrolled Courses</p>
               </div>
             </div>
@@ -108,19 +109,22 @@ export const AcademyMyLearning: React.FC = () => {
           <div className="mb-8">
             <h2 className="text-2xl font-bold text-gray-900 mb-4">Continue Learning</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {inProgressCourses.map((enrollment) => (
+              {inProgressCourses.map((enrollment) => {
+                const course = enrollment.course;
+                if (!course) return null;
+                return (
                 <div
                   key={enrollment.id}
                   className="bg-white rounded-xl border border-gray-200 overflow-hidden"
                 >
                   <div className="p-5">
-                    <Link to={`/academy/learning/${enrollment.course.id}`}>
+                    <Link to={`/academy/learning/${course.id}`}>
                       <h3 className="font-semibold text-lg text-gray-900 mb-2 line-clamp-2 hover:text-orange-600 transition-colors">
-                        {enrollment.course.title}
+                        {course.title}
                       </h3>
                     </Link>
                     <p className="text-sm text-gray-600 mb-4">
-                      {enrollment.course.creator.name}
+                      {course?.creator?.name || ''}
                     </p>
 
                     <div className="mb-4">
@@ -139,14 +143,15 @@ export const AcademyMyLearning: React.FC = () => {
                     </div>
 
                     <Link
-                      to={`/academy/learning/${enrollment.course.id}`}
+                      to={`/academy/learning/${course.id}`}
                       className="block w-full text-center px-4 py-2 bg-orange-500 text-white rounded-lg text-sm font-medium hover:bg-orange-600 transition-colors"
                     >
                       Continue
                     </Link>
                   </div>
                 </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         )}
@@ -156,23 +161,26 @@ export const AcademyMyLearning: React.FC = () => {
           <div className="mb-8">
             <h2 className="text-2xl font-bold text-gray-900 mb-4">Completed Courses</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {completedCourses.map((enrollment) => (
+              {completedCourses.map((enrollment) => {
+                const course = enrollment.course;
+                if (!course) return null;
+                return (
                 <div
                   key={enrollment.id}
                   className="bg-white rounded-xl border border-gray-200 overflow-hidden"
                 >
                   <div className="p-5">
                     <h3 className="font-semibold text-lg text-gray-900 mb-2 line-clamp-2">
-                      {enrollment.course.title}
+                      {course.title}
                     </h3>
                     <p className="text-sm text-gray-600 mb-4">
-                      {enrollment.course.creator.name}
+                      {course?.creator?.name || ''}
                     </p>
 
                     <div className="flex items-center gap-2 mb-4">
                       <CheckCircle className="w-5 h-5 text-green-500" />
                       <span className="text-sm text-green-600 font-medium">
-                        Completed on {new Date(enrollment.completedAt!).toLocaleDateString()}
+                        Completed on {enrollment.completedAt ? new Date(enrollment.completedAt).toLocaleDateString() : ''}
                       </span>
                     </div>
 
@@ -186,7 +194,8 @@ export const AcademyMyLearning: React.FC = () => {
                     )}
                   </div>
                 </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         )}
@@ -207,7 +216,7 @@ export const AcademyMyLearning: React.FC = () => {
                     </div>
                     <div>
                       <h3 className="font-semibold text-gray-900">
-                        {certificate.enrollment?.course.title}
+                        {certificate.enrollment?.course?.title || ''}
                       </h3>
                       <p className="text-sm text-gray-600">
                         {certificate.certificateId}
@@ -227,7 +236,7 @@ export const AcademyMyLearning: React.FC = () => {
         )}
 
         {/* Empty State */}
-        {enrollments?.length === 0 && (
+        {safeArray(enrollments).length === 0 && (
           <div className="flex flex-col items-center justify-center py-16 px-4">
             <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mb-4">
               <BookOpen className="w-12 h-12 text-gray-400" />

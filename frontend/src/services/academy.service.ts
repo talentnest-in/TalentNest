@@ -1,7 +1,5 @@
 import { api } from '@/lib/api';
 
-// ── Types ─────────────────────────────────────────────────────────────────────
-
 export interface Course {
   id: string;
   slug: string;
@@ -91,7 +89,6 @@ export interface EnrollmentResponse {
   enrollmentId: string | null;
   course: Course;
   progressRecords: LessonProgress[];
-  // These are present when enrolled
   id?: string;
   studentId?: string;
   status?: 'ACTIVE' | 'COMPLETED' | 'CANCELLED';
@@ -242,34 +239,32 @@ export interface PlatformAnalytics {
   topCourses: Course[];
 }
 
-// ── Course Service ────────────────────────────────────────────────────────────
-
 export const courseService = {
-  // Get all courses (marketplace)
   getAllCourses: async (params?: CoursesQueryParams): Promise<CoursesResponse> => {
     const res = await api.get('/courses', { params });
-    return res.data;
+    const data = res.data?.data ?? res.data;
+    return {
+      courses: Array.isArray(data?.courses) ? data.courses : [],
+      pagination: data?.pagination ?? { page: 1, limit: 12, total: 0, totalPages: 0 },
+    };
   },
 
-  // Get course by slug
   getCourseBySlug: async (slug: string): Promise<Course> => {
     const res = await api.get(`/courses/${slug}`);
-    return res.data;
+    return res.data?.data ?? res.data;
   },
 
-  // Get course by ID (for creator editing)
   getCourseById: async (id: string): Promise<Course> => {
     const res = await api.get(`/courses/id/${id}`);
-    return res.data;
+    return res.data?.data ?? res.data;
   },
 
-  // Get creator's courses
   getCreatorCourses: async (params?: { status?: string }): Promise<Course[]> => {
     const res = await api.get('/courses/creator/me', { params });
-    return res.data;
+    const data = res.data?.data ?? res.data;
+    return Array.isArray(data) ? data : [];
   },
 
-  // Create course
   createCourse: async (data: {
     categoryId: string;
     title: string;
@@ -284,64 +279,55 @@ export const courseService = {
     targetAudience?: string[];
   }): Promise<Course> => {
     const res = await api.post('/courses', data);
-    return res.data;
+    return res.data?.data ?? res.data;
   },
 
-  // Update course
   updateCourse: async (id: string, data: Partial<Course>): Promise<Course> => {
     const res = await api.put(`/courses/${id}`, data);
-    return res.data;
+    return res.data?.data ?? res.data;
   },
 
-  // Upload course thumbnail
   uploadThumbnail: async (id: string, file: File): Promise<{ thumbnail: string }> => {
     const formData = new FormData();
     formData.append('file', file);
     const res = await api.post(`/courses/${id}/thumbnail`, formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
-    return res.data;
+    return res.data?.data ?? res.data;
   },
 
-  // Delete course
   deleteCourse: async (id: string): Promise<void> => {
     await api.delete(`/courses/${id}`);
   },
 
-  // Get course categories
   getCategories: async (): Promise<CourseCategory[]> => {
     const res = await api.get('/courses/categories');
-    return res.data;
+    const data = res.data?.data ?? res.data;
+    return Array.isArray(data) ? data : [];
   },
 
-  // Get course tags
   getTags: async (): Promise<CourseTag[]> => {
     const res = await api.get('/courses/tags');
-    return res.data;
+    const data = res.data?.data ?? res.data;
+    return Array.isArray(data) ? data : [];
   },
 };
 
-// ── Lesson Service ─────────────────────────────────────────────────────────────
-
 export const lessonService = {
-  // Create section
   createSection: async (courseId: string, data: { title: string; description?: string }): Promise<CourseSection> => {
     const res = await api.post(`/courses/${courseId}/sections`, data);
-    return res.data;
+    return res.data?.data ?? res.data;
   },
 
-  // Update section
   updateSection: async (sectionId: string, data: { title?: string; description?: string; order?: number }): Promise<CourseSection> => {
     const res = await api.put(`/sections/${sectionId}`, data);
-    return res.data;
+    return res.data?.data ?? res.data;
   },
 
-  // Delete section
   deleteSection: async (sectionId: string): Promise<void> => {
     await api.delete(`/sections/${sectionId}`);
   },
 
-  // Create lesson
   createLesson: async (sectionId: string, data: {
     title: string;
     description?: string;
@@ -353,190 +339,156 @@ export const lessonService = {
     isPreview?: boolean;
   }): Promise<Lesson> => {
     const res = await api.post(`/sections/${sectionId}/lessons`, data);
-    return res.data;
+    return res.data?.data ?? res.data;
   },
 
-  // Update lesson
   updateLesson: async (lessonId: string, data: Partial<Lesson>): Promise<Lesson> => {
     const res = await api.put(`/lessons/${lessonId}`, data);
-    return res.data;
+    return res.data?.data ?? res.data;
   },
 
-  // Upload lesson video
   uploadLessonVideo: async (lessonId: string, file: File): Promise<{ videoUrl: string }> => {
     const formData = new FormData();
     formData.append('file', file);
     const res = await api.post(`/lessons/${lessonId}/video`, formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
-    return res.data;
+    return res.data?.data ?? res.data;
   },
 
-  // Delete lesson
   deleteLesson: async (lessonId: string): Promise<void> => {
     await api.delete(`/lessons/${lessonId}`);
   },
 
-  // Reorder lessons
   reorderLessons: async (sectionId: string, lessons: { id: string; order: number }[]): Promise<{ success: boolean }> => {
     const res = await api.post(`/sections/${sectionId}/lessons/reorder`, { lessons });
-    return res.data;
+    return res.data?.data ?? res.data;
   },
 };
 
-// ── Enrollment Service ─────────────────────────────────────────────────────────
-
 export const enrollmentService = {
-  // Enroll in course
   enrollCourse: async (courseId: string): Promise<Enrollment> => {
     const res = await api.post(`/courses/${courseId}/enroll`);
-    return res.data;
+    return res.data?.data ?? res.data;
   },
 
-  // Get user's enrollments
   getUserEnrollments: async (params?: { status?: string }): Promise<Enrollment[]> => {
     const res = await api.get('/enrollments', { params });
-    return res.data;
+    const data = res.data?.data ?? res.data;
+    return Array.isArray(data) ? data : [];
   },
 
-  // Get enrollment details
   getEnrollment: async (courseId: string): Promise<EnrollmentResponse> => {
     const res = await api.get(`/courses/${courseId}/enrollment`);
-    return res.data;
+    return res.data?.data ?? res.data;
   },
 
-  // Update lesson progress
   updateLessonProgress: async (lessonId: string, data: {
     completed?: boolean;
     timeSpent?: number;
   }): Promise<{ progress: LessonProgress; courseProgress: number }> => {
     const res = await api.post(`/lessons/${lessonId}/progress`, data);
-    return res.data;
+    return res.data?.data ?? res.data;
   },
 
-  // Cancel enrollment
   cancelEnrollment: async (courseId: string): Promise<void> => {
     await api.delete(`/courses/${courseId}/enrollment`);
   },
 };
 
-// ── Certificate Service ────────────────────────────────────────────────────────
-
 export const certificateService = {
-  // Verify certificate (public)
   verifyCertificate: async (code: string): Promise<Certificate> => {
     const res = await api.get(`/certificates/verify/${code}`);
-    return res.data;
+    return res.data?.data ?? res.data;
   },
 
-  // Get user's certificates
   getUserCertificates: async (): Promise<Certificate[]> => {
     const res = await api.get('/certificates');
-    return res.data;
+    const data = res.data?.data ?? res.data;
+    return Array.isArray(data) ? data : [];
   },
 
-  // Get certificate by ID
   getCertificateById: async (id: string): Promise<Certificate> => {
     const res = await api.get(`/certificates/${id}`);
-    return res.data;
+    return res.data?.data ?? res.data;
   },
 
-  // Get certificate for specific enrollment
   getEnrollmentCertificate: async (courseId: string): Promise<Certificate> => {
     const res = await api.get(`/courses/${courseId}/certificate`);
-    return res.data;
+    return res.data?.data ?? res.data;
   },
 };
 
-// ── Review Service ─────────────────────────────────────────────────────────────
-
 export const reviewService = {
-  // Create course review
   createReview: async (courseId: string, data: { rating: number; review: string }): Promise<CourseReview> => {
     const res = await api.post(`/courses/${courseId}/reviews`, data);
-    return res.data;
+    return res.data?.data ?? res.data;
   },
 
-  // Update review
   updateReview: async (reviewId: string, data: { rating?: number; comment?: string }): Promise<CourseReview> => {
     const res = await api.put(`/reviews/${reviewId}`, data);
-    return res.data;
+    return res.data?.data ?? res.data;
   },
 
-  // Delete review
   deleteReview: async (reviewId: string): Promise<void> => {
     await api.delete(`/reviews/${reviewId}`);
   },
 
-  // Reply to review
   replyReview: async (reviewId: string, data: { reply: string }): Promise<CourseReview> => {
     const res = await api.post(`/reviews/${reviewId}/reply`, data);
-    return res.data;
+    return res.data?.data ?? res.data;
   },
 
-  // Add to wishlist
   addToWishlist: async (courseId: string): Promise<void> => {
     await api.post(`/courses/${courseId}/wishlist`);
   },
 
-  // Remove from wishlist
   removeFromWishlist: async (courseId: string): Promise<void> => {
     await api.delete(`/courses/${courseId}/wishlist`);
   },
 
-  // Get user's wishlist
   getWishlist: async (): Promise<CourseWishlist[]> => {
     const res = await api.get('/wishlist');
-    return res.data;
+    const data = res.data?.data ?? res.data;
+    return Array.isArray(data) ? data : [];
   },
 
-  // Check if course is in wishlist
   checkWishlist: async (courseId: string): Promise<{ inWishlist: boolean }> => {
     const res = await api.get(`/courses/${courseId}/wishlist/check`);
-    return res.data;
+    return res.data?.data ?? res.data;
   },
 };
-
-// ── Creator Service ────────────────────────────────────────────────────────────
 
 export const creatorService = {
-  // Get or create creator profile
   getCreatorProfile: async (): Promise<CreatorProfile> => {
     const res = await api.get('/creator/profile');
-    return res.data;
+    return res.data?.data ?? res.data;
   },
 
-  // Update creator profile
   updateCreatorProfile: async (data: Partial<CreatorProfile>): Promise<CreatorProfile> => {
     const res = await api.put('/creator/profile', data);
-    return res.data;
+    return res.data?.data ?? res.data;
   },
 
-  // Get creator dashboard stats
   getCreatorStats: async (): Promise<CreatorStats> => {
     const res = await api.get('/creator/stats');
-    return res.data;
+    return res.data?.data ?? res.data;
   },
 
-  // Get public creator profile
   getPublicCreatorProfile: async (creatorId: string): Promise<CreatorProfile & { user: { name: string; avatar: string | null } }> => {
     const res = await api.get(`/creators/${creatorId}`);
-    return res.data;
+    return res.data?.data ?? res.data;
   },
 };
 
-// ── Analytics Service ─────────────────────────────────────────────────────────
-
 export const analyticsService = {
-  // Get course analytics
   getCourseAnalytics: async (courseId: string): Promise<CourseAnalytics> => {
     const res = await api.get(`/courses/${courseId}/analytics`);
-    return res.data;
+    return res.data?.data ?? res.data;
   },
 
-  // Get platform-wide analytics (admin only)
   getPlatformAnalytics: async (): Promise<PlatformAnalytics> => {
     const res = await api.get('/analytics/platform');
-    return res.data;
+    return res.data?.data ?? res.data;
   },
 };

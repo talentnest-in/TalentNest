@@ -36,3 +36,34 @@ export const logger = pino(pinoOptions);
 export function createRequestId(): string {
   return randomUUID();
 }
+
+export function logError(context: string, error: unknown, meta?: Record<string, unknown>): void {
+  const logData: Record<string, unknown> = {
+    context,
+    message: error instanceof Error ? error.message : String(error),
+    timestamp: new Date().toISOString(),
+    ...meta,
+  };
+  if (error instanceof Error && error.stack && !isProduction) {
+    logData.stack = error.stack;
+  }
+  console.error(JSON.stringify(logData));
+}
+
+export function logInfo(context: string, message: string, meta?: Record<string, unknown>): void {
+  console.log(JSON.stringify({
+    context,
+    message,
+    timestamp: new Date().toISOString(),
+    ...meta,
+  }));
+}
+
+export function logWarn(context: string, message: string, meta?: Record<string, unknown>): void {
+  console.warn(JSON.stringify({
+    context,
+    message,
+    timestamp: new Date().toISOString(),
+    ...meta,
+  }));
+}

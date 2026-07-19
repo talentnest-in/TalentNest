@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Check, CheckCheck, Download, FileText, Image as ImageIcon } from 'lucide-react';
 import type { Message, MessageAttachment } from '@/services/chat.service';
 import { api } from '@/lib/api';
@@ -23,10 +24,19 @@ export function ChatBubble({ message, isOwn }: ChatBubbleProps) {
     return <Check className="w-4 h-4 ml-2" />;
   };
 
+  const [imgError, setImgError] = useState<Record<string, boolean>>({});
+
   const renderAttachment = (attachment: MessageAttachment) => {
     const isImage = attachment.mimeType.startsWith('image/');
     
     if (isImage) {
+      if (imgError[attachment.id]) {
+        return (
+          <div className="mt-2 p-4 bg-background rounded-lg text-center text-text-muted text-sm">
+            Image failed to load
+          </div>
+        );
+      }
       return (
         <div className="mt-2">
           <img
@@ -34,6 +44,7 @@ export function ChatBubble({ message, isOwn }: ChatBubbleProps) {
             alt={attachment.fileName}
             className="max-w-full h-auto rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
             onClick={() => window.open(attachment.fileUrl, '_blank')}
+            onError={() => setImgError(prev => ({ ...prev, [attachment.id]: true }))}
           />
         </div>
       );

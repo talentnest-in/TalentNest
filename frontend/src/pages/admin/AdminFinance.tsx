@@ -19,17 +19,20 @@ export function AdminFinance() {
   const [activeTab, setActiveTab] = useState<'disputes' | 'payouts'>('payouts');
   const queryClient = useQueryClient();
 
-  const { data: payouts = [], isLoading: loadingPayouts } = useQuery({
+  const { data: payoutsRaw, isLoading: loadingPayouts } = useQuery({
     queryKey: ['admin-payouts'],
     queryFn: async () => (await api.get('/admin/finance/payouts')).data,
     enabled: activeTab === 'payouts',
   });
 
-  const { data: disputes = [], isLoading: loadingDisputes } = useQuery({
+  const { data: disputesRaw, isLoading: loadingDisputes } = useQuery({
     queryKey: ['admin-disputes'],
     queryFn: async () => (await api.get('/admin/finance/disputes')).data,
     enabled: activeTab === 'disputes',
   });
+
+  const payouts = Array.isArray(payoutsRaw) ? payoutsRaw : (payoutsRaw?.data ? (Array.isArray(payoutsRaw.data) ? payoutsRaw.data : []) : []);
+  const disputes = Array.isArray(disputesRaw) ? disputesRaw : (disputesRaw?.data ? (Array.isArray(disputesRaw.data) ? disputesRaw.data : []) : []);
 
   const payoutMutation = useMutation({
     mutationFn: async ({ id, status }: { id: string; status: 'APPROVED' | 'REJECTED' }) =>

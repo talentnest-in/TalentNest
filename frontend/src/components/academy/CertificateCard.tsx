@@ -28,10 +28,10 @@ export const CertificateCard: React.FC<CertificateCardProps> = ({
             </div>
             <div>
               <h3 className="font-semibold text-gray-900">
-                {certificate.enrollment?.course.title}
+                {certificate.enrollment?.course?.title || ''}
               </h3>
               <p className="text-sm text-gray-600">
-                {certificate.enrollment?.course.creator.name}
+                {certificate.enrollment?.course?.creator?.name || ''}
               </p>
             </div>
           </div>

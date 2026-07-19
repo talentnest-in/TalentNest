@@ -6,8 +6,18 @@ import { registerBadgeWorker } from './badge.worker';
 import { registerAnalyticsWorker } from './analytics.worker';
 import { registerRecommendationWorker } from './recommendation.worker';
 import { queueManager } from '../lib/queue';
+import { logWarn, logInfo } from '../lib/logger';
+
+function isRedisConfigured(): boolean {
+  return !!(process.env.REDIS_URL || process.env.REDIS_HOST);
+}
 
 export function registerAllWorkers(): void {
+  if (!isRedisConfigured()) {
+    logWarn('[Queue]', 'Redis not configured — skipping all worker registration');
+    return;
+  }
+
   registerEmailWorker();
   registerNotificationWorker();
   registerGamificationWorker();
@@ -15,10 +25,10 @@ export function registerAllWorkers(): void {
   registerBadgeWorker();
   registerAnalyticsWorker();
   registerRecommendationWorker();
-  console.log('[Queue] All workers registered');
+  logInfo('[Queue]', 'All workers registered');
 }
 
 export async function closeAllWorkers(): Promise<void> {
   await queueManager.close();
-  console.log('[Queue] All workers and queues closed');
+  logInfo('[Queue]', 'All workers and queues closed');
 }

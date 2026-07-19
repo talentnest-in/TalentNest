@@ -1,4 +1,5 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
+import { z } from 'zod';
 import {
   getPlatformStats as svcGetPlatformStats, getAnalytics as svcGetAnalytics, getUsers as svcGetUsers,
   updateUserRole as svcUpdateUserRole, deleteUser as svcDeleteUser, suspendUser as svcSuspendUser,
@@ -13,6 +14,15 @@ import {
   getMissions as svcGetMissions, createMission as svcCreateMission, deleteMission as svcDeleteMission,
 } from '../services/admin.service';
 import { AppError } from '../lib/errors';
+
+const userIdSchema = z.object({ userId: z.string().uuid('Invalid user ID') });
+const postIdSchema = z.object({ postId: z.string().uuid('Invalid post ID') });
+const reportIdSchema = z.object({ reportId: z.string().uuid('Invalid report ID') });
+const courseIdSchema = z.object({ courseId: z.string().uuid('Invalid course ID') });
+const contestIdSchema = z.object({ contestId: z.string().uuid('Invalid contest ID') });
+const payoutIdSchema = z.object({ payoutId: z.string().uuid('Invalid payout ID') });
+const badgeIdSchema = z.object({ badgeId: z.string().uuid('Invalid badge ID') });
+const missionIdSchema = z.object({ missionId: z.string().uuid('Invalid mission ID') });
 
 const adminController = {
   async getPlatformStats(request: FastifyRequest, reply: FastifyReply) {
@@ -47,11 +57,12 @@ const adminController = {
 
   async updateUserRole(request: FastifyRequest, reply: FastifyReply) {
     try {
-      const { userId } = request.params as { userId: string };
+      const { userId } = userIdSchema.parse(request.params);
       const body = request.body as any;
       const result = await svcUpdateUserRole(userId, body);
       return reply.send(result);
     } catch (error) {
+      if (error instanceof z.ZodError) return reply.status(400).send({ statusCode: 400, message: 'Invalid user ID format' });
       if (error instanceof AppError) return reply.status(error.statusCode).send({ message: error.message });
       return reply.status(500).send({ statusCode: 500, message: 'Internal Server Error' });
     }
@@ -60,10 +71,11 @@ const adminController = {
   async deleteUser(request: FastifyRequest, reply: FastifyReply) {
     try {
       const adminUserId = (request as any).user.id;
-      const { userId } = request.params as { userId: string };
+      const { userId } = userIdSchema.parse(request.params);
       await svcDeleteUser(adminUserId, userId);
       return reply.send({ success: true });
     } catch (error) {
+      if (error instanceof z.ZodError) return reply.status(400).send({ statusCode: 400, message: 'Invalid user ID format' });
       if (error instanceof AppError) return reply.status(error.statusCode).send({ message: error.message });
       return reply.status(500).send({ statusCode: 500, message: 'Internal Server Error' });
     }
@@ -72,11 +84,12 @@ const adminController = {
   async suspendUser(request: FastifyRequest, reply: FastifyReply) {
     try {
       const adminUserId = (request as any).user.id;
-      const { userId } = request.params as { userId: string };
+      const { userId } = userIdSchema.parse(request.params);
       const body = request.body as any;
       const result = await svcSuspendUser(adminUserId, userId, body);
       return reply.send(result);
     } catch (error) {
+      if (error instanceof z.ZodError) return reply.status(400).send({ statusCode: 400, message: 'Invalid user ID format' });
       if (error instanceof AppError) return reply.status(error.statusCode).send({ message: error.message });
       return reply.status(500).send({ statusCode: 500, message: 'Internal Server Error' });
     }
@@ -84,10 +97,11 @@ const adminController = {
 
   async unsuspendUser(request: FastifyRequest, reply: FastifyReply) {
     try {
-      const { userId } = request.params as { userId: string };
+      const { userId } = userIdSchema.parse(request.params);
       const result = await svcUnsuspendUser(userId);
       return reply.send(result);
     } catch (error) {
+      if (error instanceof z.ZodError) return reply.status(400).send({ statusCode: 400, message: 'Invalid user ID format' });
       if (error instanceof AppError) return reply.status(error.statusCode).send({ message: error.message });
       return reply.status(500).send({ statusCode: 500, message: 'Internal Server Error' });
     }
@@ -105,10 +119,11 @@ const adminController = {
 
   async deleteReportedPost(request: FastifyRequest, reply: FastifyReply) {
     try {
-      const { postId } = request.params as { postId: string };
-      await svcDeleteReportedPost(postId);
+      const { reportId } = reportIdSchema.parse(request.params);
+      await svcDeleteReportedPost(reportId);
       return reply.send({ success: true });
     } catch (error) {
+      if (error instanceof z.ZodError) return reply.status(400).send({ statusCode: 400, message: 'Invalid report ID format' });
       if (error instanceof AppError) return reply.status(error.statusCode).send({ message: error.message });
       return reply.status(500).send({ statusCode: 500, message: 'Internal Server Error' });
     }
@@ -116,10 +131,11 @@ const adminController = {
 
   async dismissReport(request: FastifyRequest, reply: FastifyReply) {
     try {
-      const { reportId } = request.params as { reportId: string };
+      const { reportId } = reportIdSchema.parse(request.params);
       await svcDismissReport(reportId);
       return reply.send({ success: true });
     } catch (error) {
+      if (error instanceof z.ZodError) return reply.status(400).send({ statusCode: 400, message: 'Invalid report ID format' });
       if (error instanceof AppError) return reply.status(error.statusCode).send({ message: error.message });
       return reply.status(500).send({ statusCode: 500, message: 'Internal Server Error' });
     }
@@ -137,11 +153,12 @@ const adminController = {
 
   async updateCourseStatus(request: FastifyRequest, reply: FastifyReply) {
     try {
-      const { courseId } = request.params as { courseId: string };
+      const { courseId } = courseIdSchema.parse(request.params);
       const { status } = request.body as { status: 'PUBLISHED' | 'REJECTED' };
       const result = await svcUpdateCourseStatus(courseId, status);
       return reply.send(result);
     } catch (error) {
+      if (error instanceof z.ZodError) return reply.status(400).send({ statusCode: 400, message: 'Invalid course ID format' });
       if (error instanceof AppError) return reply.status(error.statusCode).send({ message: error.message });
       return reply.status(500).send({ statusCode: 500, message: 'Internal Server Error' });
     }
@@ -159,10 +176,11 @@ const adminController = {
 
   async deleteContest(request: FastifyRequest, reply: FastifyReply) {
     try {
-      const { contestId } = request.params as { contestId: string };
+      const { contestId } = contestIdSchema.parse(request.params);
       await svcDeleteContest(contestId);
       return reply.send({ success: true });
     } catch (error) {
+      if (error instanceof z.ZodError) return reply.status(400).send({ statusCode: 400, message: 'Invalid contest ID format' });
       if (error instanceof AppError) return reply.status(error.statusCode).send({ message: error.message });
       return reply.status(500).send({ statusCode: 500, message: 'Internal Server Error' });
     }
@@ -222,11 +240,12 @@ const adminController = {
 
   async updatePayoutStatus(request: FastifyRequest, reply: FastifyReply) {
     try {
-      const { payoutId } = request.params as { payoutId: string };
+      const { payoutId } = payoutIdSchema.parse(request.params);
       const { status } = request.body as { status: 'APPROVED' | 'REJECTED' };
       const result = await svcUpdatePayoutStatus(payoutId, status);
       return reply.send(result);
     } catch (error) {
+      if (error instanceof z.ZodError) return reply.status(400).send({ statusCode: 400, message: 'Invalid payout ID format' });
       if (error instanceof AppError) return reply.status(error.statusCode).send({ message: error.message });
       return reply.status(500).send({ statusCode: 500, message: 'Internal Server Error' });
     }
@@ -264,10 +283,11 @@ const adminController = {
 
   async deleteBadge(request: FastifyRequest, reply: FastifyReply) {
     try {
-      const { badgeId } = request.params as { badgeId: string };
+      const { badgeId } = badgeIdSchema.parse(request.params);
       await svcDeleteBadge(badgeId);
       return reply.send({ success: true });
     } catch (error) {
+      if (error instanceof z.ZodError) return reply.status(400).send({ statusCode: 400, message: 'Invalid badge ID format' });
       if (error instanceof AppError) return reply.status(error.statusCode).send({ message: error.message });
       return reply.status(500).send({ statusCode: 500, message: 'Internal Server Error' });
     }
@@ -295,10 +315,11 @@ const adminController = {
 
   async deleteMission(request: FastifyRequest, reply: FastifyReply) {
     try {
-      const { missionId } = request.params as { missionId: string };
+      const { missionId } = missionIdSchema.parse(request.params);
       await svcDeleteMission(missionId);
       return reply.send({ success: true });
     } catch (error) {
+      if (error instanceof z.ZodError) return reply.status(400).send({ statusCode: 400, message: 'Invalid mission ID format' });
       if (error instanceof AppError) return reply.status(error.statusCode).send({ message: error.message });
       return reply.status(500).send({ statusCode: 500, message: 'Internal Server Error' });
     }

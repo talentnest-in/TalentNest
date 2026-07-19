@@ -25,21 +25,26 @@ export interface NotificationsResponse {
 export const notificationService = {
   async getNotifications(page = 1, limit = 20): Promise<NotificationsResponse> {
     const response = await api.get('/notifications', { params: { page, limit } });
-    return response.data;
+    const data = response.data?.data ?? response.data;
+    return {
+      notifications: Array.isArray(data?.notifications) ? data.notifications : [],
+      pagination: data?.pagination ?? { page: 1, limit: 20, total: 0, totalPages: 0 },
+      unreadCount: data?.unreadCount ?? 0,
+    };
   },
 
   async markAsRead(notificationId: string): Promise<Notification> {
     const response = await api.patch(`/notifications/${notificationId}/read`);
-    return response.data;
+    return response.data?.data ?? response.data;
   },
 
   async markAllAsRead(): Promise<{ success: boolean }> {
     const response = await api.patch('/notifications/read-all');
-    return response.data;
+    return response.data?.data ?? response.data;
   },
 
   async deleteNotification(notificationId: string): Promise<{ success: boolean }> {
     const response = await api.delete(`/notifications/${notificationId}`);
-    return response.data;
+    return response.data?.data ?? response.data;
   },
 };

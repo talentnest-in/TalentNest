@@ -56,23 +56,44 @@ export class RedisService {
   private url: string;
   private circuit = new CircuitBreaker();
   private reconnectAttempts = 0;
+  private configured = false;
 
   constructor(url?: string) {
-    const password = url
-      ? undefined
-      : process.env.REDIS_PASSWORD || undefined;
-    const host = process.env.REDIS_HOST || 'localhost';
-    const port = process.env.REDIS_PORT || '6379';
+    const explicitUrl = url || process.env.REDIS_URL;
+    const host = process.env.REDIS_HOST;
 
-    this.url =
-      url ||
-      process.env.REDIS_URL ||
-      (password
-        ? `redis://:${encodeURIComponent(password)}@${host}:${port}`
-        : `redis://${host}:${port}`);
+    if (explicitUrl) {
+      this.url = explicitUrl;
+      this.configured = true;
+    } else if (host) {
+      const password = process.env.REDIS_PASSWORD || undefined;
+      const port = process.env.REDIS_PORT || '6379';
+      const useTls = process.env.REDIS_TLS === 'true';
+      const protocol = useTls ? 'rediss' : 'redis';
+      const pw = password ? `:${encodeURIComponent(password)}@` : '';
+      this.url = `${protocol}://${pw}${host}:${port}`;
+      this.configured = true;
+    } else {
+      this.url = '';
+      this.configured = false;
+    }
+  }
+
+  isConfigured(): boolean {
+    return this.configured;
+  }
+
+  getUrl(): string {
+    return this.url;
   }
 
   async connect(): Promise<boolean> {
+    if (!this.configured || !this.url) {
+      console.log('[Redis] No Redis configuration found — running without Redis');
+      this.isConnected = false;
+      return false;
+    }
+
     if (this.circuit.isOpen()) {
       if (!this.circuit.attemptReset()) {
         console.warn('[Redis] Circuit breaker OPEN — skipping connection attempt');

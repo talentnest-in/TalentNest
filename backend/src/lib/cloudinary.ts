@@ -1,6 +1,7 @@
 import { v2 as cloudinary } from 'cloudinary';
 import crypto from 'crypto';
 import { Readable } from 'stream';
+import { logInfo, logWarn, logError } from './logger';
 
 // ── Configuration ───────────────────────────────────────────────────
 const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
@@ -16,9 +17,9 @@ if (isConfigured) {
     api_secret: apiSecret,
     secure: true,
   });
-  console.log('Cloudinary configured:', cloudName);
+  logInfo('[Cloudinary]', 'Configured', { cloudName });
 } else {
-  console.warn('Cloudinary not configured. Uploads will fail.');
+  logWarn('[Cloudinary]', 'Not configured. Uploads will fail.');
 }
 
 export { cloudinary };
@@ -247,7 +248,7 @@ export async function deleteFromCloudinary(publicId: string): Promise<boolean> {
   return new Promise((resolve) => {
     cloudinary.uploader.destroy(publicId, (error, result) => {
       if (error) {
-        console.warn(`[Cloudinary] Delete failed for ${publicId}:`, error.message);
+        logWarn('[Cloudinary]', `Delete failed for ${publicId}`, { message: error.message });
         resolve(false);
       } else {
         resolve(result?.result === 'ok');
@@ -401,7 +402,7 @@ export async function deleteOrphanAssets(
 
     return deletedCount;
   } catch (error) {
-    console.error('[Cloudinary] Orphan cleanup failed:', error);
+    logError('[Cloudinary]', error, { context: 'orphan_cleanup' });
     return deletedCount;
   }
 }

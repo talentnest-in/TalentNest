@@ -1,16 +1,14 @@
 import axios from 'axios';
 import { API_BASE_URL } from './constants';
 
-
 export const api = axios.create({
   baseURL: API_BASE_URL,
-  withCredentials: true,  // send HttpOnly cookies automatically
+  withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
-// Request interceptor: attach access token if stored
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('access_token');
@@ -23,10 +21,10 @@ api.interceptors.request.use(
 );
 
 let isRefreshing = false;
-let failedQueue: { resolve: (value?: unknown) => void, reject: (reason?: any) => void }[] = [];
+let failedQueue: { resolve: (value?: unknown) => void; reject: (reason?: any) => void }[] = [];
 
 const processQueue = (error: any, token: string | null = null) => {
-  failedQueue.forEach(prom => {
+  failedQueue.forEach((prom) => {
     if (error) {
       prom.reject(error);
     } else {
@@ -36,15 +34,33 @@ const processQueue = (error: any, token: string | null = null) => {
   failedQueue = [];
 };
 
-// Response interceptor: handle 401 globally and extract backend error messages
+function normalizeResponse(response: any) {
+  if (response?.data && typeof response.data === 'object') {
+    if (response.data.data !== undefined) {
+      return response.data.data;
+    }
+  }
+  return response?.data;
+}
+
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    if (response.data && typeof response.data === 'object' && 'success' in response.data) {
+      return {
+        ...response,
+        data: response.data,
+      };
+    }
+    return response;
+  },
   async (error) => {
     const originalRequest = error.config;
 
-    // Extract backend error message instead of generic "Request failed with status code 400"
     if (error.response?.data) {
-      const backendMessage = error.response.data.message || error.response.data.error;
+      const backendMessage =
+        error.response.data.message ||
+        error.response.data.error ||
+        error.response.data.error?.message;
       if (backendMessage) {
         error.message = backendMessage;
       }
@@ -52,21 +68,27 @@ api.interceptors.response.use(
 
     if (error.response?.status === 401 && !originalRequest._retry) {
       if (isRefreshing) {
-        return new Promise(function(resolve, reject) {
+        return new Promise(function (resolve, reject) {
           failedQueue.push({ resolve, reject });
-        }).then(token => {
-          originalRequest.headers.Authorization = 'Bearer ' + token;
-          return api(originalRequest);
-        }).catch(err => {
-          return Promise.reject(err);
-        });
+        })
+          .then((token) => {
+            originalRequest.headers.Authorization = 'Bearer ' + token;
+            return api(originalRequest);
+          })
+          .catch((err) => {
+            return Promise.reject(err);
+          });
       }
 
       originalRequest._retry = true;
       isRefreshing = true;
 
       try {
-        const { data } = await axios.post(`${API_BASE_URL}/auth/refresh`, {}, { withCredentials: true });
+        const { data } = await axios.post(
+          `${API_BASE_URL}/auth/refresh`,
+          {},
+          { withCredentials: true }
+        );
         const newToken = data.token;
         localStorage.setItem('access_token', newToken);
         api.defaults.headers.common['Authorization'] = 'Bearer ' + newToken;
@@ -86,3 +108,5 @@ api.interceptors.response.use(
     return Promise.reject(error);
   }
 );
+
+export { normalizeResponse };

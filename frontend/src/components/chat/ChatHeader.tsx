@@ -1,5 +1,6 @@
 import { ArrowLeft, MoreVertical } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useState } from 'react';
 
 interface ChatHeaderProps {
   userName: string;
@@ -11,6 +12,7 @@ interface ChatHeaderProps {
 
 export function ChatHeader({ userName, userAvatar, contractTitle, isOnline, onBack }: ChatHeaderProps) {
   const navigate = useNavigate();
+  const [imgError, setImgError] = useState(false);
 
   const handleBack = () => {
     if (onBack) {
@@ -30,11 +32,12 @@ export function ChatHeader({ userName, userAvatar, contractTitle, isOnline, onBa
       </button>
 
       <div className="w-10 h-10 rounded-full bg-background border border-border flex items-center justify-center shrink-0 relative">
-        {userAvatar ? (
+        {userAvatar && !imgError ? (
           <img
             src={userAvatar}
             alt={userName}
             className="w-full h-full rounded-full object-cover"
+            onError={() => setImgError(true)}
           />
         ) : (
           <div className="w-full h-full rounded-full bg-primary/10 flex items-center justify-center">

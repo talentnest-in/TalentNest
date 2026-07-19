@@ -35,7 +35,7 @@ export const AcademyLearning: React.FC = () => {
 
   // Set first lesson as current when enrollment loads
   useEffect(() => {
-    if (enrollment && enrollment.course.sections && enrollment.course.sections.length > 0) {
+    if (enrollment?.course?.sections && enrollment.course.sections.length > 0) {
       const firstLesson = enrollment.course.sections[0].lessons?.[0];
       if (firstLesson && !currentLessonId) {
         setCurrentLessonId(firstLesson.id);

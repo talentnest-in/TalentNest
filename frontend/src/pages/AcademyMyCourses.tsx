@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, Plus, Trash2, Edit, Eye, Archive, ArchiveRestore } from 'lucide-react';
 import { courseService } from '@/services/academy.service';
+import { safeArray } from '@/lib/safeArray';
 import type { Course } from '@/services/academy.service';
 
 type TabType = 'PUBLISHED' | 'DRAFT' | 'ARCHIVED';
@@ -66,11 +67,11 @@ export const AcademyMyCourses: React.FC = () => {
   const getCoursesForTab = () => {
     switch (activeTab) {
       case 'PUBLISHED':
-        return publishedCourses || [];
+        return safeArray(publishedCourses);
       case 'DRAFT':
-        return draftCourses || [];
+        return safeArray(draftCourses);
       case 'ARCHIVED':
-        return archivedCourses || [];
+        return safeArray(archivedCourses);
       default:
         return [];
     }

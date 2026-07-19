@@ -1,6 +1,7 @@
 import { Job } from 'bullmq';
 import { queueManager, QUEUES } from '../lib/queue';
 import { prisma } from '../lib/prisma';
+import { logError, logWarn, logInfo } from '../lib/logger';
 
 interface UpdateCourseAnalyticsData {
   courseId: string;
@@ -45,7 +46,7 @@ export async function updateCourseAnalyticsProcessor(job: Job<UpdateCourseAnalyt
       },
     });
   } catch (error) {
-    console.error('[AnalyticsWorker] Course analytics update failed:', error);
+    logError('[AnalyticsWorker]', error, { context: 'course_analytics_update', courseId });
   }
 }
 
@@ -58,12 +59,12 @@ export async function platformAnalyticsProcessor(job: Job<UpdatePlatformAnalytic
       prisma.creatorProfile.count(),
     ]);
 
-    console.log('[AnalyticsWorker] Platform stats:', {
+    logInfo('[AnalyticsWorker]', 'Platform stats', {
       totalCourses, totalEnrollments,
       totalRevenue: totalRevenue._sum.amount || 0, totalCreators,
     });
   } catch (error) {
-    console.error('[AnalyticsWorker] Platform analytics failed:', error);
+    logError('[AnalyticsWorker]', error, { context: 'platform_analytics_update' });
   }
 }
 
@@ -77,12 +78,12 @@ export async function analyticsRouter(job: Job): Promise<void> {
       await platformAnalyticsProcessor(job);
       break;
     default:
-      console.warn(`[AnalyticsWorker] Unknown type: ${type}`);
+      logWarn('[AnalyticsWorker]', `Unknown type: ${type}`);
   }
 }
 
 export function registerAnalyticsWorker(): void {
   queueManager.defineQueue(QUEUES.ANALYTICS);
   queueManager.defineWorker(QUEUES.ANALYTICS, analyticsRouter, { concurrency: 2 });
-  console.log('[Queue] Analytics worker registered');
+  logInfo('[Queue]', 'Analytics worker registered');
 }

@@ -2,6 +2,8 @@ import { z } from 'zod';
 import { prisma } from '../lib/prisma';
 import { NotFoundError, ForbiddenError, BadRequestError } from '../lib/errors';
 
+const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 const createMilestoneSchema = z.object({
   title: z.string().min(1),
   description: z.string().optional(),
@@ -14,6 +16,10 @@ const createMilestoneSchema = z.object({
 const updateMilestoneSchema = createMilestoneSchema.partial();
 
 async function verifyContractAccess(contractId: string, userId: string) {
+  if (!uuidRegex.test(contractId)) {
+    throw new BadRequestError('Invalid contract ID format');
+  }
+
   const contract = await prisma.contract.findUnique({
     where: { id: contractId },
   });
@@ -107,6 +113,10 @@ export async function deleteMilestone(contractId: string, id: string, userId: st
 }
 
 export async function fundMilestone(contractId: string, id: string, userId: string) {
+  if (!uuidRegex.test(contractId)) {
+    throw new BadRequestError('Invalid contract ID format');
+  }
+
   const contract = await prisma.contract.findUnique({
     where: { id: contractId },
   });
@@ -134,6 +144,10 @@ export async function fundMilestone(contractId: string, id: string, userId: stri
 }
 
 export async function releaseMilestone(contractId: string, id: string, userId: string) {
+  if (!uuidRegex.test(contractId)) {
+    throw new BadRequestError('Invalid contract ID format');
+  }
+
   const contract = await prisma.contract.findUnique({
     where: { id: contractId },
   });

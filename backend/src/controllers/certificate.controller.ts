@@ -1,6 +1,9 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
+import { z } from 'zod';
 import { verifyCertificate, getUserCertificates, getEnrollmentCertificate, getCertificateById } from '../services/certificate.service';
 import { AppError } from '../lib/errors';
+
+const certIdSchema = z.object({ id: z.string().uuid('Invalid certificate ID') });
 
 export const certificateController = {
   async verifyCertificate(request: FastifyRequest, reply: FastifyReply) {
@@ -29,10 +32,11 @@ export const certificateController = {
   async getEnrollmentCertificate(request: FastifyRequest, reply: FastifyReply) {
     try {
       const userId = (request as any).user.id;
-      const { enrollmentId } = request.params as { enrollmentId: string };
-      const result = await getEnrollmentCertificate(userId, enrollmentId);
+      const { courseId } = z.object({ courseId: z.string().uuid('Invalid course ID') }).parse(request.params);
+      const result = await getEnrollmentCertificate(userId, courseId);
       return reply.send(result);
     } catch (error) {
+      if (error instanceof z.ZodError) return reply.status(400).send({ message: 'Invalid course ID format' });
       if (error instanceof AppError) return reply.status(error.statusCode).send({ message: error.message });
       request.log.error(error, 'getEnrollmentCertificate failed');
       return reply.status(500).send({ message: 'Failed to fetch certificate' });
@@ -42,10 +46,11 @@ export const certificateController = {
   async getCertificateById(request: FastifyRequest, reply: FastifyReply) {
     try {
       const userId = (request as any).user.id;
-      const { id } = request.params as { id: string };
+      const { id } = certIdSchema.parse(request.params);
       const result = await getCertificateById(userId, id);
       return reply.send(result);
     } catch (error) {
+      if (error instanceof z.ZodError) return reply.status(400).send({ message: 'Invalid certificate ID format' });
       if (error instanceof AppError) return reply.status(error.statusCode).send({ message: error.message });
       request.log.error(error, 'getCertificateById failed');
       return reply.status(500).send({ message: 'Failed to fetch certificate' });

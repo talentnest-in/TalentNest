@@ -57,6 +57,11 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
     const newSocket = io(BACKEND_URL, {
       auth: { token },
       transports: ['websocket', 'polling'],
+      reconnection: true,
+      reconnectionAttempts: 10,
+      reconnectionDelay: 1000,
+      reconnectionDelayMax: 5000,
+      timeout: 10000,
     });
 
     newSocket.on('connect', () => {
@@ -64,13 +69,13 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
       setIsConnected(true);
     });
 
-    newSocket.on('disconnect', () => {
-      console.log('Socket disconnected');
+    newSocket.on('disconnect', (reason) => {
+      console.log('Socket disconnected:', reason);
       setIsConnected(false);
     });
 
     newSocket.on('connect_error', (error) => {
-      console.error('Socket connection error:', error);
+      console.error('Socket connection error:', error.message);
       setIsConnected(false);
     });
 

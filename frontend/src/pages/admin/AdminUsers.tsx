@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { Search, ChevronLeft, ChevronRight, Shield, Briefcase, Building2, Trash2, UserCog, Ban, CheckCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/Button';
+import { safeArray } from '@/lib/safeArray';
 import { api } from '@/lib/api';
 
 const ROLE_CONFIG: Record<string, { label: string; color: string; icon: React.ReactNode }> = {
@@ -131,7 +132,7 @@ export function AdminUsers() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-border/30">
-                {data?.users?.map((user: any, idx: number) => {
+                {safeArray(data?.users).map((user: any, idx: number) => {
                   const roleCfg = ROLE_CONFIG[user.role] || ROLE_CONFIG['FREELANCER'];
                   const contracts = (user._count?.freelancerContracts || 0) + (user._count?.clientContracts || 0);
                   return (

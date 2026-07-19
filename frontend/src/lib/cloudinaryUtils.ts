@@ -1,13 +1,21 @@
-/**
- * Cloudinary image optimization helper.
- * Transforms raw Cloudinary URLs to use auto-format, quality, and size optimizations
- * for dramatically faster image loading (WebP auto-conversion, right-sized thumbnails).
- *
- * Usage:
- *   cloudinaryOptimize(url, { width: 96, height: 96, fit: 'fill' })
- *   cloudinaryAvatar(url)
- *   cloudinaryBanner(url)
- */
+const PLACEHOLDER =
+  'data:image/svg+xml,' +
+  encodeURIComponent(
+    '<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200">' +
+    '<rect fill="#f0f0f0" width="200" height="200"/>' +
+    '<text fill="#999" font-family="Arial" font-size="14" x="50%" y="50%" dominant-baseline="middle" text-anchor="middle">No Image</text>' +
+    '</svg>'
+  );
+
+export function getImageUrl(url: string | null | undefined): string {
+  if (!url || typeof url !== 'string') return PLACEHOLDER;
+  const trimmed = url.trim();
+  if (!trimmed) return PLACEHOLDER;
+  if (trimmed.startsWith('blob:')) return trimmed;
+  if (trimmed.startsWith('data:')) return trimmed;
+  if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) return trimmed;
+  return PLACEHOLDER;
+}
 
 interface TransformOptions {
   width?: number;
@@ -19,15 +27,11 @@ interface TransformOptions {
   radius?: number | 'max';
 }
 
-/**
- * Returns a Cloudinary URL with transformation params applied.
- * Only modifies Cloudinary URLs — passes through other URLs unchanged.
- */
 export function cloudinaryOptimize(url: string | null | undefined, options: TransformOptions = {}): string {
-  if (!url) return '';
+  const safeUrl = getImageUrl(url);
+  if (!safeUrl || safeUrl === PLACEHOLDER) return PLACEHOLDER;
 
-  // Only transform Cloudinary URLs
-  if (!url.includes('res.cloudinary.com')) return url;
+  if (!safeUrl.includes('res.cloudinary.com')) return safeUrl;
 
   const {
     width,
@@ -41,7 +45,6 @@ export function cloudinaryOptimize(url: string | null | undefined, options: Tran
 
   const transforms: string[] = [];
 
-  // Core transforms
   transforms.push(`f_${format}`);
   transforms.push(`q_${quality}`);
 
@@ -53,13 +56,9 @@ export function cloudinaryOptimize(url: string | null | undefined, options: Tran
 
   const transformStr = transforms.join(',');
 
-  // Insert transforms after the /upload/ segment
-  return url.replace('/upload/', `/upload/${transformStr}/`);
+  return safeUrl.replace('/upload/', `/upload/${transformStr}/`);
 }
 
-// ── Preset helpers ───────────────────────────────────────────────────────────
-
-/** Optimized avatar: 96×96, circular crop, WebP */
 export function cloudinaryAvatar(url: string | null | undefined, size = 96): string {
   return cloudinaryOptimize(url, {
     width: size,
@@ -71,7 +70,6 @@ export function cloudinaryAvatar(url: string | null | undefined, size = 96): str
   });
 }
 
-/** Optimized community/profile banner: 1200×400 */
 export function cloudinaryBanner(url: string | null | undefined): string {
   return cloudinaryOptimize(url, {
     width: 1200,
@@ -83,7 +81,6 @@ export function cloudinaryBanner(url: string | null | undefined): string {
   });
 }
 
-/** Optimized community logo: square thumbnail */
 export function cloudinaryLogo(url: string | null | undefined, size = 128): string {
   return cloudinaryOptimize(url, {
     width: size,
@@ -95,7 +92,6 @@ export function cloudinaryLogo(url: string | null | undefined, size = 128): stri
   });
 }
 
-/** Optimized post image: full-width, max 800px wide */
 export function cloudinaryPostImage(url: string | null | undefined): string {
   return cloudinaryOptimize(url, {
     width: 800,
@@ -105,7 +101,6 @@ export function cloudinaryPostImage(url: string | null | undefined): string {
   });
 }
 
-/** Optimized course thumbnail: 640×360 (16:9) */
 export function cloudinaryCourseThumbnail(url: string | null | undefined): string {
   return cloudinaryOptimize(url, {
     width: 640,

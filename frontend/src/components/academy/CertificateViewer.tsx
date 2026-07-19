@@ -66,7 +66,7 @@ export const CertificateViewer: React.FC<CertificateViewerProps> = ({
             </h2>
             <p className="text-gray-600 mb-4">has successfully completed</p>
             <h3 className="text-2xl font-semibold text-gray-900 mb-6">
-              {certificate.enrollment?.course.title}
+              {certificate.enrollment?.course?.title || ''}
             </h3>
           </div>
 
@@ -87,7 +87,7 @@ export const CertificateViewer: React.FC<CertificateViewerProps> = ({
               </div>
               <div>
                 <p className="text-sm text-gray-500 mb-1">Instructor</p>
-                <p className="text-sm text-gray-900">{certificate.enrollment?.course.creator.name}</p>
+                <p className="text-sm text-gray-900">{certificate.enrollment?.course?.creator?.name || ''}</p>
               </div>
             </div>
           </div>

@@ -1,15 +1,25 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
-import { enrollCourse as svcEnrollCourse, getUserEnrollments, getEnrollment, updateLessonProgress, cancelEnrollment } from '../services/enrollment.service';
+import { z } from 'zod';
+import { enrollCourse as svcEnrollCourse, getUserEnrollments, getEnrollment, updateLessonProgressByEnrollment, cancelEnrollment } from '../services/enrollment.service';
 import { AppError } from '../lib/errors';
+
+const courseIdSchema = z.object({ courseId: z.string().uuid('Invalid course ID') });
+const enrollmentIdSchema = z.object({ enrollmentId: z.string().uuid('Invalid enrollment ID') });
+const lessonProgressSchema = z.object({
+  lessonId: z.string().uuid('Invalid lesson ID'),
+  completed: z.boolean().optional(),
+  timeSpent: z.number().int().min(0).optional(),
+});
 
 export const enrollmentController = {
   async enrollCourse(request: FastifyRequest, reply: FastifyReply) {
     try {
       const userId = (request as any).user.id;
-      const { courseId } = request.params as { courseId: string };
+      const { courseId } = courseIdSchema.parse(request.params);
       const result = await svcEnrollCourse(userId, courseId);
       return reply.status(201).send(result);
     } catch (error) {
+      if (error instanceof z.ZodError) return reply.status(400).send({ message: 'Invalid course ID format' });
       if (error instanceof AppError) return reply.status(error.statusCode).send({ message: error.message });
       request.log.error(error, 'enrollCourse failed');
       return reply.status(500).send({ message: 'Failed to enroll' });
@@ -31,10 +41,11 @@ export const enrollmentController = {
   async getEnrollment(request: FastifyRequest, reply: FastifyReply) {
     try {
       const userId = (request as any).user.id;
-      const { courseId } = request.params as { courseId: string };
+      const { courseId } = courseIdSchema.parse(request.params);
       const result = await getEnrollment(userId, courseId);
       return reply.send(result);
     } catch (error) {
+      if (error instanceof z.ZodError) return reply.status(400).send({ message: 'Invalid course ID format' });
       if (error instanceof AppError) return reply.status(error.statusCode).send({ message: error.message });
       request.log.error(error, 'getEnrollment failed');
       return reply.status(500).send({ message: 'Failed to fetch enrollment' });
@@ -44,11 +55,14 @@ export const enrollmentController = {
   async updateLessonProgress(request: FastifyRequest, reply: FastifyReply) {
     try {
       const userId = (request as any).user.id;
-      const { enrollmentId } = request.params as { enrollmentId: string };
-      const body = request.body as any;
-      const result = await updateLessonProgress(userId, enrollmentId, body);
+      const { lessonId, completed, timeSpent } = lessonProgressSchema.parse(request.body);
+      const progressData: { completed?: boolean; timeSpent?: number } = {};
+      if (completed !== undefined) progressData.completed = completed;
+      if (timeSpent !== undefined) progressData.timeSpent = timeSpent;
+      const result = await updateLessonProgressByEnrollment(userId, lessonId, progressData);
       return reply.send(result);
     } catch (error) {
+      if (error instanceof z.ZodError) return reply.status(400).send({ message: 'Invalid request body' });
       if (error instanceof AppError) return reply.status(error.statusCode).send({ message: error.message });
       request.log.error(error, 'updateLessonProgress failed');
       return reply.status(500).send({ message: 'Failed to update progress' });
@@ -58,10 +72,11 @@ export const enrollmentController = {
   async cancelEnrollment(request: FastifyRequest, reply: FastifyReply) {
     try {
       const userId = (request as any).user.id;
-      const { enrollmentId } = request.params as { enrollmentId: string };
+      const { enrollmentId } = enrollmentIdSchema.parse(request.params);
       await cancelEnrollment(userId, enrollmentId);
       return reply.send({ success: true });
     } catch (error) {
+      if (error instanceof z.ZodError) return reply.status(400).send({ message: 'Invalid enrollment ID format' });
       if (error instanceof AppError) return reply.status(error.statusCode).send({ message: error.message });
       request.log.error(error, 'cancelEnrollment failed');
       return reply.status(500).send({ message: 'Failed to cancel enrollment' });

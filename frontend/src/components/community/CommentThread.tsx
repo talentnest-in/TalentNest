@@ -18,6 +18,7 @@ export function CommentThread({ comment, postId }: CommentThreadProps) {
   const queryClient = useQueryClient();
   const [isReplying, setIsReplying] = useState(false);
   const [replyContent, setReplyContent] = useState('');
+  const [avatarError, setAvatarError] = useState<Record<string, boolean>>({});
 
   const deleteComment = useMutation({
     mutationFn: () => postService.deleteComment(postId, comment.id),
@@ -40,8 +41,8 @@ export function CommentThread({ comment, postId }: CommentThreadProps) {
     <div className="mb-4">
       {/* Main Comment */}
       <div className="flex gap-3">
-        {comment.author?.avatar ? (
-          <img src={comment.author.avatar} alt="" className="w-8 h-8 rounded-full object-cover flex-shrink-0 mt-1" />
+        {comment.author?.avatar && !avatarError[comment.author.id] ? (
+          <img src={comment.author.avatar} alt="" className="w-8 h-8 rounded-full object-cover flex-shrink-0 mt-1" onError={() => setAvatarError(prev => ({ ...prev, [comment.author!.id]: true }))} />
         ) : (
           <div className="w-8 h-8 rounded-full bg-primary/20 text-primary flex items-center justify-center font-bold flex-shrink-0 mt-1">
             {comment.author?.name?.charAt(0) || 'U'}

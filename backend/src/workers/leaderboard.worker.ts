@@ -1,6 +1,7 @@
 import { Job } from 'bullmq';
 import { queueManager, QUEUES } from '../lib/queue';
 import { prisma } from '../lib/prisma';
+import { logError, logInfo } from '../lib/logger';
 
 let io: any = null;
 export const setSocketIOForLeaderboard = (socketIO: any): void => {
@@ -84,12 +85,12 @@ export async function leaderboardProcessor(job: Job<UpdateLeaderboardData>): Pro
       }
     }
   } catch (error) {
-    console.error('[LeaderboardWorker] Failed:', error);
+    logError('[LeaderboardWorker]', error, { context: 'leaderboard_update', userId });
   }
 }
 
 export function registerLeaderboardWorker(): void {
   queueManager.defineQueue(QUEUES.LEADERBOARD);
   queueManager.defineWorker(QUEUES.LEADERBOARD, leaderboardProcessor, { concurrency: 2 });
-  console.log('[Queue] Leaderboard worker registered');
+  logInfo('[Queue]', 'Leaderboard worker registered');
 }

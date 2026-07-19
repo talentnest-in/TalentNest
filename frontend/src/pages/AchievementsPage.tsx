@@ -23,24 +23,27 @@ const CATEGORY_COLORS: Record<string, string> = {
 };
 
 export function AchievementsPage() {
-  const { data: userAchievements, isLoading: loadingUser } = useQuery({
+  const { data: userAchievementsRaw, isLoading: loadingUser } = useQuery({
     queryKey: ['user-achievements'],
     queryFn: () => api.get('/gamification/achievements').then(res => res.data),
   });
 
-  const { data: allAchievements, isLoading: loadingAll } = useQuery({
+  const { data: allAchievementsRaw, isLoading: loadingAll } = useQuery({
     queryKey: ['all-achievements'],
     queryFn: () => api.get('/gamification/achievements/all').then(res => res.data),
   });
 
   const isLoading = loadingUser || loadingAll;
 
-  const unlockedMap = new Map<string, UserAchievement>();
-  userAchievements?.forEach((ua: UserAchievement) => unlockedMap.set(ua.achievementId, ua));
+  const userAchievements = Array.isArray(userAchievementsRaw?.data ?? userAchievementsRaw) ? (userAchievementsRaw?.data ?? userAchievementsRaw) : [];
+  const allAchievements = Array.isArray(allAchievementsRaw?.data ?? allAchievementsRaw) ? (allAchievementsRaw?.data ?? allAchievementsRaw) : [];
 
-  const unlockedAchievements = allAchievements?.filter((a: Achievement) => unlockedMap.has(a.id)) || [];
-  const lockedAchievements = allAchievements?.filter((a: Achievement) => !unlockedMap.has(a.id)) || [];
-  const completionPct = allAchievements?.length
+  const unlockedMap = new Map<string, UserAchievement>();
+  userAchievements.forEach((ua: UserAchievement) => unlockedMap.set(ua.achievementId, ua));
+
+  const unlockedAchievements = allAchievements.filter((a: Achievement) => unlockedMap.has(a.id));
+  const lockedAchievements = allAchievements.filter((a: Achievement) => !unlockedMap.has(a.id));
+  const completionPct = allAchievements.length
     ? Math.round((unlockedAchievements.length / allAchievements.length) * 100) : 0;
 
   if (isLoading) {

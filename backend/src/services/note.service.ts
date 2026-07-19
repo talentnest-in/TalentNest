@@ -2,6 +2,8 @@ import { z } from 'zod';
 import { prisma } from '../lib/prisma';
 import { NotFoundError, ForbiddenError, BadRequestError } from '../lib/errors';
 
+const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 const createNoteSchema = z.object({
   title: z.string().min(1),
   content: z.string().min(1),
@@ -10,6 +12,10 @@ const createNoteSchema = z.object({
 const updateNoteSchema = createNoteSchema.partial();
 
 async function verifyContractAccess(contractId: string, userId: string) {
+  if (!uuidRegex.test(contractId)) {
+    throw new BadRequestError('Invalid contract ID format');
+  }
+
   const contract = await prisma.contract.findUnique({
     where: { id: contractId },
   });

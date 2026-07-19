@@ -119,7 +119,7 @@ export function Dashboard() {
   const applications = applicationsData?.applications || [];
   const offers = offersData?.offers || [];
   const contracts = contractsData?.contracts || [];
-  const enrollments = enrollmentsData || [];
+  const enrollments = Array.isArray(enrollmentsData) ? enrollmentsData : [];
   const recommendedCourses = coursesData?.courses || [];
   const recommendedJobs = recommendedJobsData?.jobs || [];
   const jobsMatched = recommendedJobsData?.matched ?? false;
@@ -185,42 +185,44 @@ export function Dashboard() {
                 </button>
               </div>
               <div className="px-6 pb-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {recommendedJobs.map((job: any) => (
-                  <div
-                    key={job.id}
-                    onClick={() => navigate(`/jobs/${job.id}`)}
-                    className="border border-border/60 rounded-xl p-4 hover:border-accent/40 hover:bg-accent/5 cursor-pointer transition-all duration-200 group"
-                  >
-                    <div className="flex items-start justify-between mb-2">
-                      <h3 className="text-sm font-semibold text-text group-hover:text-accent transition-colors line-clamp-2 flex-1 mr-2">
-                        {job.title}
-                      </h3>
-                      {jobsMatched && job.matchedSkills > 0 && (
-                        <span className="flex items-center gap-1 text-xs bg-accent/10 text-accent px-2 py-0.5 rounded-full whitespace-nowrap flex-shrink-0">
-                          <Star className="h-3 w-3" />
-                          {job.matchedSkills} match
-                        </span>
-                      )}
+                {recommendedJobs.map((job: any) => {
+                  return (
+                    <div
+                      key={job.id}
+                      onClick={() => navigate(`/jobs/${job.id}`)}
+                      className="border border-border/60 rounded-xl p-4 hover:border-accent/40 hover:bg-accent/5 cursor-pointer transition-all duration-200 group"
+                    >
+                      <div className="flex items-start justify-between mb-2">
+                        <h3 className="text-sm font-semibold text-text group-hover:text-accent transition-colors line-clamp-2 flex-1 mr-2">
+                          {job.title}
+                        </h3>
+                        {jobsMatched && job.matchedSkills > 0 && (
+                          <span className="flex items-center gap-1 text-xs bg-accent/10 text-accent px-2 py-0.5 rounded-full whitespace-nowrap flex-shrink-0">
+                            <Star className="h-3 w-3" />
+                            {job.matchedSkills} match
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-xs text-text-muted mb-3 line-clamp-2">{job.description}</p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {(job.skills || []).slice(0, 3).map((skill: any) => (
+                          <span key={skill.id} className="text-xs bg-background text-text-muted px-2 py-0.5 rounded-md border border-border/50">
+                            {skill.name}
+                          </span>
+                        ))}
+                        {job.skills?.length > 3 && (
+                          <span className="text-xs text-text-muted">+{job.skills.length - 3}</span>
+                        )}
+                      </div>
+                      <div className="flex items-center justify-between mt-3 pt-3 border-t border-border/40">
+                        <span className="text-xs text-text-muted">{job.type} · {job.isRemote ? 'Remote' : job.location}</span>
+                        {job.budget && (
+                          <span className="text-sm font-semibold text-success">${job.budget.toLocaleString()}</span>
+                        )}
+                      </div>
                     </div>
-                    <p className="text-xs text-text-muted mb-3 line-clamp-2">{job.description}</p>
-                    <div className="flex flex-wrap gap-1.5">
-                      {job.skills?.slice(0, 3).map((skill: any) => (
-                        <span key={skill.id} className="text-xs bg-background text-text-muted px-2 py-0.5 rounded-md border border-border/50">
-                          {skill.name}
-                        </span>
-                      ))}
-                      {job.skills?.length > 3 && (
-                        <span className="text-xs text-text-muted">+{job.skills.length - 3}</span>
-                      )}
-                    </div>
-                    <div className="flex items-center justify-between mt-3 pt-3 border-t border-border/40">
-                      <span className="text-xs text-text-muted">{job.type} · {job.isRemote ? 'Remote' : job.location}</span>
-                      {job.budget && (
-                        <span className="text-sm font-semibold text-success">${job.budget.toLocaleString()}</span>
-                      )}
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </motion.div>
           )}
@@ -318,17 +320,20 @@ export function Dashboard() {
                   </button>
                 </div>
                 <div className="space-y-4">
-                  {enrollments.slice(0, 3).map((enrollment) => (
+                  {enrollments.slice(0, 3).map((enrollment) => {
+                    const course = enrollment.course;
+                    if (!course) return null;
+                    return (
                     <div
                       key={enrollment.id}
-                      onClick={() => navigate(`/academy/learning/${enrollment.course.id}`)}
+                      onClick={() => navigate(`/academy/learning/${course.id}`)}
                       className="flex items-center gap-4 p-3 rounded-xl hover:bg-border/30 cursor-pointer transition-colors"
                     >
                       <div className="w-16 h-12 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
-                        {enrollment.course.thumbnail ? (
+                        {course.thumbnail ? (
                           <img
-                            src={enrollment.course.thumbnail}
-                            alt={enrollment.course.title}
+                            src={course.thumbnail}
+                            alt={course.title}
                             className="w-full h-full object-cover"
                           />
                         ) : (
@@ -338,8 +343,8 @@ export function Dashboard() {
                         )}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-text truncate">{enrollment.course.title}</p>
-                        <p className="text-xs text-text-muted">{enrollment.course.creator.name}</p>
+                        <p className="text-sm font-medium text-text truncate">{course.title}</p>
+                        <p className="text-xs text-text-muted">{course?.creator?.name || ''}</p>
                         <div className="flex items-center gap-2 mt-1">
                           <div className="flex-1 h-1.5 bg-gray-200 rounded-full">
                             <div
@@ -352,7 +357,8 @@ export function Dashboard() {
                       </div>
                       <Play className="h-5 w-5 text-accent flex-shrink-0" />
                     </div>
-                  ))}
+                  );
+                })}
                 </div>
               </motion.div>
             )}

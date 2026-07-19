@@ -2,6 +2,7 @@ import { Job } from 'bullmq';
 import { queueManager, QUEUES } from '../lib/queue';
 import { prisma } from '../lib/prisma';
 import { EXP_REWARDS, getLevelFromExp } from '../constants/gamification.constants';
+import { logError, logWarn, logInfo } from '../lib/logger';
 
 let io: any = null;
 export const setSocketIOForGamification = (socketIO: any): void => {
@@ -73,7 +74,7 @@ export async function awardExpProcessor(job: Job<AwardExpData>): Promise<void> {
       });
     }
   } catch (error) {
-    console.error('[GamificationWorker] awardExp failed:', error);
+    logError('[GamificationWorker]', error, { context: 'awardExp', userId });
     throw error;
   }
 }
@@ -170,7 +171,7 @@ export async function checkAchievementsProcessor(job: Job<CheckAchievementsData>
       }
     }
   } catch (error) {
-    console.error('[GamificationWorker] checkAchievements failed:', error);
+    logError('[GamificationWorker]', error, { context: 'checkAchievements', userId });
   }
 }
 
@@ -217,7 +218,7 @@ export async function updateStreakProcessor(job: Job<UpdateStreakData>): Promise
       });
     }
   } catch (error) {
-    console.error('[GamificationWorker] updateStreak failed:', error);
+    logError('[GamificationWorker]', error, { context: 'updateStreak', userId });
   }
 }
 
@@ -275,7 +276,7 @@ export async function updateMissionProcessor(job: Job<UpdateMissionData>): Promi
       }
     }
   } catch (error) {
-    console.error('[GamificationWorker] updateMission failed:', error);
+    logError('[GamificationWorker]', error, { context: 'updateMission', userId });
   }
 }
 
@@ -320,12 +321,12 @@ export async function gamificationRouter(job: Job): Promise<void> {
       break;
     }
     default:
-      console.warn(`[GamificationWorker] Unknown type: ${type}`);
+      logWarn('[GamificationWorker]', `Unknown type: ${type}`);
   }
 }
 
 export function registerGamificationWorker(): void {
   queueManager.defineQueue(QUEUES.GAMIFICATION);
   queueManager.defineWorker(QUEUES.GAMIFICATION, gamificationRouter, { concurrency: 5 });
-  console.log('[Queue] Gamification worker registered');
+  logInfo('[Queue]', 'Gamification worker registered');
 }

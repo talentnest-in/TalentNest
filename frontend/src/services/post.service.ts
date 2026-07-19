@@ -5,27 +5,38 @@ import type { PaginatedResponse } from './community.service';
 export const postService = {
   getPosts: async (params?: { page?: number; limit?: number; filter?: 'newest' | 'popular' }): Promise<PaginatedResponse<Post>> => {
     const response = await api.get('/posts', { params });
-    return response.data;
+    if (response.data && response.data.meta) {
+      return response.data;
+    }
+    const data = response.data?.data ?? response.data;
+    return { data: Array.isArray(data) ? data : [], meta: { total: 0, page: 1, limit: 10, totalPages: 0 } };
   },
 
   getCommunityPosts: async (communityId: string, params?: { page?: number; limit?: number; filter?: 'newest' | 'popular' }): Promise<PaginatedResponse<Post>> => {
     const response = await api.get(`/community/${communityId}/posts`, { params });
-    return response.data;
+    if (response.data && response.data.meta) {
+      return response.data;
+    }
+    const data = response.data?.data ?? response.data;
+    return { data: Array.isArray(data) ? data : [], meta: { total: 0, page: 1, limit: 10, totalPages: 0 } };
   },
 
   createPost: async (data: { content: string; type?: 'TEXT' | 'IMAGE' | 'PDF' | 'LINK'; mediaUrls?: string[]; linkUrl?: string; communityId?: string }): Promise<Post> => {
     const response = await api.post('/posts', data);
-    return response.data.data;
+    const result = response.data?.data ?? response.data;
+    return result;
   },
 
   getPostById: async (id: string): Promise<Post> => {
     const response = await api.get(`/posts/${id}`);
-    return response.data.data;
+    const result = response.data?.data ?? response.data;
+    return result;
   },
 
   updatePost: async (id: string, data: Partial<Post>): Promise<Post> => {
     const response = await api.put(`/posts/${id}`, data);
-    return response.data.data;
+    const result = response.data?.data ?? response.data;
+    return result;
   },
 
   deletePost: async (id: string): Promise<void> => {
@@ -34,12 +45,14 @@ export const postService = {
 
   toggleLike: async (id: string): Promise<{ liked: boolean; likeCount: number }> => {
     const response = await api.post(`/posts/${id}/like`);
-    return response.data.data;
+    const result = response.data?.data ?? response.data;
+    return result;
   },
 
   addComment: async (id: string, data: { content: string; parentId?: string }): Promise<PostComment> => {
     const response = await api.post(`/posts/${id}/comments`, data);
-    return response.data.data;
+    const result = response.data?.data ?? response.data;
+    return result;
   },
 
   deleteComment: async (id: string, commentId: string): Promise<void> => {
@@ -64,6 +77,6 @@ export const postService = {
     const response = await api.post('/upload', formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
-    return response.data.fileUrl || response.data.url;
+    return response.data?.fileUrl || response.data?.url || '';
   },
 };

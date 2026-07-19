@@ -28,7 +28,11 @@ const reportPostSchema = z.object({
   reason: z.string().min(1),
 });
 
-export async function getPosts(query: { page?: string; limit?: string; filter?: string }) {
+function safeAuthor(author: { id: string; name: string | null; avatar: string | null } | null) {
+  return author ?? { id: '', name: 'Deleted User', avatar: null };
+}
+
+export async function getPosts(userId: string | undefined, query: { page?: string; limit?: string; filter?: string }) {
   const { page = '1', limit = '10', filter = 'newest' } = query;
   const pageStr = Array.isArray(page) ? page[0] : page;
   const limitStr = Array.isArray(limit) ? limit[0] : limit;
@@ -43,22 +47,46 @@ export async function getPosts(query: { page?: string; limit?: string; filter?: 
     orderBy = { likes: { _count: 'desc' } };
   }
 
+  const whereClause: any = {
+    isHidden: false,
+    OR: [
+      { communityId: null },
+      { community: { type: 'PUBLIC' } }
+    ]
+  };
+
+  if (userId) {
+    whereClause.OR.push({
+      community: {
+        members: {
+          some: { userId }
+        }
+      }
+    });
+  }
+
   const [posts, total] = await Promise.all([
     prisma.post.findMany({
-      where: { isHidden: false, communityId: null },
+      where: whereClause,
       skip,
       take: limitNum,
       orderBy,
       include: {
         author: { select: { id: true, name: true, avatar: true } },
+        community: { select: { id: true, name: true, slug: true } },
         _count: { select: { likes: true, comments: true } },
       },
     }),
-    prisma.post.count({ where: { isHidden: false, communityId: null } }),
+    prisma.post.count({ where: whereClause }),
   ]);
 
+  const safePosts = posts.map((post) => ({
+    ...post,
+    author: safeAuthor(post.author),
+  }));
+
   return {
-    data: posts,
+    data: safePosts,
     meta: { total, page: pageNum, limit: limitNum, totalPages: Math.ceil(total / limitNum) },
   };
 }
@@ -103,8 +131,13 @@ export async function getCommunityPosts(communityId: string, userId: string | un
     prisma.post.count({ where: { communityId, isHidden: false } }),
   ]);
 
+  const safePosts = posts.map((post) => ({
+    ...post,
+    author: safeAuthor(post.author),
+  }));
+
   return {
-    data: posts,
+    data: safePosts,
     meta: { total, page: pageNum, limit: limitNum, totalPages: Math.ceil(total / limitNum) },
   };
 }
@@ -138,7 +171,7 @@ export async function createPost(userId: string, body: unknown) {
 
   await awardExp(userId, 'FIRST_POST', 'Created a community post');
 
-  return post;
+  return { ...post, author: safeAuthor(post.author) };
 }
 
 export async function getPostById(id: string, userId?: string) {
@@ -147,6 +180,17 @@ export async function getPostById(id: string, userId?: string) {
     include: {
       author: { select: { id: true, name: true, avatar: true } },
       community: { select: { id: true, name: true, slug: true, type: true } },
+      comments: {
+        include: {
+          author: { select: { id: true, name: true, avatar: true } },
+        },
+        orderBy: { createdAt: 'asc' },
+      },
+      likes: {
+        include: {
+          user: { select: { id: true, name: true, avatar: true } },
+        },
+      },
       _count: { select: { likes: true, comments: true } },
     },
   });
@@ -161,7 +205,24 @@ export async function getPostById(id: string, userId?: string) {
     if (!member) throw new ForbiddenError('Must be a member to view private community posts');
   }
 
-  return post;
+  return {
+    ...post,
+    author: safeAuthor(post.author),
+    comments: (post.comments ?? [])
+      .filter((c) => c.author !== null)
+      .map((c) => ({
+        ...c,
+        author: safeAuthor(c.author),
+      })),
+    likes: (post.likes ?? [])
+      .filter((l) => l.user !== null)
+      .map((l) => ({
+        ...l,
+        user: l.user ?? { id: '', name: 'Deleted User', avatar: null } as any,
+      })),
+    mediaUrls: (post.mediaUrls ?? []).filter((url): url is string => url !== null && url !== undefined),
+    community: post.community ?? null,
+  };
 }
 
 export async function updatePost(id: string, userId: string, body: unknown) {
@@ -178,9 +239,13 @@ export async function updatePost(id: string, userId: string, body: unknown) {
       ...(data.mediaUrls !== undefined ? { mediaUrls: data.mediaUrls } : {}),
       ...(data.linkUrl !== undefined ? { linkUrl: data.linkUrl ?? null } : {}),
     },
+    include: {
+      author: { select: { id: true, name: true, avatar: true } },
+      _count: { select: { likes: true, comments: true } },
+    },
   });
 
-  return updatedPost;
+  return { ...updatedPost, author: safeAuthor(updatedPost.author) };
 }
 
 export async function deletePost(id: string, userId: string) {
@@ -276,7 +341,7 @@ export async function addComment(id: string, userId: string, body: unknown) {
     io.emit('post:commented', { postId: id, comment });
   }
 
-  return comment;
+  return { ...comment, author: safeAuthor(comment.author) };
 }
 
 export async function deleteComment(id: string, cId: string, userId: string) {

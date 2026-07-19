@@ -4,12 +4,14 @@ import type { Company } from '@/types';
 export const companyService = {
   getMyCompany: async (): Promise<Company | null> => {
     const res = await api.get('/clients/company');
-    return res.data.company;
+    const data = res.data?.data ?? res.data;
+    return data?.company ?? null;
   },
 
   saveCompany: async (data: Partial<Company>): Promise<Company> => {
     const res = await api.post('/clients/company', data);
-    return res.data.company;
+    const result = res.data?.data ?? res.data;
+    return result?.company ?? result;
   },
 
   uploadLogo: async (file: File): Promise<string> => {
@@ -18,6 +20,7 @@ export const companyService = {
     const res = await api.post('/clients/company/upload-logo', form, {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
-    return res.data.logoUrl;
+    const data = res.data?.data ?? res.data;
+    return data?.logoUrl || '';
   },
 };

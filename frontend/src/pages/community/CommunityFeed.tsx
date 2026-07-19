@@ -25,6 +25,7 @@ export function CommunityFeed() {
     queryFn: ({ pageParam = 1 }) => postService.getPosts({ filter, page: pageParam, limit: 10 }),
     initialPageParam: 1,
     getNextPageParam: (lastPage) => {
+      if (!lastPage?.meta) return undefined;
       if (lastPage.meta.page < lastPage.meta.totalPages) {
         return lastPage.meta.page + 1;
       }
@@ -32,7 +33,7 @@ export function CommunityFeed() {
     },
   });
 
-  const posts = postsData?.pages.flatMap(page => page.data) || [];
+  const posts = postsData?.pages?.filter(Boolean).flatMap(page => page.data?.filter(Boolean) ?? []) ?? [];
 
   const { socket } = useSocket();
 
@@ -103,7 +104,7 @@ export function CommunityFeed() {
               </div>
             ) : (
               <>
-                {posts.map((post) => (
+                {posts.filter(Boolean).map((post) => (
                   <PostCard key={post.id} post={post} />
                 ))}
                 

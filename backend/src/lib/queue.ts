@@ -1,7 +1,8 @@
 import { Queue, Worker, ConnectionOptions, Job } from 'bullmq';
-import { getRedisService } from './redis';
+import { getRedisService, RedisService } from './redis';
+import { logWarn, logError, logInfo } from './logger';
 
-function parseRedisConnection(): ConnectionOptions {
+function buildConnectionFromEnv(): ConnectionOptions {
   const redisUrl = process.env.REDIS_URL;
   if (redisUrl) {
     try {
@@ -15,19 +16,20 @@ function parseRedisConnection(): ConnectionOptions {
         tls: isTls ? {} : undefined,
       };
     } catch {
-      console.warn('[Queue] Failed to parse REDIS_URL, falling back to host/port config');
+      logWarn('[Queue]', 'Failed to parse REDIS_URL, falling back to host/port config');
     }
   }
+  if (!process.env.REDIS_HOST) {
+    return {};
+  }
   return {
-    host: process.env.REDIS_HOST || 'localhost',
+    host: process.env.REDIS_HOST,
     port: parseInt(process.env.REDIS_PORT || '6379'),
     password: process.env.REDIS_PASSWORD || undefined,
+    tls: process.env.REDIS_TLS === 'true' ? {} : undefined,
   };
 }
 
-const DEFAULT_CONNECTION: ConnectionOptions = parseRedisConnection();
-
-/** Returns true only when a Redis URL or host is explicitly configured */
 function isRedisConfigured(): boolean {
   return !!(process.env.REDIS_URL || process.env.REDIS_HOST);
 }
@@ -41,17 +43,38 @@ class QueueManager {
   private queues: Map<string, Queue> = new Map();
   private workers: Map<string, Worker> = new Map();
   private connection: ConnectionOptions;
+  private redisSvc: RedisService;
 
   constructor(connection?: ConnectionOptions) {
-    this.connection = connection || DEFAULT_CONNECTION;
+    this.redisSvc = getRedisService();
+    this.connection = connection || buildConnectionFromEnv();
   }
 
   getConnection(): ConnectionOptions {
-    return parseRedisConnection();
+    const url = this.redisSvc.getUrl();
+    if (url) {
+      try {
+        const parsed = new URL(url);
+        const isTls = parsed.protocol === 'rediss:';
+        return {
+          host: parsed.hostname,
+          port: parseInt(parsed.port || '6379'),
+          password: parsed.password ? decodeURIComponent(parsed.password) : undefined,
+          username: parsed.username ? decodeURIComponent(parsed.username) : undefined,
+          tls: isTls ? {} : undefined,
+        };
+      } catch {
+        // fall through
+      }
+    }
+    return this.connection;
   }
 
   defineQueue(name: string, opts?: { defaultJobOptions?: any }): Queue | null {
-    if (!isRedisConfigured()) return null;
+    if (!isRedisConfigured()) {
+      console.warn(`[Queue] Skipped queue "${name}" — no Redis configured`);
+      return null;
+    }
     if (this.queues.has(name)) {
       return this.queues.get(name)!;
     }
@@ -75,7 +98,7 @@ class QueueManager {
     opts?: { concurrency?: number; limiter?: { max: number; duration: number } }
   ): Worker | null {
     if (!isRedisConfigured()) {
-      console.warn(`[Worker:${name}] Skipped — no Redis configured (set REDIS_URL)`);
+      logWarn('[Queue]', `Worker "${name}" skipped — no Redis configured (set REDIS_URL)`);
       return null;
     }
     if (this.workers.has(name)) {
@@ -97,7 +120,7 @@ class QueueManager {
         try {
           await processor(job);
         } catch (err) {
-          console.error(`[Worker:${name}] Job ${job.id} failed:`, err);
+          logError(`[Worker:${name}]`, err, { jobId: job.id });
           throw err;
         }
       },
@@ -105,18 +128,17 @@ class QueueManager {
     );
 
     worker.on('completed', (job) => {
-      console.log(`[Worker:${name}] Job ${job.id} completed`);
+      logInfo(`[Worker:${name}]`, `Job ${job.id} completed`);
     });
 
     worker.on('failed', (job, err) => {
-      console.error(`[Worker:${name}] Job ${job?.id} failed after retries:`, err.message);
+      logError(`[Worker:${name}]`, err, { jobId: job?.id, context: 'failed_after_retries' });
     });
 
     worker.on('error', (err) => {
-      // Only log unique error messages to avoid spamming logs
       const msg = err.message || String(err);
       if (!msg.includes('ECONNREFUSED')) {
-        console.error(`[Worker:${name}] Error:`, msg);
+        logError(`[Worker:${name}]`, err, { context: 'worker_error' });
       }
     });
 
@@ -131,13 +153,13 @@ class QueueManager {
   async addJob(name: string, data: any, opts?: any): Promise<Job | undefined> {
     const queue = this.queues.get(name);
     if (!queue) {
-      console.warn(`[Queue] Queue "${name}" not defined`);
+      logWarn('[Queue]', `Queue "${name}" not defined`);
       return undefined;
     }
     try {
       return await queue.add(name, data, opts);
     } catch (err) {
-      console.error(`[Queue] Failed to add job to "${name}":`, err);
+      logError('[Queue]', err, { queue: name, context: 'add_job' });
       return undefined;
     }
   }
@@ -160,11 +182,11 @@ class QueueManager {
   async close(): Promise<void> {
     for (const [name, worker] of this.workers) {
       await worker.close();
-      console.log(`[Queue] Worker "${name}" closed`);
+      logInfo('[Queue]', `Worker "${name}" closed`);
     }
     for (const [name, queue] of this.queues) {
       await queue.close();
-      console.log(`[Queue] Queue "${name}" closed`);
+      logInfo('[Queue]', `Queue "${name}" closed`);
     }
   }
 }

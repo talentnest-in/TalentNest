@@ -1,4 +1,5 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
+import { z } from 'zod';
 import {
   browseContests as svcBrowseContests, createContest as svcCreateContest, getContestDetail as svcGetContestDetail,
   updateContest as svcUpdateContest, deleteContest as svcDeleteContest, publishContest as svcPublishContest,
@@ -12,6 +13,9 @@ import {
   toggleSaveContest as svcToggleSaveContest,
 } from '../services/contest.service';
 import { AppError } from '../lib/errors';
+
+const uuidSchema = z.string().uuid('Invalid ID format');
+const contestSubmissionSchema = z.object({ id: z.string().uuid('Invalid contest ID'), submissionId: z.string().uuid('Invalid submission ID') });
 
 const contestController = {
   async browseContests(request: FastifyRequest, reply: FastifyReply) {
@@ -53,9 +57,11 @@ const contestController = {
     try {
       const userId = (request as any).user.id;
       const { id } = request.params as { id: string };
-      const result = await svcUpdateContest(userId, id, request.body);
+      const parsedId = uuidSchema.parse(id);
+      const result = await svcUpdateContest(parsedId, userId, request.body);
       return reply.send(result);
     } catch (error) {
+      if (error instanceof z.ZodError) return reply.status(400).send({ error: 'Invalid contest ID format' });
       if (error instanceof AppError) return reply.status(error.statusCode).send({ error: error.message });
       request.log.error(error, 'updateContest failed');
       return reply.status(500).send({ error: 'Failed to update contest' });
@@ -67,9 +73,11 @@ const contestController = {
       const userId = (request as any).user.id;
       const userRole = (request as any).user.role;
       const { id } = request.params as { id: string };
-      await svcDeleteContest(id, userId, userRole);
+      const parsedId = uuidSchema.parse(id);
+      await svcDeleteContest(parsedId, userId, userRole);
       return reply.send({ success: true });
     } catch (error) {
+      if (error instanceof z.ZodError) return reply.status(400).send({ error: 'Invalid contest ID format' });
       if (error instanceof AppError) return reply.status(error.statusCode).send({ error: error.message });
       request.log.error(error, 'deleteContest failed');
       return reply.status(500).send({ error: 'Failed to delete contest' });
@@ -80,9 +88,11 @@ const contestController = {
     try {
       const userId = (request as any).user.id;
       const { id } = request.params as { id: string };
-      const result = await svcPublishContest(userId, id);
+      const parsedId = uuidSchema.parse(id);
+      const result = await svcPublishContest(parsedId, userId);
       return reply.send(result);
     } catch (error) {
+      if (error instanceof z.ZodError) return reply.status(400).send({ error: 'Invalid contest ID format' });
       if (error instanceof AppError) return reply.status(error.statusCode).send({ error: error.message });
       return reply.status(500).send({ error: 'Failed to publish contest' });
     }
@@ -92,9 +102,11 @@ const contestController = {
     try {
       const userId = (request as any).user.id;
       const { id } = request.params as { id: string };
-      const result = await svcPauseContest(userId, id);
+      const parsedId = uuidSchema.parse(id);
+      const result = await svcPauseContest(parsedId, userId);
       return reply.send(result);
     } catch (error) {
+      if (error instanceof z.ZodError) return reply.status(400).send({ error: 'Invalid contest ID format' });
       if (error instanceof AppError) return reply.status(error.statusCode).send({ error: error.message });
       return reply.status(500).send({ error: 'Failed to pause contest' });
     }
@@ -104,9 +116,11 @@ const contestController = {
     try {
       const userId = (request as any).user.id;
       const { id } = request.params as { id: string };
-      const result = await svcCloseContest(userId, id);
+      const parsedId = uuidSchema.parse(id);
+      const result = await svcCloseContest(parsedId, userId);
       return reply.send(result);
     } catch (error) {
+      if (error instanceof z.ZodError) return reply.status(400).send({ error: 'Invalid contest ID format' });
       if (error instanceof AppError) return reply.status(error.statusCode).send({ error: error.message });
       return reply.status(500).send({ error: 'Failed to close contest' });
     }
@@ -116,9 +130,11 @@ const contestController = {
     try {
       const userId = (request as any).user.id;
       const { id } = request.params as { id: string };
-      const result = await svcReopenContest(userId, id);
+      const parsedId = uuidSchema.parse(id);
+      const result = await svcReopenContest(parsedId, userId);
       return reply.send(result);
     } catch (error) {
+      if (error instanceof z.ZodError) return reply.status(400).send({ error: 'Invalid contest ID format' });
       if (error instanceof AppError) return reply.status(error.statusCode).send({ error: error.message });
       return reply.status(500).send({ error: 'Failed to reopen contest' });
     }
@@ -128,9 +144,11 @@ const contestController = {
     try {
       const userId = (request as any).user.id;
       const { id } = request.params as { id: string };
-      const result = await svcDuplicateContest(userId, id);
+      const parsedId = uuidSchema.parse(id);
+      const result = await svcDuplicateContest(parsedId, userId);
       return reply.status(201).send(result);
     } catch (error) {
+      if (error instanceof z.ZodError) return reply.status(400).send({ error: 'Invalid contest ID format' });
       if (error instanceof AppError) return reply.status(error.statusCode).send({ error: error.message });
       return reply.status(500).send({ error: 'Failed to duplicate contest' });
     }
@@ -141,9 +159,11 @@ const contestController = {
       const userId = (request as any).user.id;
       const userRole = (request as any).user.role;
       const { id } = request.params as { id: string };
-      const result = await svcJoinContest(id, { id: userId, role: userRole });
+      const parsedId = uuidSchema.parse(id);
+      const result = await svcJoinContest(parsedId, { id: userId, role: userRole });
       return reply.send(result);
     } catch (error) {
+      if (error instanceof z.ZodError) return reply.status(400).send({ error: 'Invalid contest ID format' });
       if (error instanceof AppError) return reply.status(error.statusCode).send({ error: error.message });
       return reply.status(500).send({ error: 'Failed to join contest' });
     }
@@ -153,9 +173,11 @@ const contestController = {
     try {
       const userId = (request as any).user.id;
       const { id } = request.params as { id: string };
-      const result = await svcLeaveContest(userId, id);
+      const parsedId = uuidSchema.parse(id);
+      const result = await svcLeaveContest(parsedId, userId);
       return reply.send(result);
     } catch (error) {
+      if (error instanceof z.ZodError) return reply.status(400).send({ error: 'Invalid contest ID format' });
       if (error instanceof AppError) return reply.status(error.statusCode).send({ error: error.message });
       return reply.status(500).send({ error: 'Failed to leave contest' });
     }
@@ -164,9 +186,11 @@ const contestController = {
   async listParticipants(request: FastifyRequest, reply: FastifyReply) {
     try {
       const { id } = request.params as { id: string };
-      const result = await svcListParticipants(id);
+      const parsedId = uuidSchema.parse(id);
+      const result = await svcListParticipants(parsedId);
       return reply.send(result);
     } catch (error) {
+      if (error instanceof z.ZodError) return reply.status(400).send({ error: 'Invalid contest ID format' });
       request.log.error(error, 'listParticipants failed');
       return reply.status(500).send({ error: 'Failed to fetch participants' });
     }
@@ -176,9 +200,11 @@ const contestController = {
     try {
       const userId = (request as any).user.id;
       const { id } = request.params as { id: string };
-      const result = await svcSubmitEntry(userId, id, request.body);
+      const parsedId = uuidSchema.parse(id);
+      const result = await svcSubmitEntry(parsedId, userId, request.body);
       return reply.status(201).send(result);
     } catch (error) {
+      if (error instanceof z.ZodError) return reply.status(400).send({ error: 'Invalid contest ID format' });
       if (error instanceof AppError) return reply.status(error.statusCode).send({ error: error.message });
       return reply.status(500).send({ error: 'Failed to submit entry' });
     }
@@ -188,9 +214,11 @@ const contestController = {
     try {
       const userId = (request as any).user.id;
       const { id } = request.params as { id: string };
-      const result = await svcUpdateSubmission(id, userId, request.body);
+      const parsedId = uuidSchema.parse(id);
+      const result = await svcUpdateSubmission(parsedId, userId, request.body);
       return reply.send(result);
     } catch (error) {
+      if (error instanceof z.ZodError) return reply.status(400).send({ error: 'Invalid submission ID format' });
       if (error instanceof AppError) return reply.status(error.statusCode).send({ error: error.message });
       return reply.status(500).send({ error: 'Failed to update submission' });
     }
@@ -200,9 +228,11 @@ const contestController = {
     try {
       const userId = (request as any).user.id;
       const { id } = request.params as { id: string };
-      await svcWithdrawSubmission(id, userId);
+      const parsedId = uuidSchema.parse(id);
+      await svcWithdrawSubmission(parsedId, userId);
       return reply.send({ success: true });
     } catch (error) {
+      if (error instanceof z.ZodError) return reply.status(400).send({ error: 'Invalid submission ID format' });
       if (error instanceof AppError) return reply.status(error.statusCode).send({ error: error.message });
       return reply.status(500).send({ error: 'Failed to withdraw submission' });
     }
@@ -211,10 +241,13 @@ const contestController = {
   async listSubmissions(request: FastifyRequest, reply: FastifyReply) {
     try {
       const { id } = request.params as { id: string };
-      const userId = (request as any).user.id;
-      const result = await svcListSubmissions(userId, id, request.query as any);
+      const parsedId = uuidSchema.parse(id);
+      const user = (request as any).user;
+      const { filter } = request.query as { filter?: string };
+      const result = await svcListSubmissions(parsedId, user.id, user.role, filter);
       return reply.send(result);
     } catch (error) {
+      if (error instanceof z.ZodError) return reply.status(400).send({ error: 'Invalid contest ID format' });
       if (error instanceof AppError) return reply.status(error.statusCode).send({ error: error.message });
       return reply.status(500).send({ error: 'Failed to list submissions' });
     }
@@ -224,9 +257,11 @@ const contestController = {
     try {
       const userId = (request as any).user.id;
       const { id } = request.params as { id: string };
-      const result = await svcGetMySubmission(userId, id);
+      const parsedId = uuidSchema.parse(id);
+      const result = await svcGetMySubmission(parsedId, userId);
       return reply.send(result);
     } catch (error) {
+      if (error instanceof z.ZodError) return reply.status(400).send({ error: 'Invalid contest ID format' });
       if (error instanceof AppError) return reply.status(error.statusCode).send({ error: error.message });
       return reply.status(500).send({ error: 'Failed to fetch submission' });
     }
@@ -235,11 +270,12 @@ const contestController = {
   async updateSubmissionStatus(request: FastifyRequest, reply: FastifyReply) {
     try {
       const userId = (request as any).user.id;
-      const { id, submissionId } = request.params as { id: string; submissionId: string };
-      const body = request.body as any;
-      const result = await svcUpdateSubmissionStatus(userId, id, submissionId, body);
+      const { id, submissionId } = contestSubmissionSchema.parse(request.params);
+      const { status } = request.body as { status: any };
+      const result = await svcUpdateSubmissionStatus(id, submissionId, userId, status);
       return reply.send(result);
     } catch (error) {
+      if (error instanceof z.ZodError) return reply.status(400).send({ error: 'Invalid contest or submission ID format' });
       if (error instanceof AppError) return reply.status(error.statusCode).send({ error: error.message });
       return reply.status(500).send({ error: 'Failed to update submission status' });
     }
@@ -248,10 +284,12 @@ const contestController = {
   async selectWinner(request: FastifyRequest, reply: FastifyReply) {
     try {
       const userId = (request as any).user.id;
-      const { id, submissionId } = request.params as { id: string; submissionId: string };
-      const result = await svcSelectWinner(userId, id, submissionId);
+      const { id } = request.params as { id: string };
+      const parsedId = uuidSchema.parse(id);
+      const result = await svcSelectWinner(parsedId, userId, request.body);
       return reply.send(result);
     } catch (error) {
+      if (error instanceof z.ZodError) return reply.status(400).send({ error: 'Invalid contest ID format' });
       if (error instanceof AppError) return reply.status(error.statusCode).send({ error: error.message });
       return reply.status(500).send({ error: 'Failed to select winner' });
     }
@@ -272,9 +310,11 @@ const contestController = {
     try {
       const userId = (request as any).user.id;
       const { id } = request.params as { id: string };
-      const result = await svcGetContestAnalytics(userId, id);
+      const parsedId = uuidSchema.parse(id);
+      const result = await svcGetContestAnalytics(parsedId, userId);
       return reply.send(result);
     } catch (error) {
+      if (error instanceof z.ZodError) return reply.status(400).send({ error: 'Invalid contest ID format' });
       request.log.error(error, 'getContestAnalytics failed');
       return reply.status(500).send({ error: 'Failed to fetch analytics' });
     }
@@ -306,9 +346,11 @@ const contestController = {
     try {
       const userId = (request as any).user.id;
       const { id } = request.params as { id: string };
-      const result = await svcToggleSaveContest(userId, id);
+      const parsedId = uuidSchema.parse(id);
+      const result = await svcToggleSaveContest(userId, parsedId);
       return reply.send(result);
     } catch (error) {
+      if (error instanceof z.ZodError) return reply.status(400).send({ error: 'Invalid contest ID format' });
       if (error instanceof AppError) return reply.status(error.statusCode).send({ error: error.message });
       return reply.status(500).send({ error: 'Failed to toggle save' });
     }

@@ -38,8 +38,11 @@ export const register = async (request: FastifyRequest, reply: FastifyReply) => 
     return reply.status(201).send(result);
   } catch (error) {
     if (error instanceof z.ZodError) throw error;
+    if (error instanceof AppError) {
+      return reply.status(error.statusCode).send({ statusCode: error.statusCode, message: error.message });
+    }
     request.log.error(error, 'register failed');
-    throw error;
+    return reply.status(500).send({ statusCode: 500, message: 'Internal Server Error' });
   }
 };
 
@@ -57,14 +60,19 @@ export const login = async (request: FastifyRequest, reply: FastifyReply) => {
       return reply.status(error.statusCode).send({ statusCode: error.statusCode, message: error.message });
     }
     request.log.error(error, 'login failed');
-    throw error;
+    return reply.status(500).send({ statusCode: 500, message: 'Internal Server Error' });
   }
 };
 
 export const logout = async (request: FastifyRequest, reply: FastifyReply) => {
-  const cookieOpts3 = getCookieOptions(isHttps(request));
-  reply.clearCookie('token', { ...cookieOpts3, secure: cookieOpts3.secure ?? true });
-  return reply.send({ statusCode: 200, message: 'Logged out successfully' });
+  try {
+    const cookieOpts3 = getCookieOptions(isHttps(request));
+    reply.clearCookie('token', { ...cookieOpts3, secure: cookieOpts3.secure ?? true });
+    return reply.send({ statusCode: 200, message: 'Logged out successfully' });
+  } catch (error) {
+    request.log.error(error, 'logout failed');
+    return reply.status(500).send({ statusCode: 500, message: 'Internal Server Error' });
+  }
 };
 
 export const refresh = async (request: FastifyRequest, reply: FastifyReply) => {
@@ -101,8 +109,11 @@ export const getMe = async (request: FastifyRequest, reply: FastifyReply) => {
     const user = await authGetMe((request.user as any).id);
     return reply.send({ user });
   } catch (error) {
+    if (error instanceof AppError) {
+      return reply.status(error.statusCode).send({ statusCode: error.statusCode, message: error.message });
+    }
     request.log.error(error, 'getMe failed');
-    throw error;
+    return reply.status(500).send({ statusCode: 500, message: 'Internal Server Error' });
   }
 };
 
@@ -113,8 +124,11 @@ export const forgotPassword = async (request: FastifyRequest<{ Body: { email: st
     return reply.send({ message: 'If that email exists, a reset link has been sent.' });
   } catch (error) {
     if (error instanceof z.ZodError) throw error;
+    if (error instanceof AppError) {
+      return reply.status(error.statusCode).send({ statusCode: error.statusCode, message: error.message });
+    }
     request.log.error(error, 'forgotPassword failed');
-    throw error;
+    return reply.status(500).send({ statusCode: 500, message: 'Internal Server Error' });
   }
 };
 
@@ -129,6 +143,6 @@ export const resetPassword = async (request: FastifyRequest<{ Body: { token: str
       return reply.status(error.statusCode).send({ statusCode: error.statusCode, message: error.message });
     }
     request.log.error(error, 'resetPassword failed');
-    throw error;
+    return reply.status(500).send({ statusCode: 500, message: 'Internal Server Error' });
   }
 };

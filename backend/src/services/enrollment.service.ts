@@ -194,7 +194,7 @@ export async function getEnrollment(userId: string, courseId: string) {
   };
 }
 
-export async function updateLessonProgress(
+export async function updateLessonProgressByEnrollment(
   userId: string,
   lessonId: string,
   data: { completed?: boolean; timeSpent?: number }
@@ -312,18 +312,17 @@ export async function updateLessonProgress(
   };
 }
 
-export async function cancelEnrollment(userId: string, courseId: string) {
+export async function cancelEnrollment(userId: string, enrollmentId: string) {
   const enrollment = await prisma.enrollment.findUnique({
-    where: {
-      courseId_studentId: {
-        courseId,
-        studentId: userId,
-      },
-    },
+    where: { id: enrollmentId },
   });
 
   if (!enrollment) {
     throw new NotFoundError('Enrollment');
+  }
+
+  if (enrollment.studentId !== userId) {
+    throw new ForbiddenError('Not authorized to cancel this enrollment');
   }
 
   if (enrollment.status === 'CANCELLED') {

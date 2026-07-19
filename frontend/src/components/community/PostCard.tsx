@@ -22,6 +22,8 @@ export function PostCard({ post, isDetail = false, isAdmin = false }: PostCardPr
   const [isLiked, setIsLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(post._count?.likes || 0);
   const [showOptions, setShowOptions] = useState(false);
+  const [avatarError, setAvatarError] = useState(false);
+  const [mediaErrors, setMediaErrors] = useState<Record<number, boolean>>({});
 
   useEffect(() => {
     // Check if user liked post
@@ -99,8 +101,8 @@ export function PostCard({ post, isDetail = false, isAdmin = false }: PostCardPr
       {/* Header */}
       <div className="flex items-start justify-between mb-3">
         <div className="flex items-center gap-3">
-          {post.author?.avatar ? (
-            <img src={post.author.avatar} alt={post.author.name || ''} className="w-10 h-10 rounded-full object-cover" />
+          {post.author?.avatar && !avatarError ? (
+            <img src={post.author.avatar} alt={post.author.name || ''} className="w-10 h-10 rounded-full object-cover" onError={() => setAvatarError(true)} />
           ) : (
             <div className="w-10 h-10 rounded-full bg-primary/20 text-primary flex items-center justify-center font-bold">
               {post.author?.name?.charAt(0) || 'U'}
@@ -182,7 +184,11 @@ export function PostCard({ post, isDetail = false, isAdmin = false }: PostCardPr
       {post.type === 'IMAGE' && post.mediaUrls && post.mediaUrls.length > 0 && (
         <div className={`grid gap-2 mb-4 ${post.mediaUrls.length === 1 ? 'grid-cols-1' : post.mediaUrls.length === 2 ? 'grid-cols-2' : 'grid-cols-2 md:grid-cols-3'}`}>
           {post.mediaUrls.map((url, index) => (
-            <img key={index} src={url} alt="Post attachment" className="rounded-xl w-full h-auto object-cover max-h-96" />
+            mediaErrors[index] ? (
+              <div key={index} className="rounded-xl w-full h-48 bg-background flex items-center justify-center text-text-muted text-sm">Image failed to load</div>
+            ) : (
+              <img key={index} src={url} alt="Post attachment" className="rounded-xl w-full h-auto object-cover max-h-96" onError={() => setMediaErrors(prev => ({ ...prev, [index]: true }))} />
+            )
           ))}
         </div>
       )}

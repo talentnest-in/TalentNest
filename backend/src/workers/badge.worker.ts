@@ -1,6 +1,7 @@
 import { Job } from 'bullmq';
 import { queueManager, QUEUES } from '../lib/queue';
 import { prisma } from '../lib/prisma';
+import { logError, logInfo } from '../lib/logger';
 
 let io: any = null;
 export const setSocketIOForBadge = (socketIO: any): void => {
@@ -58,12 +59,12 @@ export async function badgeProcessor(job: Job<CheckBadgesData>): Promise<void> {
       }
     }
   } catch (error) {
-    console.error('[BadgeWorker] Failed:', error);
+    logError('[BadgeWorker]', error, { context: 'badge_check', userId });
   }
 }
 
 export function registerBadgeWorker(): void {
   queueManager.defineQueue(QUEUES.BADGE);
   queueManager.defineWorker(QUEUES.BADGE, badgeProcessor, { concurrency: 3 });
-  console.log('[Queue] Badge worker registered');
+  logInfo('[Queue]', 'Badge worker registered');
 }

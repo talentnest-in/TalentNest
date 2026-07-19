@@ -2,27 +2,29 @@ import { api } from '@/lib/api';
 import type { ApplyJobInput, ApplicationWithDetails, ApplicationsQueryParams, ApplicationsResponse, JobApplication } from '@/types';
 
 export const applicationService = {
-  // Apply for a job
   applyForJob: async (jobId: string, data: ApplyJobInput): Promise<{ application: JobApplication }> => {
     const res = await api.post(`/jobs/${jobId}/apply`, data);
-    return res.data;
+    return res.data?.data ?? res.data;
   },
 
-  // Get my applications
   getMyApplications: async (params?: ApplicationsQueryParams): Promise<ApplicationsResponse> => {
     const res = await api.get('/freelancers/applications', { params });
-    return res.data;
+    const data = res.data?.data ?? res.data;
+    return {
+      applications: Array.isArray(data?.applications) ? data.applications : [],
+      total: data?.total ?? 0,
+      page: data?.page ?? 1,
+      totalPages: data?.totalPages ?? 0,
+    };
   },
 
-  // Get application details
   getApplicationDetails: async (id: string): Promise<{ application: ApplicationWithDetails }> => {
     const res = await api.get(`/freelancers/applications/${id}`);
-    return res.data;
+    return res.data?.data ?? res.data;
   },
 
-  // Withdraw application
   withdrawApplication: async (id: string): Promise<{ message: string }> => {
     const res = await api.put(`/freelancers/applications/${id}/withdraw`);
-    return res.data;
+    return res.data?.data ?? res.data;
   },
 };
