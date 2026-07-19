@@ -50,7 +50,7 @@ export function ResumeCard({ resumeUrl, onUpload, onDelete }: ResumeCardProps) {
             <span className="text-sm font-medium text-text">Resume Uploaded</span>
           </div>
           <div className="flex gap-2">
-            <a href={`${BACKEND_URL}${resumeUrl}`} target="_blank" rel="noopener noreferrer">
+            <a href={resumeUrl?.startsWith('http') ? resumeUrl : `${BACKEND_URL}${resumeUrl}`} target="_blank" rel="noopener noreferrer">
               <Button variant="outline" size="sm">View</Button>
             </a>
             {onDelete && (

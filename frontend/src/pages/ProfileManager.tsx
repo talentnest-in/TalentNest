@@ -212,7 +212,7 @@ function PortfolioForm({
       <div>
         <label className="text-sm font-medium text-text-muted mb-1 block">Project Image</label>
         {form.imageUrl && (
-          <img src={`${BACKEND_URL}${form.imageUrl}`} alt="Preview" className="w-full h-40 object-cover rounded-lg mb-2" />
+          <img src={form.imageUrl?.startsWith('http') ? form.imageUrl : `${BACKEND_URL}${form.imageUrl}`} alt="Preview" className="w-full h-40 object-cover rounded-lg mb-2" />
         )}
         <label className="flex items-center gap-2 cursor-pointer text-sm text-accent hover:underline">
           <input type="file" className="hidden" accept="image/*" onChange={handleImageUpload} disabled={uploadingImage} />

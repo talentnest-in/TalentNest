@@ -19,7 +19,7 @@ export function PortfolioGrid({ projects, onDelete, onEdit }: PortfolioGridProps
       {projects.map((project) => (
         <div key={project.id} className="bg-surface border border-border rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow flex flex-col">
           {project.imageUrl ? (
-            <img src={`${BACKEND_URL}${project.imageUrl}`} alt={project.title} className="w-full h-48 object-cover" />
+            <img src={project.imageUrl?.startsWith('http') ? project.imageUrl : `${BACKEND_URL}${project.imageUrl}`} alt={project.title} className="w-full h-48 object-cover" />
           ) : (
             <div className="w-full h-48 bg-background flex items-center justify-center text-text-muted text-sm">
               No Image

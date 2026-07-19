@@ -10,7 +10,7 @@ export function CompanyCard({ company }: { company: Company }) {
     <div className="bg-surface border border-border rounded-2xl p-6 flex flex-col gap-4">
       <div className="flex items-center gap-4">
         {company.logoUrl ? (
-          <img src={`${BACKEND_URL}${company.logoUrl}`} alt={company.name} className="w-14 h-14 rounded-xl object-cover border border-border" />
+          <img src={company.logoUrl?.startsWith('http') ? company.logoUrl : `${BACKEND_URL}${company.logoUrl}`} alt={company.name} className="w-14 h-14 rounded-xl object-cover border border-border" />
         ) : (
           <div className="w-14 h-14 rounded-xl bg-accent/10 flex items-center justify-center">
             <Building2 className="w-7 h-7 text-accent" />

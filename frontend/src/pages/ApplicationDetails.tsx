@@ -90,7 +90,7 @@ export function ApplicationDetails() {
           <div className="flex items-start gap-4 mb-4">
             {companyLogo ? (
               <img
-                src={`${BACKEND_URL}${companyLogo}`}
+                src={companyLogo?.startsWith('http') ? companyLogo : `${BACKEND_URL}${companyLogo}`}
                 alt={companyName}
                 className="w-16 h-16 rounded-xl object-cover border border-border"
               />

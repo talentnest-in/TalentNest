@@ -1,4 +1,4 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Bookmark, BookmarkCheck } from 'lucide-react';
 import { savedJobService } from '@/services/saved-job.service';
 import { Button } from '@/components/ui/Button';
@@ -11,6 +11,13 @@ interface SaveButtonProps {
 
 export function SaveButton({ jobId, isSaved = false, size = 'md' }: SaveButtonProps) {
   const queryClient = useQueryClient();
+
+  const { data: savedJobsData } = useQuery({
+    queryKey: ['savedJobs'],
+    queryFn: savedJobService.getSavedJobs,
+  });
+
+  const isActuallySaved = isSaved || (savedJobsData?.savedJobs?.some((sj: any) => sj.jobId === jobId) ?? false);
 
   const saveMutation = useMutation({
     mutationFn: () => savedJobService.saveJob(jobId),
@@ -32,7 +39,7 @@ export function SaveButton({ jobId, isSaved = false, size = 'md' }: SaveButtonPr
     e.preventDefault();
     e.stopPropagation();
 
-    if (isSaved) {
+    if (isActuallySaved) {
       unsaveMutation.mutate();
     } else {
       saveMutation.mutate();
@@ -47,15 +54,15 @@ export function SaveButton({ jobId, isSaved = false, size = 'md' }: SaveButtonPr
         onClick={handleToggle}
         disabled={isLoading}
         className={`p-2 rounded-lg transition-colors ${
-          isSaved
+          isActuallySaved
             ? 'bg-accent/10 text-accent hover:bg-accent/20'
             : 'bg-background border border-border text-text-muted hover:border-accent hover:text-accent'
         }`}
-        title={isSaved ? 'Remove from saved' : 'Save job'}
+        title={isActuallySaved ? 'Remove from saved' : 'Save job'}
       >
         {isLoading ? (
           <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
-        ) : isSaved ? (
+        ) : isActuallySaved ? (
           <BookmarkCheck className="w-4 h-4" />
         ) : (
           <Bookmark className="w-4 h-4" />
@@ -66,7 +73,7 @@ export function SaveButton({ jobId, isSaved = false, size = 'md' }: SaveButtonPr
 
   return (
     <Button
-      variant={isSaved ? 'accent' : 'outline'}
+      variant={isActuallySaved ? 'accent' : 'outline'}
       size="sm"
       onClick={handleToggle}
       disabled={isLoading}
@@ -74,12 +81,12 @@ export function SaveButton({ jobId, isSaved = false, size = 'md' }: SaveButtonPr
     >
       {isLoading ? (
         <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
-      ) : isSaved ? (
+      ) : isActuallySaved ? (
         <BookmarkCheck className="w-4 h-4" />
       ) : (
         <Bookmark className="w-4 h-4" />
       )}
-      {isSaved ? 'Saved' : 'Save'}
+      {isActuallySaved ? 'Saved' : 'Save'}
     </Button>
   );
 }

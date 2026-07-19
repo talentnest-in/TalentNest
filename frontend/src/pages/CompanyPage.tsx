@@ -91,7 +91,7 @@ export function CompanyPage() {
         <div className="bg-surface border border-border rounded-2xl p-6 lg:p-8 shadow-sm">
           <div className="flex items-center gap-6 mb-8 pb-8 border-b border-border">
             {company?.logoUrl ? (
-              <img src={`${BACKEND_URL}${company.logoUrl}`} alt="Company Logo" className="w-24 h-24 rounded-2xl object-cover border border-border" />
+              <img src={company.logoUrl?.startsWith('http') ? company.logoUrl : `${BACKEND_URL}${company.logoUrl}`} alt="Company Logo" className="w-24 h-24 rounded-2xl object-cover border border-border" />
             ) : (
               <div className="w-24 h-24 rounded-2xl bg-accent/10 flex items-center justify-center">
                 <Building2 className="w-10 h-10 text-accent" />

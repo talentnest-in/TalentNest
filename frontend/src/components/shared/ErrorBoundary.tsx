@@ -25,6 +25,15 @@ export class ErrorBoundary extends Component<Props, State> {
     // Log error to console (future: send to logging service)
     console.error('Error caught by ErrorBoundary:', error);
     console.error('Error Info:', errorInfo);
+
+    // Handle chunk load errors caused by new deployments
+    if (error.name === 'ChunkLoadError' || error.message.includes('Failed to fetch dynamically imported module')) {
+      const isReloaded = sessionStorage.getItem('chunk_failed_reload');
+      if (!isReloaded) {
+        sessionStorage.setItem('chunk_failed_reload', 'true');
+        window.location.reload();
+      }
+    }
   }
 
   handleReload = () => {

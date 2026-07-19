@@ -113,7 +113,7 @@ export function JobDetails() {
           <div className="flex items-center gap-4">
             {companyLogo ? (
               <img
-                src={`${BACKEND_URL}${companyLogo}`}
+                src={companyLogo?.startsWith('http') ? companyLogo : `${BACKEND_URL}${companyLogo}`}
                 alt={companyName}
                 className="w-16 h-16 rounded-xl object-cover border border-border"
               />
